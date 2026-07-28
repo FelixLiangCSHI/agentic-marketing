@@ -395,6 +395,90 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
   const missingModules = LINKEDIN_MODULES.filter(
     (module) => !state.slots[module].confirmed,
   );
+  const hasIntakeActivity = LINKEDIN_MODULES.some(
+    (module) => state.slots[module].status !== "idle",
+  );
+  const confidencePercent = Math.round((completedCount / 3) * 100);
+  const hasBlockingIssues = snapshot?.quality.hasBlockingIssues ?? false;
+  const hasQualityWarnings = (snapshot?.quality.warningCount ?? 0) > 0;
+  let confidenceLabel = "Not assessed";
+  let confidenceTone = "neutral";
+  let confidenceDetail = `${completedCount} of 3 modules confirmed`;
+
+  if (hasBlockingIssues) {
+    const issueCount = snapshot?.quality.blockingIssueCount ?? 0;
+    confidenceLabel = "Low";
+    confidenceTone = "danger";
+    confidenceDetail = `${issueCount} blocking quality issue${issueCount === 1 ? "" : "s"}`;
+  } else if (hasQualityWarnings) {
+    const warningCount = snapshot?.quality.warningCount ?? 0;
+    confidenceLabel = "Moderate";
+    confidenceTone = "approval";
+    confidenceDetail = `${warningCount} quality warning${warningCount === 1 ? "" : "s"}`;
+  } else if (completedCount === 3) {
+    confidenceLabel = "High";
+    confidenceTone = "ready";
+  } else if (completedCount === 2) {
+    confidenceLabel = "Moderate";
+  } else if (completedCount === 1) {
+    confidenceLabel = "Developing";
+  }
+  const workflowSummary = state.analysisReady
+    ? {
+        badge: hasBlockingIssues ? "Attention required" : "In review",
+        title: hasBlockingIssues
+          ? "Analysis requires remediation"
+          : "Campaign strategy review",
+        detail: "Step 2 of 4",
+        tone: hasBlockingIssues ? "danger" : "active",
+      }
+    : ready
+      ? {
+          badge: "Ready",
+          title: "Historical analysis ready",
+          detail: "Step 1 of 4",
+          tone: "ready",
+        }
+      : hasIntakeActivity
+        ? {
+            badge: "In progress",
+            title: "Data intake in progress",
+            detail: "Step 1 of 4",
+            tone: "active",
+          }
+        : {
+            badge: "Open",
+            title: "Awaiting source data",
+            detail: "Step 1 of 4",
+            tone: "neutral",
+          };
+  const approvalGate = hasBlockingIssues
+    ? {
+        badge: "Blocked",
+        title: "Resolve data quality issues",
+        detail: "Approval cannot advance while blocking issues remain.",
+        tone: "danger",
+      }
+    : state.analysisReady
+      ? {
+          badge: "Required",
+          title: "Human review pending",
+          detail: "Recommendations require explicit approval before planning.",
+          tone: "approval",
+        }
+      : ready
+        ? {
+            badge: "Available",
+            title: "Analysis gate available",
+            detail: "Start analysis to prepare evidence for human review.",
+            tone: "ready",
+          }
+        : {
+            badge: "Locked",
+            title: "Approval gate locked",
+            detail: "Confirm all three source modules to unlock review.",
+            tone: "neutral",
+          };
 
   return (
     <div className="app-shell">
@@ -404,43 +488,83 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
       />
 
       <div className="page-frame">
-        <section className="hero">
-          <div>
-            <span className="hero__eyebrow">
-              <Icon name="content" size={15} />
-              GOVERNED MARKETING OPERATIONS
-            </span>
-            <h1>Turn LinkedIn performance into an approved 30-day campaign</h1>
-            <p>
-              A governed workflow for historical analysis, campaign strategy, content planning, and publishing preparation.
-            </p>
-            <div className="hero__trust">
-              <span>
-                <Icon name="shield" size={15} />
-                Server-side validation
-              </span>
-              <span>
-                <Icon name="lock" size={15} />
-                No default persistence
-              </span>
-              <span>
-                <Icon name="table" size={15} />
-                Row-level evidence
-              </span>
-            </div>
-          </div>
-          <div className="mock-entry">
-            <span className="mock-entry__icon">
-              <Icon name="database" size={22} />
-            </span>
+        <section
+          className="dashboard-overview"
+          aria-labelledby="workflow-overview-title"
+        >
+          <header className="dashboard-overview__header">
             <div>
-              <strong>No files available?</strong>
-              <p>Load fictional sample data to review the same intake workflow.</p>
+              <span className="section-label">CAMPAIGN OPERATIONS</span>
+              <h1 id="workflow-overview-title">Campaign workflow overview</h1>
+              <p>
+                Governed intake, analysis, approval, and publishing preparation
+                for LinkedIn campaign operations.
+              </p>
             </div>
-            <button className="secondary-button" type="button" onClick={loadMock}>
-              Use demo data
-              <Icon name="arrow" size={16} />
-            </button>
+            <div className="mock-entry">
+              <div>
+                <strong>Demo workspace</strong>
+                <p>Load fictional data into the same governed intake.</p>
+              </div>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={loadMock}
+              >
+                Use demo data
+              </button>
+            </div>
+          </header>
+
+          <div
+            className="dashboard-overview__status"
+            aria-label="Current workflow status"
+          >
+            <article className="overview-status-card">
+              <div className="overview-status-card__heading">
+                <h2>Workflow status</h2>
+                <span
+                  className={`overview-badge overview-badge--${workflowSummary.tone}`}
+                >
+                  {workflowSummary.badge}
+                </span>
+              </div>
+              <strong>{workflowSummary.title}</strong>
+              <p>{workflowSummary.detail}</p>
+            </article>
+
+            <article className="overview-status-card">
+              <div className="overview-status-card__heading">
+                <h2>Data confidence</h2>
+                <span
+                  className={`overview-badge overview-badge--${confidenceTone}`}
+                >
+                  {confidenceLabel}
+                </span>
+              </div>
+              <strong>{confidencePercent}% source coverage</strong>
+              <p>{confidenceDetail}</p>
+              <progress
+                aria-label="Data confidence based on confirmed source modules"
+                max="100"
+                value={confidencePercent}
+              >
+                {confidencePercent}%
+              </progress>
+            </article>
+
+            <article className="overview-status-card">
+              <div className="overview-status-card__heading">
+                <h2>Approval gate</h2>
+                <span
+                  className={`overview-badge overview-badge--${approvalGate.tone}`}
+                >
+                  {approvalGate.badge}
+                </span>
+              </div>
+              <strong>{approvalGate.title}</strong>
+              <p>{approvalGate.detail}</p>
+            </article>
           </div>
         </section>
 
@@ -448,7 +572,7 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
           <PipelineNavigation
             ingestionComplete={ready}
             packageReady={state.analysisReady}
-            hasBlockingIssues={snapshot?.quality.hasBlockingIssues ?? false}
+            hasBlockingIssues={hasBlockingIssues}
           />
 
           <main className="workspace">
