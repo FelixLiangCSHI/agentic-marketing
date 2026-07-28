@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from pathlib import Path
 
 from streamlit_demo.data_models import ApplicationConfiguration
@@ -30,15 +31,27 @@ class LocalConfigurationStore:
 
     def save(self, configuration: ApplicationConfiguration) -> None:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        temporary = self.path.with_suffix(f"{self.path.suffix}.tmp")
-        temporary.write_text(
-            json.dumps(configuration.to_dict(), ensure_ascii=False, indent=2),
-            encoding="utf-8",
+        self.path.parent.chmod(0o700)
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=".config-",
+            dir=self.path.parent,
         )
+        temporary = Path(temporary_name)
         try:
-            temporary.chmod(0o600)
-            temporary.replace(self.path)
+            os.fchmod(descriptor, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                descriptor = -1
+                json.dump(
+                    configuration.to_dict(),
+                    handle,
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, self.path)
             self.path.chmod(0o600)
         finally:
+            if descriptor >= 0:
+                os.close(descriptor)
             temporary.unlink(missing_ok=True)
-

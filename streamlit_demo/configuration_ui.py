@@ -34,11 +34,11 @@ def _configuration_draft(
         }
     return {
         "insight_endpoint": configuration.ai_insight.endpoint,
-        "insight_credential": configuration.ai_insight.credential,
+        "insight_credential": "",
         "plan_endpoint": configuration.ai_plan.endpoint,
-        "plan_credential": configuration.ai_plan.credential,
+        "plan_credential": "",
         "buffer_endpoint": configuration.buffer.endpoint,
-        "buffer_credential": configuration.buffer.credential,
+        "buffer_credential": "",
     }
 
 
@@ -56,18 +56,26 @@ def initialize_configuration_state(workflow: ConfigurationWorkflow) -> None:
 
 def _draft_configuration() -> ApplicationConfiguration:
     draft = st.session_state["configuration_draft"]
+    current = st.session_state.get("configuration")
+
+    def credential(draft_key: str, service_name: str) -> str:
+        entered = draft[draft_key].strip()
+        if entered or not isinstance(current, ApplicationConfiguration):
+            return entered
+        return getattr(current, service_name).credential
+
     return ApplicationConfiguration(
         ai_insight=ServiceConfiguration(
             draft["insight_endpoint"].strip(),
-            draft["insight_credential"].strip(),
+            credential("insight_credential", "ai_insight"),
         ),
         ai_plan=ServiceConfiguration(
             draft["plan_endpoint"].strip(),
-            draft["plan_credential"].strip(),
+            credential("plan_credential", "ai_plan"),
         ),
         buffer=ServiceConfiguration(
             draft["buffer_endpoint"].strip(),
-            draft["buffer_credential"].strip(),
+            credential("buffer_credential", "buffer"),
         ),
     )
 
@@ -89,6 +97,11 @@ def _service_fields(
         credential_label,
         value=draft[credential_key],
         type="password",
+        placeholder=(
+            "Leave blank to keep the saved credential"
+            if st.session_state.get("configuration") is not None
+            else ""
+        ),
         key=f"configuration-{credential_key}",
     )
     draft[endpoint_key] = endpoint
@@ -233,7 +246,8 @@ def render_settings() -> None:
     st.dataframe(rows, hide_index=True, width="stretch")
     st.caption(
         "Credentials remain hidden and are not requested again unless you choose "
-        "to edit this configuration."
+        "to edit this configuration. Saved credential values are never returned "
+        "to the form."
     )
     if st.button("Edit Configuration", type="primary"):
         st.session_state["configuration_editing"] = True
@@ -243,4 +257,3 @@ def render_settings() -> None:
             configuration
         )
         st.rerun()
-

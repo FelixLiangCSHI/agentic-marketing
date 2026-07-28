@@ -135,6 +135,24 @@ class ConfigurationWorkflowTests(unittest.TestCase):
                         for item in relaunched.text_input
                     )
                 )
+                navigation = next(
+                    item
+                    for item in relaunched.radio
+                    if item.key == "active_stage"
+                )
+                relaunched = navigation.set_value("Settings").run()
+                edit_button = next(
+                    item
+                    for item in relaunched.button
+                    if item.label == "Edit Configuration"
+                )
+                relaunched = edit_button.click().run()
+                insight_key = next(
+                    item
+                    for item in relaunched.text_input
+                    if item.label == "AI API 1 Key"
+                )
+                self.assertEqual(insight_key.value, "")
 
 
 class ApprovalEngineTests(unittest.TestCase):

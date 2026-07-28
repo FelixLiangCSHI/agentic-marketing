@@ -94,6 +94,8 @@ npm start
   当前用户可访问的 `0700` 和 `0600`；
 - 测试或受管部署可用 `AGENTIC_MARKETING_CONFIG_PATH` 覆盖路径；
 - 当前服务适配器仍执行确定性 Mock 连接验证，不向第三方发送凭据或业务数据；
+- 配置属于运行应用的本地工作区；多用户托管部署必须提供认证和按租户密钥存储，
+  不应把个人凭据写入共享配置；
 - 不要把 API Key 放入上传文件或仓库。
 - Bridge 子进程会移除名称含 `API_KEY`、`TOKEN`、`SECRET`、`PASSWORD` 或 `AUTHORIZATION` 的环境变量。
 - 可使用标准 Streamlit 环境变量调整本地端口，例如 `STREAMLIT_SERVER_PORT=8502`。
