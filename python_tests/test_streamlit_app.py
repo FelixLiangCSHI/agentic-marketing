@@ -77,7 +77,7 @@ class StreamlitDemoTests(unittest.TestCase):
 
         app = click_label(
             app,
-            "解析并计算 Analysis Snapshot",
+            "Process Data and Create Snapshot",
             timeout=90,
         )
         state = app.session_state.filtered_state
@@ -89,25 +89,25 @@ class StreamlitDemoTests(unittest.TestCase):
             {"followers": 3, "visitors": 3, "content": 3},
         )
 
-        app = navigate(app, "数据接入")
+        app = navigate(app, "Data Intake")
         self.assertEqual(list(app.exception), [])
         self.assertTrue(
             any(
-                "文件识别结果" in markdown.value
+                "File Recognition Results" in markdown.value
                 for markdown in app.markdown
             )
         )
 
-        app = navigate(app, "受众洞察")
+        app = navigate(app, "Audience Insights")
         self.assertTrue(
             any(
-                "洞察、策略、计划和聊天仍由确定性 Mock Agent" in warning.value
-                for warning in app.warning
+                "predefined demonstration rules" in info.value
+                for info in app.info
             )
         )
 
-        app = navigate(app, "报告导出")
-        app = click_label(app, "准备三种安全导出")
+        app = navigate(app, "Reports & Exports")
+        app = click_label(app, "Prepare Campaign Reports")
         structured = app.session_state.filtered_state[
             "export_artifacts"
         ]["structuredJson"]["content"]
@@ -122,24 +122,24 @@ class StreamlitDemoTests(unittest.TestCase):
         self.assertEqual(list(app.exception), [])
         self.assertEqual(len(app.get("file_uploader")), 3)
 
-        app = click_label(app, "使用示例数据开始")
+        app = click_label(app, "Start with Sample Data")
         state = app.session_state.filtered_state
         self.assertEqual(list(app.exception), [])
         self.assertEqual(state["mode"], "mock")
         self.assertEqual(state["analysis"]["analysisStatus"], "ready")
-        self.assertEqual(state["active_stage"], "指标计算")
+        self.assertEqual(state["active_stage"], "Performance Metrics")
 
         approval_steps = (
             (
-                "受众洞察",
+                "Audience Insights",
                 (
                     "approve-insight-audience-followers",
                     "approve-insight-audience-visitors",
                 ),
             ),
-            ("内容洞察", ("approve-insight-content-performance",)),
+            ("Content Insights", ("approve-insight-content-performance",)),
             (
-                "策略建议",
+                "Campaign Strategy",
                 (
                     "approve-strategy-content-experiment",
                     "approve-strategy-audience-path",
@@ -152,14 +152,14 @@ class StreamlitDemoTests(unittest.TestCase):
                 app = click_key(app, key)
             self.assertEqual(list(app.exception), [])
 
-        app = navigate(app, "30 天计划")
+        app = navigate(app, "30-Day Campaign Plan")
         goal_confirmation = next(
             item
             for item in app.checkbox
             if item.key == "business_goal_confirmed"
         )
         app = goal_confirmation.set_value(True).run()
-        app = click_label(app, "生成 Mock 初稿", timeout=90)
+        app = click_label(app, "Create Campaign Draft", timeout=90)
         plan = app.session_state.filtered_state["plan"]
         self.assertEqual(list(app.exception), [])
         self.assertEqual(len(plan["fourWeekPlan"]), 4)
@@ -167,28 +167,28 @@ class StreamlitDemoTests(unittest.TestCase):
         self.assertEqual(plan["status"], "ai_draft")
 
         topic_input = next(
-            item for item in app.text_input if item.label == "主题"
+            item for item in app.text_input if item.label == "Topic"
         )
         app = topic_input.set_value("用户确认的实验主题").run()
-        app = click_label(app, "保存单项修改", timeout=60)
+        app = click_label(app, "Save Item Changes", timeout=60)
         edited_plan = app.session_state.filtered_state["plan"]
         self.assertEqual(
             edited_plan["contentCalendar"][0]["topic"],
             "用户确认的实验主题",
         )
-        app = click_label(app, "撤销最近一次修改")
+        app = click_label(app, "Undo Last Change")
         restored_plan = app.session_state.filtered_state["plan"]
         self.assertNotEqual(
             restored_plan["contentCalendar"][0]["topic"],
             "用户确认的实验主题",
         )
 
-        app = click_label(app, "确认当前计划", timeout=60)
+        app = click_label(app, "Approve Current Plan", timeout=60)
         self.assertEqual(
             app.session_state.filtered_state["plan"]["status"],
             "user_confirmed",
         )
-        app = navigate(app, "交付 Buffer", timeout=90)
+        app = navigate(app, "Buffer Handoff", timeout=90)
         state = app.session_state.filtered_state
         self.assertEqual(list(app.exception), [])
         preview = state["buffer_preview"]
@@ -217,10 +217,10 @@ class StreamlitDemoTests(unittest.TestCase):
         )
         app = editor.set_value(blocked_label).run(timeout=60)
         format_control = next(
-            item for item in app.selectbox if item.label == "内容形式"
+            item for item in app.selectbox if item.label == "Content Format"
         )
         app = format_control.set_value("文字短帖").run(timeout=60)
-        app = click_label(app, "保存并重新校验", timeout=90)
+        app = click_label(app, "Save and Revalidate", timeout=90)
         preview = app.session_state.filtered_state["buffer_preview"]
         self.assertIsNotNone(preview)
         self.assertEqual(preview["summary"]["blockingErrorCount"], 0)
@@ -233,7 +233,7 @@ class StreamlitDemoTests(unittest.TestCase):
         app = warning_ack.set_value(True).run(timeout=60)
         app = click_label(
             app,
-            "生成 Buffer 导入准备文件",
+            "Create Buffer Handoff Files",
             timeout=90,
         )
         state = app.session_state.filtered_state
@@ -261,20 +261,20 @@ class StreamlitDemoTests(unittest.TestCase):
         )
         self.assertTrue(
             any(
-                "Lucy 的 Buffer 人工导入步骤" in heading.value
+                "Buffer Import Checklist" in heading.value
                 for heading in app.subheader
             )
         )
 
-        app = navigate(app, "证据问答")
+        app = navigate(app, "Campaign Evidence")
         app = click_key(app, "quick-0", timeout=60)
         chat = app.session_state.filtered_state["chat_history"]
         self.assertEqual(chat[-1]["role"], "assistant")
         self.assertEqual(chat[-1]["answer"]["status"], "answered")
         self.assertGreater(len(chat[-1]["answer"]["citations"]), 0)
 
-        app = navigate(app, "报告导出")
-        app = click_label(app, "准备三种安全导出", timeout=60)
+        app = navigate(app, "Reports & Exports")
+        app = click_label(app, "Prepare Campaign Reports", timeout=60)
         artifacts = app.session_state.filtered_state["export_artifacts"]
         self.assertEqual(
             app.session_state.filtered_state["export_status"],
@@ -289,7 +289,7 @@ class StreamlitDemoTests(unittest.TestCase):
             json.loads(structured)["privacy"]["containsRawFile"]
         )
 
-        app = click_label(app, "清除当前项目数据")
+        app = click_label(app, "Clear Campaign Data")
         cleared = app.session_state.filtered_state
         self.assertEqual(list(app.exception), [])
         self.assertIsNone(cleared["analysis"])
@@ -302,11 +302,11 @@ class StreamlitDemoTests(unittest.TestCase):
             str(ROOT / "streamlit_app.py"),
             default_timeout=60,
         ).run()
-        app = navigate(app, "交付 Buffer")
+        app = navigate(app, "Buffer Handoff")
         self.assertEqual(list(app.exception), [])
         self.assertTrue(
             any(
-                "请先生成 30 天计划" in info.value
+                "Create a 30-day campaign plan first" in info.value
                 for info in app.info
             )
         )
