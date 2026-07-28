@@ -39,11 +39,12 @@ function insight(
   snapshot: AnalysisSnapshot,
   input: Omit<
     EvidenceInsight,
-    "snapshotId" | "approvalStatus" | "confidence" | "evidence"
+    "snapshotId" | "approvalStatus" | "confidence" | "evidence" | "report"
   > & {
     metrics: Metric[];
   },
 ): EvidenceInsight {
+  const insightConfidence = confidence(input.metrics);
   return {
     insightId: input.insightId,
     snapshotId: snapshot.snapshotId,
@@ -53,9 +54,28 @@ function insight(
     possibleMeaning: input.possibleMeaning,
     suggestedValidation: input.suggestedValidation,
     evidence: input.metrics.map(evidence),
-    confidence: confidence(input.metrics),
+    confidence: insightConfidence,
     limitations: input.limitations,
     approvalStatus: "draft",
+    report: {
+      executiveSummary: input.statement,
+      keyFindings: [input.statement],
+      businessImplications: [input.possibleMeaning],
+      recommendations: [input.suggestedValidation],
+      confidenceLevel:
+        insightConfidence === "high"
+          ? "High"
+          : insightConfidence === "medium"
+            ? "Medium"
+            : "Low",
+      evidence: input.metrics.map(
+        (metric) =>
+          `${metric.label}: ${metric.formattedValue} (${metric.metricId})`,
+      ),
+      observedTrends: [
+        "The available period establishes a directional baseline; additional comparable periods are required to confirm a trend.",
+      ],
+    },
   };
 }
 
@@ -63,7 +83,7 @@ function strategy(
   snapshot: AnalysisSnapshot,
   input: Omit<
     StrategyRecommendation,
-    "snapshotId" | "approvalStatus" | "editedByUser"
+    "snapshotId" | "approvalStatus" | "editedByUser" | "report"
   >,
 ): StrategyRecommendation {
   return {
@@ -71,6 +91,17 @@ function strategy(
     snapshotId: snapshot.snapshotId,
     approvalStatus: "draft",
     editedByUser: false,
+    report: {
+      executiveSummary: input.objective,
+      keyFindings: [input.rationale],
+      businessImplications: [input.objective],
+      recommendations: input.actions,
+      confidenceLevel: "Medium",
+      evidence: input.metricIds,
+      observedTrends: [
+        "Recommendations use the current aggregate baseline; outcome trends require future like-for-like measurement.",
+      ],
+    },
   };
 }
 
@@ -94,16 +125,16 @@ export function generateEvidenceStrategyBundle(
       insight(snapshot, {
         insightId: "insight-audience-followers",
         category: "audience",
-        title: "关注者变化基线",
-        statement: `数据显示，${primary.label}为 ${primary.formattedValue}。`,
+        title: "Follower Change Baseline",
+        statement: `${primary.label} is ${primary.formattedValue} for the available analysis period.`,
         possibleMeaning:
-          "这可能意味着当前关注者获取存在可观察的方向，但不能据此识别具体关注者或个人意向。",
+          "The aggregate result establishes a direction for follower acquisition; it does not identify individual followers or intent.",
         suggestedValidation:
-          "建议在下一次导入中使用相同口径复核趋势，并与内容发布窗口分开验证。",
+          "Repeat the analysis with the same definitions and evaluate publishing windows separately.",
         metrics: followerMetrics,
         limitations: [
-          "数据为聚合口径，不能识别具体关注者。",
-          "增长变化不能直接归因于单条内容。",
+          "Aggregate data cannot identify individual followers.",
+          "Follower changes cannot be attributed directly to a single content item.",
         ],
       }),
     );
@@ -122,16 +153,16 @@ export function generateEvidenceStrategyBundle(
       insight(snapshot, {
         insightId: "insight-audience-visitors",
         category: "audience",
-        title: "主页访问基线",
-        statement: `数据显示，${primary.label}为 ${primary.formattedValue}。`,
+        title: "Page Visit Baseline",
+        statement: `${primary.label} is ${primary.formattedValue} for the available analysis period.`,
         possibleMeaning:
-          "这可能意味着主页正在获得一定聚合访问，但无法判断匿名访客身份或其购买意向。",
+          "The result quantifies aggregate page traffic without identifying anonymous visitors or purchase intent.",
         suggestedValidation:
-          "建议持续采集 Page Views、Unique Visitors 与 CTA 点击，并按相同周期比较。",
+          "Track Page Views, Unique Visitors, and CTA clicks over equivalent periods.",
         metrics: visitorMetrics,
         limitations: [
-          "Visitors 是匿名聚合数据。",
-          "Page Views 与关注者变化之间不存在用户级归因。",
+          "Visitor data is anonymous and aggregated.",
+          "Page Views and follower changes do not support user-level attribution.",
         ],
       }),
     );
@@ -151,16 +182,16 @@ export function generateEvidenceStrategyBundle(
       insight(snapshot, {
         insightId: "insight-content-performance",
         category: "content",
-        title: "内容表现基线",
-        statement: `数据显示，${primary.label}为 ${primary.formattedValue}。`,
+        title: "Content Performance Baseline",
+        statement: `${primary.label} is ${primary.formattedValue} for the available analysis period.`,
         possibleMeaning:
-          "这可能意味着现有内容形成了可用于实验比较的基线，而不是未来表现承诺。",
+          "Current content performance provides an experiment baseline, not a forecast of future results.",
         suggestedValidation:
-          "建议使用内容类型、主题和 CTA 的单变量实验，并在下一次导入后复盘。",
+          "Run single-variable tests across format, topic, and CTA, then review the next comparable import.",
         metrics: contentMetrics,
         limitations: [
-          "历史表现不保证未来结果。",
-          "样本较少的内容分组仅适合方向性判断。",
+          "Historical performance does not guarantee future results.",
+          "Small content segments support directional analysis only.",
         ],
       }),
     );
@@ -174,14 +205,14 @@ export function generateEvidenceStrategyBundle(
     strategies.push(
       strategy(snapshot, {
         strategyId: "strategy-content-experiment",
-        title: "建立可复盘的内容实验节奏",
-        objective: "用稳定发布节奏验证内容形式、主题和 CTA 的相对表现。",
+        title: "Establish a Measurable Content Experiment Cadence",
+        objective: "Use a consistent publishing cadence to compare format, topic, and CTA performance.",
         rationale:
-          "该策略仅使用已计算的内容基线设计实验，不承诺具体增长幅度。",
+          "The strategy uses the calculated content baseline to design experiments without forecasting a specific growth rate.",
         actions: [
-          "保持每周可执行的发布数量。",
-          "每轮只改变一个主要变量。",
-          "在下一次导入后按相同指标复盘。",
+          "Maintain an operationally sustainable weekly publishing volume.",
+          "Change one primary variable in each experiment.",
+          "Review the same metrics after the next import.",
         ],
         insightIds: [contentInsight.insightId],
         metricIds: contentInsight.evidence.map((item) => item.metricId),
@@ -196,14 +227,14 @@ export function generateEvidenceStrategyBundle(
     strategies.push(
       strategy(snapshot, {
         strategyId: "strategy-audience-path",
-        title: "统一受众信息与主页 CTA 路径",
-        objective: "围绕重点受众建立从内容到主页 CTA 的可观测路径。",
+        title: "Align Audience Messaging and the Page CTA Path",
+        objective: "Create an observable path from content to the page CTA for the priority audience.",
         rationale:
-          "Followers 与 Visitors 均为聚合数据，因此策略重点是可收集指标，而非个人级转化归因。",
+          "Follower and visitor data is aggregated; measurement should focus on observable metrics rather than individual conversion attribution.",
         actions: [
-          "在内容中保持单一、明确的 CTA。",
-          "记录发布窗口与主页聚合指标。",
-          "避免将代理比率称为真实转化率。",
+          "Use one clear CTA in each content item.",
+          "Record publishing windows alongside aggregate page metrics.",
+          "Classify proxy ratios separately from verified conversion rates.",
         ],
         insightIds: audienceInsights.map((item) => item.insightId),
         metricIds: audienceInsights.flatMap((item) =>

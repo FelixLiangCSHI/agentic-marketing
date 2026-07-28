@@ -155,82 +155,105 @@ export function generateMarkdownReport(input: ReportExportInput): string {
   ]);
 
   const lines = [
-    `# LinkedIn Marketing 分析报告：${input.projectId}`,
+    `# LinkedIn Marketing Analysis Report: ${input.projectId}`,
     "",
-    `- 项目标识：${input.projectId}`,
+    `- Project: ${input.projectId}`,
     `- Snapshot ID：\`${snapshot.snapshotId}\``,
-    `- 生成时间：${plan?.updatedAt ?? strategyBundle.generatedAt}`,
-    `- 分析时间范围：${periodLabel(snapshot.analysisPeriod)}`,
-    `- 数据模块：${modulesLabel(snapshot.sourceModules)}`,
-    `- Prompt 版本：${strategyBundle.promptVersion}${
+    `- Generated: ${plan?.updatedAt ?? strategyBundle.generatedAt}`,
+    `- Analysis period: ${periodLabel(snapshot.analysisPeriod)}`,
+    `- Data modules: ${modulesLabel(snapshot.sourceModules)}`,
+    `- Prompt version: ${strategyBundle.promptVersion}${
       plan ? ` / ${plan.promptVersion}` : ""
     }`,
-    `- 数据模式：${snapshot.inputMode === "mock" ? "Synthetic Mock" : "用户上传"}`,
+    `- Data mode: ${snapshot.inputMode === "mock" ? "Synthetic Mock" : "User Upload"}`,
     "",
     "## Executive Summary",
     "",
     plan?.executiveSummary ??
-      "当前已完成确定性指标和证据洞察，尚未生成经用户确认的 30 天行动计划。",
+      "Deterministic metrics and evidence-led findings are available; a confirmed 30-day action plan has not been generated.",
     "",
-    "## 数据范围",
+    "## Evidence",
     "",
-    `- Followers 记录：${snapshot.records.followers}`,
-    `- Visitors 记录：${snapshot.records.visitors}`,
-    `- Content 记录：${snapshot.records.content}`,
-    `- 共同分析范围：${periodLabel(snapshot.analysisPeriod)}`,
+    "### Data Scope",
     "",
-    "## 数据质量",
+    `- Follower records: ${snapshot.records.followers}`,
+    `- Visitor records: ${snapshot.records.visitors}`,
+    `- Content records: ${snapshot.records.content}`,
+    `- Shared analysis period: ${periodLabel(snapshot.analysisPeriod)}`,
     "",
-    `- 阻断问题：${snapshot.quality.blockingIssueCount}`,
-    `- Warning：${snapshot.quality.warningCount}`,
-    `- 可进入洞察：${snapshot.canEnterInsights ? "是" : "否"}`,
+    "### Data Quality",
+    "",
+    `- Blocking issues: ${snapshot.quality.blockingIssueCount}`,
+    `- Warnings: ${snapshot.quality.warningCount}`,
+    `- Eligible for findings: ${snapshot.canEnterInsights ? "Yes" : "No"}`,
     ...(qualityIssues.length > 0
       ? qualityIssues.map(
           (issue) =>
             `- [${issue.severity}] \`${issue.code}\` · ${issue.module}：${issue.message}（blocksAnalysis: ${issue.blocksAnalysis ? "yes" : "no"}）`,
         )
-      : ["- 未记录质量问题；这不代表数据能够回答所有业务问题。"]),
+      : ["- No quality issue is recorded; this does not establish coverage of every business question."]),
     "",
-    "## 指标",
+    "### Metrics",
     "",
     ...metrics.flatMap((metric) => [metricLine(metric), ""]),
-    "## 洞察",
+    "## Key Findings",
     "",
     ...(insights.length > 0
       ? insights.flatMap((insight) => [
           `### ${insight.title}`,
           "",
           `- 状态：${insight.approvalStatus}`,
-          `- 结论：${insight.statement}`,
-          `- 可能意味着：${insight.possibleMeaning}`,
-          `- 建议验证：${insight.suggestedValidation}`,
-          `- Confidence：${insight.confidence}`,
+          `- ${insight.report.executiveSummary}`,
           `- Evidence IDs：${insight.evidence
             .map((item) => `\`${item.metricId}\``)
             .join("、")}`,
           "",
         ])
-      : ["- 尚无可导出的洞察。", ""]),
-    "## 建议",
+      : ["- No reportable finding is available.", ""]),
+    "## Business Implications",
+    "",
+    ...(insights.length > 0
+      ? insights.flatMap((insight) =>
+          insight.report.businessImplications.map((item) => `- ${item}`),
+        )
+      : ["- No material business implication is available."]),
+    "",
+    "## Recommendations",
     "",
     ...(strategies.length > 0
       ? strategies.flatMap((strategy) => [
           `### ${strategy.title}`,
           "",
           `- 状态：${strategy.approvalStatus}`,
-          `- 目标：${strategy.objective}`,
-          `- 依据：${strategy.rationale}`,
+          `- ${strategy.report.executiveSummary}`,
           `- 来源洞察：${strategy.insightIds
             .map((id) => `\`${id}\``)
             .join("、")}`,
           `- Evidence IDs：${strategy.metricIds
             .map((id) => `\`${id}\``)
             .join("、")}`,
-          ...strategy.actions.map((action) => `- 行动：${action}`),
+          ...strategy.report.recommendations.map((action) => `- ${action}`),
           "",
         ])
-      : ["- 尚无可导出的策略建议。", ""]),
-    "## 30 天计划",
+      : ["- No approved recommendation is available.", ""]),
+    "## Confidence Level",
+    "",
+    ...(insights.length > 0
+      ? insights.map(
+          (insight) =>
+            `- ${insight.title}: ${insight.report.confidenceLevel}`,
+        )
+      : ["- Low"]),
+    "",
+    "## Observed Trends",
+    "",
+    ...(insights.length > 0
+      ? insights.flatMap((insight) =>
+          insight.report.observedTrends.map((item) => `- ${item}`),
+        )
+      : ["- No confirmed trend is available."]),
+    "",
+    "## 30-Day Action Plan",
     "",
     ...(plan
       ? [
@@ -280,8 +303,8 @@ export function generateMarkdownReport(input: ReportExportInput): string {
           ...plan.nextImportQuestions.map((question) => `- ${question}`),
           "",
         ]
-      : ["- 尚未生成 30 天行动计划。", ""]),
-    "## 限制说明",
+      : ["- A 30-day action plan has not been generated.", ""]),
+    "## Limitations",
     "",
     ...[...limitations].map((item) => `- ${item}`),
     "",

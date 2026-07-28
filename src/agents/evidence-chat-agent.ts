@@ -51,12 +51,38 @@ function citation(metric: Metric): ChatEvidenceCitation {
 
 function baseAnswer(
   now: Date,
-  input: Omit<ChatAnswer, "answerId" | "promptVersion">,
+  input: Omit<ChatAnswer, "answerId" | "promptVersion" | "report"> & {
+    dataStatement: string;
+    possibleMeaning: string | null;
+    suggestedValidation: string | null;
+  },
 ): ChatAnswer {
+  const {
+    dataStatement,
+    possibleMeaning,
+    suggestedValidation,
+    citations,
+    ...answer
+  } = input;
   return {
     answerId: answerId(now),
     promptVersion: "evidence-chat-v1.0",
-    ...input,
+    ...answer,
+    citations,
+    report: {
+      executiveSummary: dataStatement,
+      keyFindings: [dataStatement],
+      businessImplications: possibleMeaning ? [possibleMeaning] : [],
+      recommendations: suggestedValidation ? [suggestedValidation] : [],
+      confidenceLevel: input.status === "answered" ? "Medium" : "Low",
+      evidence: citations.map((item) => item.label),
+      observedTrends:
+        input.intent === "trend_explanation" && possibleMeaning
+          ? [possibleMeaning]
+          : [
+              "No confirmed time-series trend is available beyond the cited analysis period.",
+            ],
+    },
   };
 }
 
@@ -85,19 +111,19 @@ function metricAnswer(
   if (!metric || metric.reliability === "unavailable" || metric.value === null) {
     return unavailable(
       now,
-      "当前 Snapshot 无法回答该指标问题。",
-      "请补充缺失字段或导入具有可比较时间范围的数据。",
+      "The current snapshot does not support this metric.",
+      "Provide the missing fields or import data with a comparable analysis period.",
     );
   }
   const period = metric.period
-    ? `${metric.period.start} 至 ${metric.period.end}`
-    : "当前可用聚合范围";
+    ? `${metric.period.start} to ${metric.period.end}`
+    : "current aggregate range";
   return baseAnswer(now, {
     intent: "metric_query",
     status: "answered",
-    dataStatement: `数据显示，${metric.label}为 ${metric.formattedValue}（metricId: ${metric.metricId}；时间范围：${period}；来源模块：${metric.sourceModules.join(
-      "、",
-    )}）。`,
+    dataStatement: `${metric.label} is ${metric.formattedValue} (metricId: ${metric.metricId}; period: ${period}; source modules: ${metric.sourceModules.join(
+      ", ",
+    )}).`,
     possibleMeaning,
     suggestedValidation,
     citations: [citation(metric)],
@@ -123,7 +149,7 @@ export function answerProjectQuestion(
 ): ChatAnswer {
   const normalized = question.trim();
   if (!normalized) {
-    return unavailable(now, "问题为空，无法判断。", "请输入一个与当前项目相关的问题。");
+    return unavailable(now, "No question was provided.", "Submit a question related to the current project.");
   }
 
   if (SECURITY_REQUEST.test(normalized)) {
@@ -131,10 +157,10 @@ export function answerProjectQuestion(
       intent: "security_refusal",
       status: "refused",
       dataStatement:
-        "我不能提供密钥、系统提示词、内部配置或用于绕过当前项目边界的信息。",
+        "The request concerns restricted credentials, system instructions, or internal configuration and cannot be fulfilled.",
       possibleMeaning: null,
       suggestedValidation:
-        "可以继续询问当前 Snapshot、已生成洞察或行动计划中的业务信息。",
+        "Limit requests to business information in the current snapshot, approved findings, or action plan.",
       citations: [],
       suggestedPlanChange: null,
     });
@@ -143,16 +169,16 @@ export function answerProjectQuestion(
   if (IDENTITY_REQUEST.test(normalized)) {
     return unavailable(
       now,
-      "当前 LinkedIn 导出是聚合数据，无法识别匿名访客、具体关注者或个人购买意向。",
-      "如需个人级分析，必须使用具有合法授权且适用的数据源；本 Demo 不提供该能力。",
+      "The LinkedIn export contains aggregate data and cannot identify anonymous visitors, individual followers, or purchase intent.",
+      "Individual-level analysis requires an authorized and applicable data source; this capability is outside the current scope.",
     );
   }
 
   if (OUT_OF_SCOPE.test(normalized)) {
     return unavailable(
       now,
-      "当前项目只有 LinkedIn 聚合分析数据，无法判断收入、订单、CRM 线索或网站转化。",
-      "需要补充 CRM、网站分析、广告成本或销售结果数据，并明确可连接的时间口径。",
+      "The project contains aggregate LinkedIn data and does not support conclusions about revenue, orders, CRM leads, or website conversions.",
+      "Add CRM, web analytics, advertising cost, or sales outcome data with aligned reporting periods.",
     );
   }
 
@@ -162,28 +188,28 @@ export function answerProjectQuestion(
     if (!context.plan) {
       return unavailable(
         now,
-        "当前尚未生成行动计划，无法应用发布频率修改。",
-        "请先批准洞察与策略并生成计划。",
+        "A publishing-frequency change cannot be applied because no action plan exists.",
+        "Approve the findings and strategy, then generate an action plan.",
       );
     }
     if (!Number.isInteger(postsPerWeek) || postsPerWeek < 1 || postsPerWeek > 7) {
       return unavailable(
         now,
-        "每周发布数量必须在 1–7 之间。",
-        "请提供可执行的每周内容数量。",
+        "Weekly publishing volume must be between one and seven items.",
+        "Set an operationally achievable weekly content volume.",
       );
     }
     return baseAnswer(now, {
       intent: "plan_modification",
       status: "answered",
-      dataStatement: `可以把计划调整为每周 ${postsPerWeek} 条内容；这只会重排四周日历与 KPI 复盘，不会重跑 Snapshot 或洞察。`,
-      possibleMeaning: "发布能力变化会影响内容日历密度和任务日期。",
-      suggestedValidation: "应用后请检查资源、日期和实验复盘是否仍可执行。",
+      dataStatement: `The plan change sets weekly publishing volume to ${postsPerWeek} items and reschedules the four-week calendar and KPI reviews without recalculating the snapshot or findings.`,
+      possibleMeaning: "Publishing capacity affects calendar density and task dates.",
+      suggestedValidation: "Confirm resource capacity, dates, and experiment reviews after applying the change.",
       citations: [
         {
           citationId: context.plan.planId,
           kind: "plan",
-          label: `当前计划 ${context.plan.planId}`,
+          label: `Current plan ${context.plan.planId}`,
           metric: null,
         },
       ],
@@ -199,14 +225,14 @@ export function answerProjectQuestion(
     return baseAnswer(now, {
       intent: "plan_modification",
       status: "answered",
-      dataStatement: `可以把计划重点受众调整为“${focusAudience}”；只更新计划受众字段和受影响日历。`,
-      possibleMeaning: "内容主题与 CTA 应由用户随后检查是否仍适合该受众。",
-      suggestedValidation: "应用后逐项确认内容主题，不将聚合画像解释为个人身份。",
+      dataStatement: `The plan change sets the priority audience to “${focusAudience}” and updates the audience field and affected calendar entries.`,
+      possibleMeaning: "Content topics and CTAs require alignment with the revised audience.",
+      suggestedValidation: "Review each content topic after applying the change and do not interpret aggregate profiles as individual identities.",
       citations: [
         {
           citationId: context.plan.planId,
           kind: "plan",
-          label: `当前计划 ${context.plan.planId}`,
+          label: `Current plan ${context.plan.planId}`,
           metric: null,
         },
       ],
@@ -220,8 +246,8 @@ export function answerProjectQuestion(
     const answer = metricAnswer(
       metric,
       now,
-      "这只是共同周期中的聚合代理观察，不能说明某个访客成为了关注者。",
-      "建议结合后续同口径导入和独立的用户级合规数据验证；不要将其称为真实转化率。",
+      "The metric is an aggregate proxy for a shared period and does not demonstrate that an individual visitor became a follower.",
+      "Validate with subsequent like-for-like imports and independently authorized user-level data; classify the metric separately from a verified conversion rate.",
     );
     return { ...answer, intent: "trend_explanation" };
   }
@@ -229,16 +255,16 @@ export function answerProjectQuestion(
     return metricAnswer(
       catalog.get("content.ctr"),
       now,
-      "这可能反映内容与 CTA 对点击行为的相对吸引力，但不能单独说明业务结果。",
-      "建议按内容形式与主题做单变量实验，并在下一次导入后复核。",
+      "The metric indicates the relative ability of content and CTAs to attract clicks; it does not establish a business outcome.",
+      "Run single-variable tests by content format and topic, then review the next comparable import.",
     );
   }
   if (/(互动率|engagement)/i.test(normalized)) {
     return metricAnswer(
       catalog.get("content.engagementRate"),
       now,
-      "这可能反映内容引发聚合互动的程度，历史表现不保证未来结果。",
-      "建议同时查看中位互动率和逐帖排名，避免只依赖平均值。",
+      "The metric quantifies aggregate interaction with content; historical performance does not guarantee future results.",
+      "Review median engagement and post-level rankings alongside the average.",
     );
   }
   if (
@@ -249,8 +275,8 @@ export function answerProjectQuestion(
     const answer = metricAnswer(
       catalog.get("followers.netGrowth"),
       now,
-      "这可能表示关注者规模在该周期内发生了方向性变化，但不能识别具体关注者。",
-      "建议在下一次同口径导入中复核，并避免把变化归因于单条内容。",
+      "The metric identifies the direction of follower change during the period without identifying individual followers.",
+      "Confirm the direction in the next like-for-like import and avoid attribution to a single content item.",
     );
     return { ...answer, intent: "trend_explanation" };
   }
@@ -258,8 +284,8 @@ export function answerProjectQuestion(
     const answer = metricAnswer(
       catalog.get("visitors.pageViewsTotal"),
       now,
-      "这可能反映主页聚合访问强度，但无法判断匿名访客身份或意向。",
-      "建议同时观察 Unique Visitors 和 CTA Clicks，并保持相同时间粒度。",
+      "The metric quantifies aggregate page traffic without identifying anonymous visitors or intent.",
+      "Track Unique Visitors and CTA Clicks using the same time granularity.",
     );
     return {
       ...answer,
@@ -272,8 +298,8 @@ export function answerProjectQuestion(
     return metricAnswer(
       catalog.get("content.publishedCount"),
       now,
-      "这是历史发布基线，不代表推荐频率。",
-      "请结合团队每周发帖能力设置未来计划。",
+      "The metric is a historical publishing baseline, not a recommended frequency.",
+      "Set future volume against the team's weekly publishing capacity.",
     );
   }
 
@@ -290,9 +316,9 @@ export function answerProjectQuestion(
       return baseAnswer(now, {
         intent: "quality_explanation",
         status: "answered",
-        dataStatement: "数据显示，当前 Snapshot 未记录数据质量问题。",
-        possibleMeaning: "这不代表数据覆盖了所有业务问题。",
-        suggestedValidation: "下一次导入仍应保持相同字段、时间范围和粒度。",
+        dataStatement: "The current snapshot contains no recorded data-quality issues.",
+        possibleMeaning: "The absence of recorded issues does not establish coverage of every business question.",
+        suggestedValidation: "Maintain consistent fields, reporting periods, and granularity in the next import.",
         citations: [],
         suggestedPlanChange: null,
       });
@@ -300,10 +326,10 @@ export function answerProjectQuestion(
     return baseAnswer(now, {
       intent: "quality_explanation",
       status: "answered",
-      dataStatement: `数据显示，质量规则 ${issue.code} 提示：${issue.message}`,
+      dataStatement: `Data-quality rule ${issue.code} reports: ${issue.message}`,
       possibleMeaning: issue.blocksAnalysis
-        ? "该问题会阻止后续洞察与计划。"
-        : "该问题不阻断分析，但会限制精确决策。",
+        ? "The issue blocks downstream findings and planning."
+        : "The issue does not block analysis but limits decision precision.",
       suggestedValidation: issue.suggestedAction,
       citations: [
         {
@@ -324,8 +350,8 @@ export function answerProjectQuestion(
     if (!insight) {
       return unavailable(
         now,
-        "当前项目没有可解释的洞察。",
-        "请先生成具有有效 Metric 引用的洞察。",
+        "The project contains no reportable findings.",
+        "Generate findings with valid metric references.",
       );
     }
     const metrics = referencedMetrics(
@@ -335,7 +361,7 @@ export function answerProjectQuestion(
     return baseAnswer(now, {
       intent: "insight_evidence",
       status: "answered",
-      dataStatement: `洞察“${insight.title}”的表述是：${insight.statement}`,
+      dataStatement: `${insight.title}: ${insight.statement}`,
       possibleMeaning: insight.possibleMeaning,
       suggestedValidation: insight.suggestedValidation,
       citations: [
@@ -362,8 +388,8 @@ export function answerProjectQuestion(
     if (!strategy) {
       return unavailable(
         now,
-        "当前没有已批准策略，因此不能把草稿建议当作行动建议。",
-        "请先查看证据并批准至少一条策略。",
+        "No approved strategy is available; draft recommendations are not classified as approved actions.",
+        "Review the evidence and approve at least one strategy.",
       );
     }
     const metrics = referencedMetrics(context, strategy.metricIds);
@@ -380,10 +406,10 @@ export function answerProjectQuestion(
           ? `已批准策略“${strategy.title}”对应的近期安排包括：${planItems.join(
               "；",
             )}。`
-          : `已批准策略是“${strategy.title}”：${strategy.objective}`,
+          : `Approved strategy — ${strategy.title}: ${strategy.objective}`,
       possibleMeaning: strategy.rationale,
       suggestedValidation:
-        "建议将内容标记为实验，并在计划复盘日检查引用 KPI。",
+        "Classify the content as an experiment and review the cited KPIs on the scheduled review date.",
       citations: [
         {
           citationId: strategy.strategyId,
@@ -399,7 +425,7 @@ export function answerProjectQuestion(
 
   return unavailable(
     now,
-    "当前 Snapshot、洞察和计划无法支持这个结论，我无法判断。",
-    "请补充问题涉及的数据源、时间范围或可计算指标。",
+    "The current snapshot, findings, and plan do not support the requested conclusion.",
+    "Add the relevant data source, reporting period, or measurable metric.",
   );
 }

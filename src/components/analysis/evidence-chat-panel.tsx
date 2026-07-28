@@ -7,6 +7,7 @@ import {
   type EvidenceChatContext,
 } from "@/agents/evidence-chat-agent";
 import { Icon } from "@/components/ui/icon";
+import { ConsultingReport } from "@/components/analysis/consulting-report";
 import type { ChatAnswer, SuggestedPlanChange } from "@/domain/chat";
 
 interface EvidenceChatPanelProps {
@@ -32,13 +33,7 @@ export function EvidenceChatPanel({
   context,
   onApplyPlanChange,
 }: EvidenceChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      messageId: "welcome",
-      role: "agent",
-      text: "我只使用当前 Snapshot、已生成洞察和行动计划回答。数字会附带 metricId、时间范围和来源模块。",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -78,7 +73,7 @@ export function EvidenceChatPanel({
         {
           messageId: answer.answerId,
           role: "agent",
-          text: answer.dataStatement,
+          text: answer.report.executiveSummary,
           answer,
         },
       ]);
@@ -128,18 +123,10 @@ export function EvidenceChatPanel({
             <span className="chat-message__role">
               {message.role === "agent" ? "Agent" : "你"}
             </span>
-            <p>{message.text}</p>
-            {message.answer?.possibleMeaning && (
-              <div className="chat-answer-block">
-                <strong>可能意味着</strong>
-                <p>{message.answer.possibleMeaning}</p>
-              </div>
-            )}
-            {message.answer?.suggestedValidation && (
-              <div className="chat-answer-block">
-                <strong>建议验证</strong>
-                <p>{message.answer.suggestedValidation}</p>
-              </div>
+            {message.answer ? (
+              <ConsultingReport report={message.answer.report} />
+            ) : (
+              <p>{message.text}</p>
             )}
             {message.answer && message.answer.citations.length > 0 && (
               <details className="chat-evidence">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ConsultingReport } from "@/components/analysis/consulting-report";
 import { Icon } from "@/components/ui/icon";
 import type {
   ActionPlan,
@@ -277,15 +278,9 @@ function EvidenceSummary({
           {items.map((insight) => (
             <li key={insight.insightId}>
               <strong>{insight.title}</strong>
-              <span>{insight.statement}</span>
               <details>
-                <summary>证据与限制</summary>
-                <p>{insight.possibleMeaning}</p>
-                <code>
-                  {insight.evidence
-                    .map((reference) => reference.metricId)
-                    .join(", ")}
-                </code>
+                <summary>Consulting Report</summary>
+                <ConsultingReport report={insight.report} />
                 <small>{insight.limitations.join(" ")}</small>
               </details>
             </li>
@@ -320,7 +315,11 @@ export function ActionPlanReport({
         <div>
           <span className="section-label">STEP 3 · 30-DAY CONTENT CALENDAR</span>
           <h2>Campaign calendar and approval queue</h2>
-          <p>{plan.executiveSummary}</p>
+          {plan.report ? (
+            <ConsultingReport report={plan.report} />
+          ) : (
+            <p>{plan.executiveSummary}</p>
+          )}
         </div>
         <div className="report-hero__actions">
           <span className={`plan-status plan-status--${plan.status}`}>

@@ -1166,8 +1166,9 @@ export function generateActionPlan(
   );
   const userTarget = input.businessGoal.userDefinedTarget;
   const targetStatement = userTarget
-    ? ` 用户明确设定的目标是 ${userTarget.metricId} 达到 ${userTarget.value} ${userTarget.unit}；该数字是用户目标，不是预测。`
+    ? ` The confirmed target is ${userTarget.metricId} at ${userTarget.value} ${userTarget.unit}; this value is a user-defined objective, not a forecast.`
     : "";
+  const executiveSummary = `The four-week plan operationalizes the confirmed business goal, “${input.businessGoal.statement},” through a consistent publishing cadence, controlled experiments, and scheduled performance reviews. The plan does not forecast growth or apply individual-level attribution.${targetStatement}`;
   const plan: ActionPlan = {
     schemaVersion: "1.1",
     promptVersion: "action-plan-v1.1",
@@ -1184,21 +1185,51 @@ export function generateActionPlan(
     startDate: input.preferences.startDate,
     endDate,
     status: "ai_draft",
-    executiveSummary: `未来四周将围绕“${input.businessGoal.statement}”执行已批准策略，通过稳定发布、可标记实验和固定复盘形成下一轮可比较数据。计划不承诺具体增长，也不进行个人级归因。${targetStatement}`,
+    executiveSummary,
+    report: {
+      executiveSummary,
+      keyFindings: input.approvedInsights.map(
+        (insight) => insight.report.executiveSummary,
+      ),
+      businessImplications: input.approvedStrategies.map(
+        (strategy) => strategy.report.businessImplications[0] ?? strategy.objective,
+      ),
+      recommendations: input.approvedStrategies.flatMap(
+        (strategy) => strategy.actions,
+      ),
+      confidenceLevel: input.approvedInsights.some(
+        (insight) => insight.confidence === "low",
+      )
+        ? "Low"
+        : input.approvedInsights.every(
+              (insight) => insight.confidence === "high",
+            )
+          ? "High"
+          : "Medium",
+      evidence: input.approvedInsights.flatMap((insight) =>
+        insight.evidence.map(
+          (reference) =>
+            `${reference.label}: ${reference.formattedValue} (${reference.metricId})`,
+        ),
+      ),
+      observedTrends: input.approvedInsights.flatMap(
+        (insight) => insight.report.observedTrends,
+      ),
+    },
     assumptions: [
       input.preferences.teamSize === null
-        ? "尚未提供团队规模，所有负责人使用“待指定”占位符。"
-        : `用户提供的团队规模为 ${input.preferences.teamSize} 人，具体姓名仍由用户指定。`,
+        ? "Team size is not specified; owner fields remain unassigned."
+        : `Confirmed team size: ${input.preferences.teamSize}. Named owners remain to be assigned.`,
       input.preferences.contentResources.length === 0
-        ? "未提供内容资源清单，默认使用文字短帖和文档轮播。"
-        : `可用内容资源：${input.preferences.contentResources.join("、")}。`,
-      `每周最多发布 ${input.preferences.postsPerWeek} 条内容，时区为 ${input.preferences.timeZone}。`,
+        ? "No content-resource inventory is available; the plan uses text posts and document carousels."
+        : `Available content resources: ${input.preferences.contentResources.join(", ")}.`,
+      `Maximum weekly publishing volume: ${input.preferences.postsPerWeek}; time zone: ${input.preferences.timeZone}.`,
     ],
     risksAndLimitations: [
-      "LinkedIn 数据为聚合数据，不能识别匿名访客、具体关注者或个人购买意向。",
-      "Visitor-to-Follower Proxy 不是用户级真实转化率。",
-      "发布窗口与指标变化的时间相关性不代表内容导致增长。",
-      "未来 KPI 需要在下一次导入后按相同口径采集，当前不可预知结果。",
+      "LinkedIn data is aggregated and cannot identify anonymous visitors, individual followers, or purchase intent.",
+      "The Visitor-to-Follower Proxy is not a verified user-level conversion rate.",
+      "Correlation between publishing windows and metric changes does not establish causation.",
+      "Future KPI results require like-for-like collection in the next import and cannot be forecast from the current data.",
     ],
     ...schedule,
     kpiDefinitions,

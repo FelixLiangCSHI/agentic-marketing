@@ -20,6 +20,7 @@ import {
 import { generateEvidenceStrategyBundle } from "@/agents/evidence-strategy-agent";
 import { ActionPlanReport } from "@/components/analysis/action-plan-report";
 import { Icon } from "@/components/ui/icon";
+import { ConsultingReport } from "@/components/analysis/consulting-report";
 import type {
   ActionPlanInput,
   ActionPlanPreferences,
@@ -161,17 +162,7 @@ function EvidenceInsightCard({
           {STATUS_LABELS[insight.approvalStatus]}
         </span>
       </header>
-      <p>{insight.statement}</p>
-      <div className="evidence-language">
-        <div>
-          <strong>可能意味着</strong>
-          <span>{insight.possibleMeaning}</span>
-        </div>
-        <div>
-          <strong>建议验证</strong>
-          <span>{insight.suggestedValidation}</span>
-        </div>
-      </div>
+      <ConsultingReport report={insight.report} />
       <details className="approval-evidence">
         <summary>查看 Metric 证据与限制</summary>
         <ul>
@@ -249,15 +240,7 @@ function StrategyCard({
           }
         />
       </label>
-      <p>{strategy.rationale}</p>
-      <ul className="strategy-actions">
-        {strategy.actions.map((action) => (
-          <li key={action}>
-            <Icon name="arrow" size={13} />
-            {action}
-          </li>
-        ))}
-      </ul>
+      <ConsultingReport report={strategy.report} />
       <details className="approval-evidence">
         <summary>查看洞察与 Metric 引用</summary>
         <code>{strategy.insightIds.join(", ")}</code>

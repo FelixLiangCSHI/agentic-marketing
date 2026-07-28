@@ -55,13 +55,14 @@ test("Markdown report includes required sections and evidence identifiers", () =
 
   for (const heading of [
     "## Executive Summary",
-    "## 数据范围",
-    "## 数据质量",
-    "## 指标",
-    "## 洞察",
-    "## 建议",
-    "## 30 天计划",
-    "## 限制说明",
+    "## Key Findings",
+    "## Business Implications",
+    "## Recommendations",
+    "## Confidence Level",
+    "## Evidence",
+    "## Observed Trends",
+    "## 30-Day Action Plan",
+    "## Limitations",
   ]) {
     assert.ok(markdown.content.includes(heading));
   }
@@ -116,6 +117,10 @@ test("exports remain usable before a plan exists without inventing calendar rows
   const artifacts = createReportExportArtifacts(input, PLANNING_NOW);
 
   assert.equal(artifacts.calendarCsv.content, "");
-  assert.ok(artifacts.markdown.content.includes("尚未生成 30 天行动计划"));
+  assert.ok(
+    artifacts.markdown.content.includes(
+      "A 30-day action plan has not been generated.",
+    ),
+  );
   assert.equal(JSON.parse(artifacts.structuredJson.content).actionPlan, null);
 });
