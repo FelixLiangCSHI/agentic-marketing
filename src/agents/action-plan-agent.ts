@@ -1378,20 +1378,20 @@ export function reviseCalendarItem(
     status: "ai_draft",
     updatedAt,
     contentCalendar: plan.contentCalendar.map((candidate) => {
-      const revised =
+      const revised: ContentCalendarItem =
         candidate.itemId === itemId
           ? {
-            ...candidate,
-            ...patch,
-            mediaRequirement:
-              patch.contentFormat === undefined
-                ? candidate.mediaRequirement
-                : mediaRequirement(patch.contentFormat),
-            workflowStatus: "planning",
-            validationStatus: "not_validated",
-            validationIssues: [],
-            lastEditedAt: updatedAt,
-          }
+              ...candidate,
+              ...patch,
+              mediaRequirement:
+                patch.contentFormat === undefined
+                  ? candidate.mediaRequirement
+                  : mediaRequirement(patch.contentFormat),
+              workflowStatus: "planning",
+              validationStatus: "not_validated",
+              validationIssues: [],
+              lastEditedAt: updatedAt,
+            }
           : candidate;
       return {
         ...revised,

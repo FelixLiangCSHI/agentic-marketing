@@ -466,11 +466,7 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
         contentFormat,
         targetAudience: input.preferences.focusAudience,
         coreMessage,
-        postText: `${topic}
-
-${coreMessage}
-
-${callToAction}`,
+        postText: "",
         channel: CONTENT_CHANNELS[(sequence - 1) % CONTENT_CHANNELS.length],
         scheduledTime: POST_TIMES[(sequence - 1) % POST_TIMES.length],
         timeZone: input.preferences.timeZone,
@@ -603,7 +599,7 @@ function isActionPlanShape(value) {
   const candidate = value;
   return candidate.schemaVersion === "1.1" && (candidate.promptVersion === "action-plan-v1.0" || candidate.promptVersion === "action-plan-v1.1") && typeof candidate.planId === "string" && typeof candidate.snapshotId === "string" && (candidate.analysisPeriod === null || isRecord(candidate.analysisPeriod) && typeof candidate.analysisPeriod.start === "string" && typeof candidate.analysisPeriod.end === "string" && typeof candidate.analysisPeriod.granularity === "string" && typeof candidate.analysisPeriod.sampleSize === "number") && typeof candidate.generatedAt === "string" && typeof candidate.updatedAt === "string" && isStringArray(candidate.sourceModules) && isStringArray(candidate.sourceInsightIds) && isStringArray(candidate.sourceStrategyIds) && isRecord(candidate.businessGoal) && typeof candidate.businessGoal.goalId === "string" && typeof candidate.businessGoal.statement === "string" && typeof candidate.businessGoal.confirmed === "boolean" && typeof candidate.businessGoal.confirmedAt === "string" && isRecord(candidate.preferences) && typeof candidate.preferences.startDate === "string" && typeof candidate.preferences.timeZone === "string" && typeof candidate.preferences.postsPerWeek === "number" && Array.isArray(candidate.preferences.contentResources) && candidate.preferences.contentResources.every(
     (resource) => typeof resource === "string"
-  ) && (candidate.preferences.teamSize === null || typeof candidate.preferences.teamSize === "number") && (candidate.preferences.targetMarket === null || typeof candidate.preferences.targetMarket === "string") && typeof candidate.preferences.focusAudience === "string" && typeof candidate.startDate === "string" && typeof candidate.endDate === "string" && (candidate.status === "ai_draft" || candidate.status === "user_confirmed") && typeof candidate.executiveSummary === "string" && isStringArray(candidate.assumptions) && isStringArray(candidate.risksAndLimitations) && Array.isArray(candidate.fourWeekPlan) && candidate.fourWeekPlan.every(isFourWeekPlanItemShape) && Array.isArray(candidate.contentCalendar) && candidate.contentCalendar.every(isCalendarItemShape) && Array.isArray(candidate.kpiDefinitions) && candidate.kpiDefinitions.every(isKpiDefinitionShape) && Array.isArray(candidate.kpiReviewPlan) && candidate.kpiReviewPlan.every(isKpiReviewShape) && isStringArray(candidate.nextImportQuestions) && Array.isArray(candidate.revisionHistory) && candidate.revisionHistory.every(isPlanRevisionShape);
+  ) && (candidate.preferences.teamSize === null || typeof candidate.preferences.teamSize === "number") && (candidate.preferences.targetMarket === null || typeof candidate.preferences.targetMarket === "string") && typeof candidate.preferences.focusAudience === "string" && typeof candidate.startDate === "string" && typeof candidate.endDate === "string" && (candidate.status === "ai_draft" || candidate.status === "user_confirmed" || candidate.status === "revision_requested" || candidate.status === "rejected") && typeof candidate.executiveSummary === "string" && isStringArray(candidate.assumptions) && isStringArray(candidate.risksAndLimitations) && Array.isArray(candidate.fourWeekPlan) && candidate.fourWeekPlan.every(isFourWeekPlanItemShape) && Array.isArray(candidate.contentCalendar) && candidate.contentCalendar.every(isCalendarItemShape) && Array.isArray(candidate.kpiDefinitions) && candidate.kpiDefinitions.every(isKpiDefinitionShape) && Array.isArray(candidate.kpiReviewPlan) && candidate.kpiReviewPlan.every(isKpiReviewShape) && isStringArray(candidate.nextImportQuestions) && Array.isArray(candidate.revisionHistory) && candidate.revisionHistory.every(isPlanRevisionShape);
 }
 function migrateLegacyCalendarItem(value, index, timeZone, sourceInsightIds, updatedAt) {
   if (!isRecord(value) || typeof value.itemId !== "string" || typeof value.date !== "string" || typeof value.topic !== "string" || typeof value.contentFormat !== "string" || typeof value.targetAudience !== "string" || typeof value.coreMessage !== "string" || typeof value.callToAction !== "string" || typeof value.strategyId !== "string" || !isStringArray(value.measurementMetricIds) || !isPlanItemStatus(value.status) || typeof value.isExperiment !== "boolean" || value.experiment !== null && !isExperimentShape(value.experiment) || typeof value.ownerPlaceholder !== "string") {
@@ -1084,8 +1080,8 @@ function reviseCalendarItem(plan, itemId, patch, now = /* @__PURE__ */ new Date(
     ...plan,
     status: "ai_draft",
     updatedAt,
-    contentCalendar: plan.contentCalendar.map(
-      (candidate) => candidate.itemId === itemId ? {
+    contentCalendar: plan.contentCalendar.map((candidate) => {
+      const revised = candidate.itemId === itemId ? {
         ...candidate,
         ...patch,
         mediaRequirement: patch.contentFormat === void 0 ? candidate.mediaRequirement : mediaRequirement(patch.contentFormat),
@@ -1093,8 +1089,14 @@ function reviseCalendarItem(plan, itemId, patch, now = /* @__PURE__ */ new Date(
         validationStatus: "not_validated",
         validationIssues: [],
         lastEditedAt: updatedAt
-      } : candidate
-    ),
+      } : candidate;
+      return {
+        ...revised,
+        postText: "",
+        status: revised.status === "rejected" ? "rejected" : "ai_draft",
+        workflowStatus: "planning"
+      };
+    }),
     revisionHistory: [
       ...plan.revisionHistory,
       makeRevision(
@@ -1145,7 +1147,12 @@ function confirmActionPlan(plan, now = /* @__PURE__ */ new Date()) {
     })),
     contentCalendar: plan.contentCalendar.map((item) => ({
       ...item,
-      status: item.status === "rejected" ? "rejected" : "confirmed"
+      status: item.status === "rejected" ? "rejected" : "confirmed",
+      postText: item.status === "rejected" ? "" : `${item.topic}
+
+${item.coreMessage}
+
+${item.callToAction}`
     })),
     revisionHistory: [
       ...plan.revisionHistory,

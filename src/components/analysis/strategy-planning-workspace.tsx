@@ -79,7 +79,7 @@ function WorkflowPipeline({
     {
       number: "01",
       title: "Analysis",
-      detail: "Audience, content and posting intelligence",
+      detail: "Historical LinkedIn Analysis",
       status: "complete",
     },
     {
@@ -97,7 +97,7 @@ function WorkflowPipeline({
     {
       number: "04",
       title: "Content Calendar",
-      detail: "30-day schedule and content angles",
+      detail: "30-Day Content Calendar",
       status: calendarReady ? "complete" : strategyApproved ? "active" : "locked",
     },
     {
@@ -499,19 +499,19 @@ export function StrategyPlanningWorkspace({
     if (!planState.current) {
       return;
     }
-
-    function reviewCurrentPlan(status: "revision_requested" | "rejected") {
-      if (!planState.current) {
-        return;
-      }
-      dispatchPlan({
-        type: "APPLY_REVISION",
-        plan: reviewActionPlan(planState.current, status),
-      });
-    }
     dispatchPlan({
       type: "APPLY_REVISION",
       plan: confirmActionPlan(planState.current),
+    });
+  }
+
+  function reviewCurrentPlan(status: "revision_requested" | "rejected") {
+    if (!planState.current) {
+      return;
+    }
+    dispatchPlan({
+      type: "APPLY_REVISION",
+      plan: reviewActionPlan(planState.current, status),
     });
   }
 
