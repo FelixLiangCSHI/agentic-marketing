@@ -13,6 +13,14 @@ from streamlit_demo.bridge_client import (
     BridgeFailure,
     encode_upload,
 )
+from streamlit_demo.approval_engine import ApprovalEngine
+from streamlit_demo.configuration_ui import (
+    configuration_dialog_required,
+    initialize_configuration_state,
+    render_configuration_dialog,
+    render_settings,
+)
+from streamlit_demo.workflow import ConfigurationWorkflow
 
 
 APP_TITLE = "Medical Device LinkedIn Campaign Workspace"
@@ -38,6 +46,7 @@ NAVIGATION = (
     "Buffer Handoff",
     "Campaign Evidence",
     "Reports & Exports",
+    "Settings",
 )
 PIPELINE_STAGES = (
     "Data Intake",
@@ -84,6 +93,8 @@ BUFFER_BULK_UPLOAD_URL = (
     "https://support.buffer.com/article/"
     "926-how-to-upload-posts-in-bulk-to-buffer"
 )
+APPROVAL_ENGINE = ApprovalEngine()
+CONFIGURATION_WORKFLOW = ConfigurationWorkflow()
 
 
 st.set_page_config(
@@ -1182,18 +1193,14 @@ def render_metrics() -> None:
 
 
 def update_insight_status(insight_id: str, status: str) -> None:
-    analysis = copy.deepcopy(analysis_data())
+    analysis = analysis_data()
     if not analysis:
         return
-    bundle = analysis["strategyBundle"]
-    for insight in bundle["insights"]:
-        if insight["insightId"] == insight_id:
-            insight["approvalStatus"] = status
-    if status != "approved":
-        for strategy in bundle["strategies"]:
-            if insight_id in strategy["insightIds"]:
-                strategy["approvalStatus"] = "draft"
-    st.session_state["analysis"] = analysis
+    st.session_state["analysis"] = APPROVAL_ENGINE.update_insight(
+        analysis,
+        insight_id,
+        status,
+    )
     st.session_state["plan"] = None
     st.session_state["plan_history"] = []
     invalidate_plan_outputs()
@@ -1295,13 +1302,14 @@ def render_insights(category: str, title: str) -> None:
 
 
 def update_strategy_status(strategy_id: str, status: str) -> None:
-    analysis = copy.deepcopy(analysis_data())
+    analysis = analysis_data()
     if not analysis:
         return
-    for strategy in analysis["strategyBundle"]["strategies"]:
-        if strategy["strategyId"] == strategy_id:
-            strategy["approvalStatus"] = status
-    st.session_state["analysis"] = analysis
+    st.session_state["analysis"] = APPROVAL_ENGINE.update_strategy(
+        analysis,
+        strategy_id,
+        status,
+    )
     st.session_state["plan"] = None
     st.session_state["plan_history"] = []
     invalidate_plan_outputs()
@@ -2685,14 +2693,19 @@ def render_current_stage() -> None:
         render_chat()
     elif stage == "Reports & Exports":
         render_exports()
+    elif stage == "Settings":
+        render_settings()
 
 
 initialize_state()
+initialize_configuration_state(CONFIGURATION_WORKFLOW)
 process_pending_actions()
 render_header()
 render_sidebar()
 render_last_status()
 render_current_stage()
+if configuration_dialog_required():
+    render_configuration_dialog(CONFIGURATION_WORKFLOW)
 
 st.divider()
 st.caption(
