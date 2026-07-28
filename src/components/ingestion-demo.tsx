@@ -52,38 +52,23 @@ interface PipelineStage {
 
 const PIPELINE_STAGES: readonly PipelineStage[] = [
   {
-    label: "数据接入",
-    description: "上传与模块识别",
+    label: "Historical Analysis",
+    description: "Posts and performance",
     icon: "database",
   },
   {
-    label: "数据质量",
-    description: "映射与异常确认",
-    icon: "shield",
-  },
-  {
-    label: "指标计算",
-    description: "确定性程序计算",
-    icon: "table",
-  },
-  {
-    label: "受众洞察",
-    description: "聚合画像比较",
-    icon: "followers",
-  },
-  {
-    label: "内容洞察",
-    description: "内容表现模式",
-    icon: "content",
-  },
-  {
-    label: "策略建议",
-    description: "机会与风险",
+    label: "AI Strategy",
+    description: "Human approval required",
     icon: "sparkles",
   },
   {
-    label: "30 天计划",
-    description: "实验与行动排期",
+    label: "30-Day Calendar",
+    description: "Schedule and approval",
+    icon: "content",
+  },
+  {
+    label: "Draft Generation",
+    description: "Buffer-ready content",
     icon: "arrow",
   },
 ];
@@ -190,17 +175,17 @@ function PipelineNavigation({
   return (
     <aside className="pipeline-nav">
       <div className="pipeline-nav__heading">
-        <span>ANALYSIS FLOW</span>
-        <strong>分析流程</strong>
+        <span>AGENT PIPELINE</span>
+        <strong>Workflow progress</strong>
       </div>
       <ol>
         {PIPELINE_STAGES.map((stage, index) => {
           const status =
-            packageReady && index === 1 && hasBlockingIssues
+            packageReady && index === 0 && hasBlockingIssues
               ? "error"
-              : packageReady && index <= 2
+              : packageReady && index === 0
               ? "completed"
-              : packageReady && index === 3 && !hasBlockingIssues
+              : packageReady && index === 1 && !hasBlockingIssues
                 ? "running"
                 : index === 0 && ingestionComplete
                   ? "completed"
@@ -229,9 +214,7 @@ function PipelineNavigation({
       </ol>
       <div className="pipeline-nav__note">
         <Icon name="lock" size={17} />
-        <p>
-          上传文件仅在当前请求中解析，Demo 不写入磁盘或数据库。
-        </p>
+        <p>Human approval checkpoints prevent unreviewed AI output from advancing.</p>
       </div>
     </aside>
   );
@@ -425,11 +408,11 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
           <div>
             <span className="hero__eyebrow">
               <Icon name="sparkles" size={15} />
-              LINKEDIN MARKETING AI AGENT
+              MULTI-STAGE MARKETING AI
             </span>
-            <h1>把 LinkedIn 导出，转换为可追溯的营销分析输入</h1>
+            <h1>Turn LinkedIn performance into an approved 30-day campaign</h1>
             <p>
-              安全识别 Followers、Visitors 与 Content 工作簿，逐 Sheet 定位表头、映射字段并规范化数据；确认后，后续分析只依赖统一模型。
+              A governed AI agent workflow for historical analysis, strategy recommendation, content planning and Buffer-ready draft generation.
             </p>
             <div className="hero__trust">
               <span>

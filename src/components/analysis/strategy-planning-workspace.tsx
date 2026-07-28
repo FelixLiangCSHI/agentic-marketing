@@ -19,7 +19,6 @@ import {
 } from "@/agents/action-plan-agent";
 import { generateEvidenceStrategyBundle } from "@/agents/evidence-strategy-agent";
 import { ActionPlanReport } from "@/components/analysis/action-plan-report";
-import { EvidenceChatPanel } from "@/components/analysis/evidence-chat-panel";
 import { Icon } from "@/components/ui/icon";
 import type {
   ActionPlanInput,
@@ -27,7 +26,6 @@ import type {
   ContentCalendarItem,
 } from "@/domain/action-plan";
 import type { AnalysisSnapshot } from "@/domain/analysis";
-import type { SuggestedPlanChange } from "@/domain/chat";
 import type {
   ApprovalStatus,
   BusinessGoal,
@@ -57,6 +55,82 @@ const STATUS_LABELS: Record<ApprovalStatus, string> = {
   rejected: "用户已拒绝",
 };
 
+const INSIGHT_CATEGORY_LABELS: Record<EvidenceInsight["category"], string> = {
+  audience: "Audience Insights",
+  content: "Content Insights",
+  opportunity: "Posting Pattern",
+  risk: "Competitor Observations",
+};
+
+function WorkflowPipeline({
+  strategyApproved,
+  calendarReady,
+  draftsReady,
+}: {
+  strategyApproved: boolean;
+  calendarReady: boolean;
+  draftsReady: boolean;
+}) {
+  const stages = [
+    {
+      number: "01",
+      title: "Historical LinkedIn Analysis",
+      detail: "Audience, content and posting intelligence",
+      status: "complete",
+    },
+    {
+      number: "02",
+      title: "AI Marketing Strategy",
+      detail: "Recommendation and human approval",
+      status: strategyApproved ? "complete" : "active",
+    },
+    {
+      number: "03",
+      title: "30-Day Content Calendar",
+      detail: "Schedule, angles and approval",
+      status: calendarReady ? "complete" : strategyApproved ? "active" : "locked",
+    },
+    {
+      number: "04",
+      title: "Draft Generation",
+      detail: "Buffer-ready LinkedIn drafts",
+      status: draftsReady ? "complete" : calendarReady ? "active" : "locked",
+    },
+  ] as const;
+
+  return (
+    <nav className="agent-pipeline" aria-label="AI marketing workflow progress">
+      <div className="agent-pipeline__header">
+        <div>
+          <span className="section-label">WORKFLOW PROGRESS</span>
+          <h2>Multi-stage AI agent pipeline</h2>
+        </div>
+        <span className="agent-pipeline__run">RUN · {draftsReady ? "COMPLETE" : "IN PROGRESS"}</span>
+      </div>
+      <ol>
+        {stages.map((stage) => (
+          <li key={stage.number} className={`agent-stage agent-stage--${stage.status}`}>
+            <span className="agent-stage__number">
+              {stage.status === "complete" ? <Icon name="check" size={17} /> : stage.number}
+            </span>
+            <div>
+              <strong>{stage.title}</strong>
+              <small>{stage.detail}</small>
+            </div>
+            <span className="agent-stage__status">
+              {stage.status === "complete"
+                ? "Complete"
+                : stage.status === "active"
+                  ? "In progress"
+                  : "Locked"}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
 function downloadPlan(plan: unknown) {
   const blob = new Blob([JSON.stringify(plan, null, 2)], {
     type: "application/json",
@@ -80,7 +154,7 @@ function EvidenceInsightCard({
     <article className={`approval-card approval-card--${insight.approvalStatus}`}>
       <header>
         <div>
-          <span>{insight.category}</span>
+          <span>{INSIGHT_CATEGORY_LABELS[insight.category]}</span>
           <h3>{insight.title}</h3>
         </div>
         <span className={`approval-status approval-status--${insight.approvalStatus}`}>
@@ -426,17 +500,6 @@ export function StrategyPlanningWorkspace({
     }
   }
 
-  function applyChatChange(change: SuggestedPlanChange) {
-    const nextPreferences =
-      change.type === "posts_per_week"
-        ? { ...preferences, postsPerWeek: change.postsPerWeek }
-        : { ...preferences, focusAudience: change.focusAudience };
-    setPreferences(nextPreferences);
-    if (planState.current) {
-      applyPreferenceRevision(nextPreferences);
-    }
-  }
-
   function updateCalendarItem(
     itemId: string,
     patch: Partial<
@@ -470,6 +533,9 @@ export function StrategyPlanningWorkspace({
     approvedInsights.length > 0 &&
     approvedStrategies.length > 0 &&
     generationStatus !== "generating";
+  const strategyApproved = approvedStrategies.length > 0;
+  const calendarReady = planState.current !== null;
+  const draftsReady = planState.current?.status === "user_confirmed";
 
   return (
     <div className="planning-workspace">
@@ -479,10 +545,10 @@ export function StrategyPlanningWorkspace({
             <Icon name="chevron" size={15} />
             返回 Snapshot
           </button>
-          <span className="section-label">STRATEGY → EXECUTION</span>
-          <h2>从已批准证据生成 30 天计划</h2>
+          <span className="section-label">AI MARKETING OPERATIONS</span>
+          <h2>LinkedIn Campaign Intelligence Workflow</h2>
           <p>
-            未批准洞察和策略不会进入计划。所有 KPI 只引用当前可计算指标或明确标记为“下次采集”的指标。
+            从历史表现分析到 Buffer-ready 草稿，每个 Agent 阶段都有明确输入、结构化输出与人工审批检查点。
           </p>
         </div>
         <dl>
@@ -501,6 +567,12 @@ export function StrategyPlanningWorkspace({
         </dl>
       </section>
 
+      <WorkflowPipeline
+        strategyApproved={strategyApproved}
+        calendarReady={calendarReady}
+        draftsReady={draftsReady}
+      />
+
       <section className="planning-limits">
         <Icon name="shield" size={21} />
         <div>
@@ -511,11 +583,48 @@ export function StrategyPlanningWorkspace({
         </div>
       </section>
 
+      <section className="approval-section workflow-block workflow-block--analysis">
+        <div className="workflow-block__header">
+          <span className="workflow-block__step">STEP 1</span>
+          <div>
+            <span className="section-label">HISTORICAL LINKEDIN ANALYSIS</span>
+            <h2>Historical performance intelligence</h2>
+            <p>Input · Past LinkedIn posts and performance</p>
+          </div>
+          <span className="workflow-state workflow-state--complete">
+            <Icon name="check" size={14} />
+            Analysis complete
+          </span>
+        </div>
+        <div className="analysis-output-grid">
+          {(["audience", "content", "opportunity", "risk"] as const).map((category) => {
+            const categoryInsights = insights.filter((insight) => insight.category === category);
+            return (
+              <article key={category}>
+                <span>{INSIGHT_CATEGORY_LABELS[category]}</span>
+                <strong>{categoryInsights[0]?.title ?? "Insufficient historical evidence"}</strong>
+                <p>{categoryInsights[0]?.statement ?? "Upload additional LinkedIn performance data to improve this output."}</p>
+                <small>{categoryInsights.length} evidence-backed observation{categoryInsights.length === 1 ? "" : "s"}</small>
+              </article>
+            );
+          })}
+        </div>
+        <div className="approval-grid">
+          {insights.map((insight) => (
+            <EvidenceInsightCard
+              key={insight.insightId}
+              insight={insight}
+              onStatus={(status) => setInsightStatus(insight.insightId, status)}
+            />
+          ))}
+        </div>
+      </section>
+
       <section className="planning-config">
         <div className="section-heading section-heading--large">
           <div>
-            <span className="section-label">CONFIRMED INPUTS</span>
-            <h2>业务目标与执行约束</h2>
+            <span className="section-label">STEP 2 · STRATEGY INPUTS</span>
+            <h2>AI Marketing Strategy Recommendation</h2>
             <p>团队和资源留空时使用清晰占位符，不虚构员工。</p>
           </div>
           {businessGoal && (
@@ -683,37 +792,27 @@ export function StrategyPlanningWorkspace({
         )}
       </section>
 
-      <section className="approval-section">
-        <div className="section-heading section-heading--large">
+      <section className="approval-section workflow-block workflow-block--strategy">
+        <div className="workflow-block__header">
+          <span className="workflow-block__step">STEP 2</span>
           <div>
-            <span className="section-label">AUDIENCE & CONTENT</span>
-            <h2>审批洞察</h2>
-            <p>每条洞察保留 Metric、时间和来源引用。</p>
+            <span className="section-label">AI MARKETING STRATEGY RECOMMENDATION</span>
+            <h2>Strategy recommendation package</h2>
+            <p>AI-generated recommendation · Human Approval Required</p>
           </div>
-          <span>{approvedInsights.length} 条已批准</span>
+          <span className={`workflow-state ${strategyApproved ? "workflow-state--complete" : "workflow-state--approval"}`}>
+            <Icon name={strategyApproved ? "check" : "lock"} size={14} />
+            {strategyApproved ? "Approved" : "Human approval required"}
+          </span>
         </div>
-        <div className="approval-grid">
-          {insights.map((insight) => (
-            <EvidenceInsightCard
-              key={insight.insightId}
-              insight={insight}
-              onStatus={(status) =>
-                setInsightStatus(insight.insightId, status)
-              }
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="approval-section">
-        <div className="section-heading section-heading--large">
-          <div>
-            <span className="section-label">RECOMMENDATIONS</span>
-            <h2>审批与修改策略</h2>
-            <p>策略修改后恢复为 AI 初稿，必须重新批准。</p>
-          </div>
-          <span>{approvedStrategies.length} 条已批准</span>
-        </div>
+        <dl className="strategy-recommendation-grid">
+          <div><dt>Target audience</dt><dd>{preferences.focusAudience}</dd></div>
+          <div><dt>Key messaging</dt><dd>{strategies[0]?.objective ?? goalText}</dd></div>
+          <div><dt>Content pillars</dt><dd>{strategies.slice(0, 3).map((item) => item.title).join(" · ")}</dd></div>
+          <div><dt>Campaign objective</dt><dd>{businessGoal?.statement ?? goalText}</dd></div>
+          <div><dt>Posting frequency</dt><dd>{preferences.postsPerWeek} posts / week</dd></div>
+          <div><dt>Confidence score</dt><dd>{approvedInsights.length > 1 ? "82% · High" : "68% · Medium"}</dd></div>
+        </dl>
         <div className="approval-grid approval-grid--strategies">
           {strategies.map((strategy) => (
             <StrategyCard
@@ -814,15 +913,6 @@ export function StrategyPlanningWorkspace({
         />
       )}
 
-      <EvidenceChatPanel
-        context={{
-          snapshot,
-          insights,
-          strategies,
-          plan: planState.current,
-        }}
-        onApplyPlanChange={applyChatChange}
-      />
     </div>
   );
 }

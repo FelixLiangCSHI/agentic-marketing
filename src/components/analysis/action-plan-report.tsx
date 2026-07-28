@@ -17,14 +17,6 @@ const CHANNEL_LABELS = {
   linkedin_profile: "LinkedIn Profile",
 } as const;
 
-const WORKFLOW_LABELS = {
-  planning: "计划中",
-  ready_for_buffer: "可交付 Buffer",
-  exported_to_buffer: "已生成 Buffer 交接文件",
-  published: "用户已确认发布",
-  failed: "交接失败",
-} as const;
-
 interface ActionPlanReportProps {
   plan: ActionPlan;
   approvedInsights: EvidenceInsight[];
@@ -153,28 +145,28 @@ function PlanItemCard({
         <>
           <dl className="plan-item__details">
             <div>
-              <dt>渠道</dt>
+              <dt>Post objective</dt>
+              <dd>{strategy?.objective ?? "Build qualified audience engagement"}</dd>
+            </div>
+            <div>
+              <dt>Content angle</dt>
+              <dd>{item.coreMessage}</dd>
+            </div>
+            <div>
+              <dt>Channel</dt>
               <dd>{CHANNEL_LABELS[item.channel]}</dd>
             </div>
             <div>
-              <dt>Buffer 状态</dt>
-              <dd>{WORKFLOW_LABELS[item.workflowStatus]}</dd>
-            </div>
-            <div>
-              <dt>形式</dt>
-              <dd>{item.contentFormat}</dd>
-            </div>
-            <div>
-              <dt>目标受众</dt>
+              <dt>Target audience</dt>
               <dd>{item.targetAudience}</dd>
-            </div>
-            <div>
-              <dt>核心信息</dt>
-              <dd>{item.coreMessage}</dd>
             </div>
             <div>
               <dt>CTA</dt>
               <dd>{item.callToAction}</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>{item.status === "confirmed" ? "Approved" : item.status === "rejected" ? "Rejected" : "Human approval required"}</dd>
             </div>
           </dl>
           {item.isExperiment && item.experiment && (
@@ -227,6 +219,43 @@ function PlanItemCard({
           </div>
         </>
       )}
+    </article>
+  );
+}
+
+function DraftCard({
+  item,
+  strategy,
+}: {
+  item: ContentCalendarItem;
+  strategy: StrategyRecommendation | undefined;
+}) {
+  const campaignHashtag = item.campaignTag
+    ? `#${item.campaignTag.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, "")}`
+    : "#LinkedInMarketing";
+
+  return (
+    <article className="buffer-draft-card">
+      <header>
+        <div>
+          <span>{item.date} · {CHANNEL_LABELS[item.channel]}</span>
+          <h3>{item.topic}</h3>
+        </div>
+        <span className="draft-ready-status">
+          <Icon name="check" size={13} />
+          Draft Ready
+        </span>
+      </header>
+      <div className="draft-field">
+        <span>Body</span>
+        <p>{item.postText}</p>
+      </div>
+      <dl>
+        <div><dt>Hashtags</dt><dd>{campaignHashtag} #B2BMarketing #ContentStrategy</dd></div>
+        <div><dt>Media suggestion</dt><dd>{item.mediaRequirement ?? "Text-led post with a branded insight card"}</dd></div>
+        <div><dt>Professional terminology</dt><dd>{strategy?.title ?? item.contentFormat} · {item.coreMessage}</dd></div>
+        <div><dt>Buffer Status</dt><dd>Ready for Buffer</dd></div>
+      </dl>
     </article>
   );
 }
@@ -289,13 +318,13 @@ export function ActionPlanReport({
     <div className="action-plan-report">
       <section className="report-hero">
         <div>
-          <span className="section-label">30-DAY ACTION PLAN</span>
-          <h2>30 天执行计划</h2>
+          <span className="section-label">STEP 3 · 30-DAY CONTENT CALENDAR</span>
+          <h2>Campaign calendar and approval queue</h2>
           <p>{plan.executiveSummary}</p>
         </div>
         <div className="report-hero__actions">
           <span className={`plan-status plan-status--${plan.status}`}>
-            {plan.status === "ai_draft" ? "AI 初稿" : "用户已确认"}
+            {plan.status === "ai_draft" ? "Human Approval Required" : "Calendar Approved"}
           </span>
           <button
             className="secondary-button"
@@ -317,7 +346,7 @@ export function ActionPlanReport({
             onClick={onConfirmPlan}
           >
             <Icon name="check" size={15} />
-            确认整个计划
+            Approve calendar
           </button>
         </div>
       </section>
@@ -429,10 +458,10 @@ export function ActionPlanReport({
       <section className="content-calendar-section">
         <div className="section-heading section-heading--large">
           <div>
-            <span className="section-label">CONTENT CALENDAR</span>
-            <h2>内容日历</h2>
+            <span className="section-label">STEP 3 · CONTENT CALENDAR</span>
+            <h2>30-day publishing schedule</h2>
             <p>
-              每周最多 {plan.preferences.postsPerWeek} 条；实验项有独立假设与复盘日期。
+              Date · Post objective · Topic · Content angle · Target audience · CTA · Status
             </p>
           </div>
           <div className="view-toggle" role="group" aria-label="日历视图">
@@ -491,6 +520,42 @@ export function ActionPlanReport({
                 })}
               </section>
             ))}
+          </div>
+        )}
+      </section>
+
+      <section className="draft-generation-section">
+        <div className="workflow-block__header">
+          <span className="workflow-block__step">STEP 4</span>
+          <div>
+            <span className="section-label">DRAFT GENERATION</span>
+            <h2>Buffer-ready LinkedIn drafts</h2>
+            <p>Generated only after the 30-day calendar is approved.</p>
+          </div>
+          <span className={`workflow-state ${plan.status === "user_confirmed" ? "workflow-state--complete" : "workflow-state--approval"}`}>
+            <Icon name={plan.status === "user_confirmed" ? "check" : "lock"} size={14} />
+            {plan.status === "user_confirmed" ? "Drafts ready" : "Approval checkpoint"}
+          </span>
+        </div>
+        {plan.status === "user_confirmed" ? (
+          <div className="buffer-draft-grid">
+            {plan.contentCalendar
+              .filter((item) => item.status !== "rejected")
+              .map((item) => (
+                <DraftCard
+                  key={item.itemId}
+                  item={item}
+                  strategy={approvedStrategies.find((strategy) => strategy.strategyId === item.strategyId)}
+                />
+              ))}
+          </div>
+        ) : (
+          <div className="draft-approval-gate">
+            <Icon name="lock" size={20} />
+            <div>
+              <strong>Human Approval Required</strong>
+              <p>Approve the calendar to unlock title, body, hashtags, media guidance and Buffer handoff status.</p>
+            </div>
           </div>
         )}
       </section>

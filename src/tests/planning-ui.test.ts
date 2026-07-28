@@ -3,7 +3,10 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { generateActionPlan } from "@/agents/action-plan-agent";
+import {
+  confirmActionPlan,
+  generateActionPlan,
+} from "@/agents/action-plan-agent";
 import { ActionPlanReport } from "@/components/analysis/action-plan-report";
 import { StrategyPlanningWorkspace } from "@/components/analysis/strategy-planning-workspace";
 import {
@@ -22,11 +25,15 @@ test("planning workspace starts with explicit goal and approval gates", () => {
     }),
   );
 
-  assert.match(markup, /从已批准证据生成 30 天计划/);
+  assert.match(markup, /Multi-stage AI agent pipeline/);
+  assert.match(markup, /Historical LinkedIn Analysis/);
+  assert.match(markup, /AI Marketing Strategy Recommendation/);
+  assert.match(markup, /30-Day Content Calendar/);
+  assert.match(markup, /Draft Generation/);
   assert.match(markup, /确认业务目标/);
-  assert.match(markup, /审批洞察/);
+  assert.match(markup, /Human approval required/i);
   assert.match(markup, /必须先批准该策略引用的全部洞察/);
-  assert.match(markup, /基于证据的问答/);
+  assert.doesNotMatch(markup, /chat-message/);
 });
 
 test("action plan report shows status, risks, views, metadata, and evidence", () => {
@@ -52,4 +59,29 @@ test("action plan report shows status, risks, views, metadata, and evidence", ()
   assert.match(markup, /Prompt 版本/);
   assert.match(markup, /内容日历/);
   assert.match(markup, /实验/);
+  assert.match(markup, /Post objective/);
+  assert.match(markup, /Content angle/);
+  assert.match(markup, /Approval checkpoint/);
+});
+
+test("approved calendar exposes Buffer-ready draft cards", () => {
+  const input = approvedPlanningInput();
+  const plan = confirmActionPlan(generateActionPlan(input, PLANNING_NOW), PLANNING_NOW);
+  const markup = renderToStaticMarkup(
+    createElement(ActionPlanReport, {
+      plan,
+      approvedInsights: input.approvedInsights,
+      approvedStrategies: input.approvedStrategies,
+      canUndo: false,
+      onUndo: noop,
+      onUpdateItem: noop,
+      onConfirmPlan: noop,
+      onDownload: noop,
+    }),
+  );
+
+  assert.match(markup, /Draft Ready/);
+  assert.match(markup, /Ready for Buffer/);
+  assert.match(markup, /Media suggestion/);
+  assert.match(markup, /Professional terminology/);
 });
