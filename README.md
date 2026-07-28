@@ -84,11 +84,17 @@ npm start
 .\.venv\Scripts\python.exe -m unittest discover -s python_tests -v
 ```
 
-## 环境变量
+## 服务配置
 
-- **当前版本需要输入的 API Key 总数为 0。**
-- Mock 和上传演示不需要任何 AI API Key。
-- 不要把 API Key 放入浏览器、Streamlit session state、上传文件或仓库。
+首次启动且没有本地配置时，应用会打开四步配置向导，依次配置洞察服务、
+30 天计划服务和 Buffer，并在全部连接验证通过后保存。后续启动会自动加载配置；
+可随时从 **Settings** 页面明确选择编辑，凭据不会在普通页面中显示或重复询问。
+
+- 默认配置文件为 `~/.agentic-marketing/config.json`，目录和文件权限分别限制为
+  当前用户可访问的 `0700` 和 `0600`；
+- 测试或受管部署可用 `AGENTIC_MARKETING_CONFIG_PATH` 覆盖路径；
+- 当前服务适配器仍执行确定性 Mock 连接验证，不向第三方发送凭据或业务数据；
+- 不要把 API Key 放入上传文件或仓库。
 - Bridge 子进程会移除名称含 `API_KEY`、`TOKEN`、`SECRET`、`PASSWORD` 或 `AUTHORIZATION` 的环境变量。
 - 可使用标准 Streamlit 环境变量调整本地端口，例如 `STREAMLIT_SERVER_PORT=8502`。
 - `.streamlit/config.toml` 已关闭 Streamlit 使用统计并设置 10 MB 上传限制；`.streamlit/secrets.toml` 已忽略。
@@ -97,15 +103,14 @@ npm start
 
 | 能力 | Key 数量 | 输入位置 | 当前实现 |
 | --- | ---: | --- | --- |
-| AI / LLM | 0 | 无 | 洞察、计划和聊天使用确定性 Mock，没有 Provider SDK 或外部模型请求 |
+| AI / LLM | 2 | 首次配置向导 / Settings | 洞察、计划和聊天继续使用确定性 Mock，不执行外部模型请求 |
 | LinkedIn | 0 | 无 | 只读取用户上传的分析导出，不调用 LinkedIn API |
-| Buffer | 0 | 无 | 只生成 CSV 人工交接，不调用 Buffer API |
+| Buffer | 1 | 首次配置向导 / Settings | 验证 Mock 连接并生成 CSV 人工交接，不发布内容 |
 | GitHub | 0 | 无 | 应用代码不调用 GitHub API；部署时的平台 GitHub 授权由 Streamlit 管理 |
 | Streamlit secrets | 0 | 无 | 代码没有读取 `st.secrets`；Cloud 的 Secrets 字段保持空白 |
 
-`.streamlit/secrets.toml` 仅作为未来扩展的忽略规则存在，不是当前启动条件。
-若以后接入真实 LLM 或 Buffer OAuth，必须新增服务端密钥读取、权限隔离和轮换，
-不能把 Key 放入前端或提交到 Git。
+`.streamlit/secrets.toml` 不是当前启动条件。若以后接入真实 LLM 或 Buffer OAuth，
+必须改用服务端密钥存储、权限隔离和轮换，不能把 Key 提交到 Git。
 
 ## 部署到 Streamlit Community Cloud
 

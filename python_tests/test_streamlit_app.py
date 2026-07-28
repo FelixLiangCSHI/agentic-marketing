@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 import unittest
 from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
+from streamlit_demo.configuration_store import CONFIG_PATH_ENV, LocalConfigurationStore
+from streamlit_demo.data_models import (
+    ApplicationConfiguration,
+    ServiceConfiguration,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +35,35 @@ def click_label(app: AppTest, label: str, timeout: float = 60) -> AppTest:
 
 
 class StreamlitDemoTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.configuration_directory = tempfile.TemporaryDirectory()
+        configuration_path = (
+            Path(cls.configuration_directory.name) / "config.json"
+        )
+        os.environ[CONFIG_PATH_ENV] = str(configuration_path)
+        LocalConfigurationStore(configuration_path).save(
+            ApplicationConfiguration(
+                ai_insight=ServiceConfiguration(
+                    "mock://ai-insight",
+                    "test-credential",
+                ),
+                ai_plan=ServiceConfiguration(
+                    "mock://ai-plan",
+                    "test-credential",
+                ),
+                buffer=ServiceConfiguration(
+                    "mock://buffer",
+                    "test-credential",
+                ),
+            )
+        )
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.environ.pop(CONFIG_PATH_ENV, None)
+        cls.configuration_directory.cleanup()
+
     def test_uploaded_synthetic_fixtures_analyze_and_export(self) -> None:
         fixtures = {
             "followers": (

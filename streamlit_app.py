@@ -14,6 +14,7 @@ from streamlit_demo.bridge_client import (
     encode_upload,
 )
 from streamlit_demo.approval_engine import ApprovalEngine
+from streamlit_demo.buffer_service import BufferService
 from streamlit_demo.configuration_ui import (
     configuration_dialog_required,
     initialize_configuration_state,
@@ -94,6 +95,7 @@ BUFFER_BULK_UPLOAD_URL = (
     "926-how-to-upload-posts-in-bulk-to-buffer"
 )
 APPROVAL_ENGINE = ApprovalEngine()
+BUFFER_SERVICE = BufferService()
 CONFIGURATION_WORKFLOW = ConfigurationWorkflow()
 
 
@@ -736,6 +738,8 @@ def render_header() -> None:
     )
     if st.session_state.get("_reset_notice"):
         st.success(st.session_state.pop("_reset_notice"))
+    if st.session_state.get("_configuration_notice"):
+        st.success(st.session_state.pop("_configuration_notice"))
 
 
 def render_sidebar() -> None:
@@ -1815,25 +1819,7 @@ def render_plan() -> None:
 
 
 def buffer_handoff_payload() -> dict[str, Any]:
-    start = st.session_state["buffer_start_date"]
-    end = st.session_state["buffer_end_date"]
-    return {
-        "dateRange": {
-            "start": start.isoformat() if isinstance(start, date) else str(start),
-            "end": end.isoformat() if isinstance(end, date) else str(end),
-        },
-        "timeZone": st.session_state["buffer_timezone"],
-        "channels": list(st.session_state["buffer_channels"]),
-        "selectedItemIds": list(
-            st.session_state["buffer_selected_item_ids"]
-        ),
-        "warningsAcknowledged": bool(
-            st.session_state["buffer_warnings_acknowledged"]
-        ),
-        "previousExports": list(
-            st.session_state["buffer_export_records"]
-        ),
-    }
+    return BUFFER_SERVICE.handoff_payload(dict(st.session_state))
 
 
 def refresh_buffer_preview(
