@@ -223,6 +223,47 @@ def local_today(time_zone: str = "Asia/Shanghai") -> date:
     return datetime.now(timezone.utc).astimezone(ZoneInfo(time_zone)).date()
 
 
+def consulting_report(
+    executive_summary: str,
+    *,
+    key_findings: list[str] | None = None,
+    business_implications: list[str] | None = None,
+    recommendations: list[str] | None = None,
+    confidence_level: str = "Low",
+    evidence: list[str] | None = None,
+    observed_trends: list[str] | None = None,
+) -> dict[str, Any]:
+    return {
+        "executiveSummary": executive_summary,
+        "keyFindings": key_findings or [executive_summary],
+        "businessImplications": business_implications or [],
+        "recommendations": recommendations or [],
+        "confidenceLevel": confidence_level,
+        "evidence": evidence or [],
+        "observedTrends": observed_trends
+        or ["No confirmed time-series trend is available."],
+    }
+
+
+def render_consulting_report(report: dict[str, Any]) -> None:
+    st.subheader("Executive Summary")
+    st.write(report["executiveSummary"])
+    for heading, key in (
+        ("Key Findings", "keyFindings"),
+        ("Business Implications", "businessImplications"),
+        ("Recommendations", "recommendations"),
+    ):
+        st.subheader(heading)
+        items = report.get(key, [])
+        st.write("\n".join(f"- {item}" for item in items) if items else "No material finding is available.")
+    st.subheader("Confidence Level")
+    st.write(report["confidenceLevel"])
+    for heading, key in (("Evidence", "evidence"), ("Observed Trends", "observedTrends")):
+        st.subheader(heading)
+        items = report.get(key, [])
+        st.write("\n".join(f"- {item}" for item in items) if items else "No material finding is available.")
+
+
 def initialize_state() -> None:
     buffer_start = local_today()
     defaults: dict[str, Any] = {
@@ -235,14 +276,12 @@ def initialize_state() -> None:
                 "role": "assistant",
                 "answer": {
                     "status": "answered",
-                    "dataStatement": (
+                    "report": consulting_report(
                         "Complete the analysis to review metrics, trends, quality, "
-                        "supporting evidence, and proposed plan changes."
-                    ),
-                    "possibleMeaning": None,
-                    "suggestedValidation": (
-                        "Metric responses include the metric ID, reporting period, "
-                        "and source module."
+                        "supporting evidence, and proposed plan changes.",
+                        recommendations=[
+                            "Metric reports include the metric ID, reporting period, and source module."
+                        ],
                     ),
                     "citations": [],
                     "suggestedPlanChange": None,
@@ -430,23 +469,23 @@ def assign_analysis(result: dict[str, Any], mode: str) -> None:
             "role": "assistant",
             "answer": {
                 "status": "answered",
-                "dataStatement": (
-                    "Demonstration analysis is complete."
-                    if mode == "mock"
-                    else "Uploaded data has been processed for this session."
-                ),
-                "possibleMeaning": (
-                    "This sample dataset is fictional and does not represent "
-                    "actual company performance."
-                    if mode == "mock"
-                    else (
-                        "Recommendations and plans use structured demonstration "
-                        "rules. Review file recognition and data quality before "
-                        "continuing."
-                    )
-                ),
-                "suggestedValidation": (
-                    "Use a suggested question to review the supporting evidence."
+                "report": consulting_report(
+                    (
+                        "Demonstration analysis is complete."
+                        if mode == "mock"
+                        else "Uploaded data has been processed for this session."
+                    ),
+                    business_implications=[
+                        (
+                            "This sample dataset is fictional and does not represent actual company performance."
+                            if mode == "mock"
+                            else "Recommendations and plans use structured demonstration rules."
+                        )
+                    ],
+                    recommendations=[
+                        "Review file recognition, data quality, and supporting evidence before continuing."
+                    ],
+                    confidence_level="Medium",
                 ),
                 "citations": [],
                 "suggestedPlanChange": None,
@@ -1227,9 +1266,7 @@ def render_insights(category: str, title: str) -> None:
                 f"{insight['approvalStatus']} · confidence "
                 f"{insight['confidence']} · {insight['insightId']}"
             )
-            st.write(f"**Finding:** {insight['statement']}")
-            st.write(f"**Business implication:** {insight['possibleMeaning']}")
-            st.write(f"**Recommended validation:** {insight['suggestedValidation']}")
+            render_consulting_report(insight["report"])
             if insight["limitations"]:
                 st.warning("; ".join(insight["limitations"]))
             with st.expander("Review Supporting Evidence"):
@@ -1477,8 +1514,11 @@ def render_plan_report(plan: dict[str, Any]) -> None:
     st.subheader("Risks and Data Limitations")
     for risk in plan["risksAndLimitations"]:
         st.warning(risk)
-    st.subheader("Executive Summary")
-    st.write(plan["executiveSummary"])
+    if plan.get("report"):
+        render_consulting_report(plan["report"])
+    else:
+        st.subheader("Executive Summary")
+        st.write(plan["executiveSummary"])
     with st.expander("Planning Assumptions", expanded=True):
         for assumption in plan["assumptions"]:
             st.write(f"- {assumption}")
@@ -2418,16 +2458,7 @@ def render_buffer_handoff() -> None:
 
 
 def render_answer(answer: dict[str, Any], message_index: int) -> None:
-    if answer["status"] == "refused":
-        st.warning(answer["dataStatement"])
-    elif answer["status"] == "unavailable":
-        st.info(answer["dataStatement"])
-    else:
-        st.write(answer["dataStatement"])
-    if answer.get("possibleMeaning"):
-        st.write(f"**Business implication:** {answer['possibleMeaning']}")
-    if answer.get("suggestedValidation"):
-        st.write(f"**Recommended validation:** {answer['suggestedValidation']}")
+    render_consulting_report(answer["report"])
     citations = answer.get("citations", [])
     if citations:
         with st.expander("Review Supporting Evidence"):

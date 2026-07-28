@@ -63,6 +63,15 @@ test("builds a timezone-safe four-week plan within the 30-day range", () => {
   assert.equal(plan.contentCalendar.length, 12);
   assert.equal(plan.schemaVersion, "1.1");
   assert.equal(plan.promptVersion, "action-plan-v1.1");
+  assert.deepEqual(Object.keys(plan.report ?? {}), [
+    "executiveSummary",
+    "keyFindings",
+    "businessImplications",
+    "recommendations",
+    "confidenceLevel",
+    "evidence",
+    "observedTrends",
+  ]);
   assert.equal(new Set(plan.contentCalendar.map((item) => item.date)).size, 12);
   assert.ok(plan.contentCalendar.every((item) => item.date >= plan.startDate));
   assert.ok(
@@ -170,7 +179,7 @@ test("applies scoped plan edits and supports undoing the latest revision", () =>
   assert.equal(rescheduled.snapshotId, original.snapshotId);
   assert.ok(
     rescheduled.assumptions.some((assumption) =>
-      assumption.includes("每周最多发布 2 条"),
+      assumption.includes("Maximum weekly publishing volume: 2"),
     ),
   );
 

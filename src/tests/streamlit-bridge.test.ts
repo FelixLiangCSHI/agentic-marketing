@@ -252,12 +252,12 @@ test("bridge chat refuses prompt injection without exposing configuration", asyn
   const answer = dataOf<{
     status: string;
     intent: string;
-    dataStatement: string;
+    report: { executiveSummary: string };
   }>(response);
 
   assert.equal(answer.status, "refused");
   assert.equal(answer.intent, "security_refusal");
-  assert.ok(answer.dataStatement.includes("不能提供"));
+  assert.ok(answer.report.executiveSummary.includes("cannot be fulfilled"));
 });
 
 test("Buffer bridge previews partial eligibility and exports per channel without publishing", async () => {

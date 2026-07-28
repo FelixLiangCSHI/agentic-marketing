@@ -32,6 +32,15 @@ test("numeric answers include metricId, period, modules, and expandable evidence
   assert.match(answer.report.executiveSummary, /source modules/);
   assert.equal(answer.citations[0].metric?.metricId, "followers.netGrowth");
   assert.ok(answer.citations[0].metric?.sourceReferences.length);
+  assert.deepEqual(Object.keys(answer.report), [
+    "executiveSummary",
+    "keyFindings",
+    "businessImplications",
+    "recommendations",
+    "confidenceLevel",
+    "evidence",
+    "observedTrends",
+  ]);
 });
 
 test("never describes the visitor-to-follower proxy as a real conversion rate", () => {
