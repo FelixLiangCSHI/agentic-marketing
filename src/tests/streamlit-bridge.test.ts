@@ -69,7 +69,7 @@ async function confirmedBridgePlan() {
         timeZone: "Asia/Shanghai",
         postsPerWeek: 3,
         teamSize: null,
-        contentResources: ["临床证据", "法规资料", "KOL 访谈"],
+        contentResources: ["临床证据", "法规资料", "KOL 访谈", "医学设计"],
         targetMarket: "北美医院系统",
         focusAudience: "医疗专业人员、临床 KOL 和医院采购团队",
       },
@@ -148,7 +148,7 @@ test("Streamlit upload path reuses signature validation and unified models", asy
   assert.deepEqual(data.snapshot.records, {
     followers: 3,
     visitors: 3,
-    content: 8,
+    content: 3,
   });
 });
 

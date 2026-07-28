@@ -1385,25 +1385,28 @@ export function reviseCalendarItem(
     status: "ai_draft",
     updatedAt,
     contentCalendar: plan.contentCalendar.map((candidate) => {
+      if (candidate.itemId !== itemId) {
+        return candidate;
+      }
       const revised: ContentCalendarItem =
-        candidate.itemId === itemId
-          ? {
-              ...candidate,
-              ...patch,
-              mediaRequirement:
-                patch.contentFormat === undefined
-                  ? candidate.mediaRequirement
-                  : mediaRequirement(patch.contentFormat),
-              workflowStatus: "planning",
-              validationStatus: "not_validated",
-              validationIssues: [],
-              lastEditedAt: updatedAt,
-            }
-          : candidate;
+        {
+          ...candidate,
+          ...patch,
+          mediaRequirement:
+            patch.contentFormat === undefined
+              ? candidate.mediaRequirement
+              : mediaRequirement(patch.contentFormat),
+          workflowStatus: "planning",
+          validationStatus: "not_validated",
+          validationIssues: [],
+          lastEditedAt: updatedAt,
+        };
       return {
         ...revised,
-        postText: "",
-        status: revised.status === "rejected" ? "rejected" : "ai_draft",
+        postText: patch.postText === undefined ? "" : revised.postText,
+        status:
+          patch.status ??
+          (revised.status === "rejected" ? "rejected" : "ai_draft"),
         workflowStatus: "planning",
       };
     }),

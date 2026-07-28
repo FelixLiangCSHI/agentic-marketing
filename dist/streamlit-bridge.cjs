@@ -429,7 +429,13 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
   const formats = contentFormats(input.preferences);
   const owner = ownerPlaceholder(input.preferences);
   const offsets = POST_OFFSETS[input.preferences.postsPerWeek];
-  const topicAngles = ["核心问题", "方法拆解", "案例观察", "常见误区", "复盘提示"];
+  const topicAngles = [
+    "临床工作流",
+    "临床证据",
+    "法规与 FDA/CE 状态",
+    "患者结局",
+    "医院采购与经济价值"
+  ];
   for (let weekIndex = 0; weekIndex < 4; weekIndex += 1) {
     const weekNumber = weekIndex + 1;
     const weekStart = addDays(input.preferences.startDate, weekIndex * 7);
@@ -444,7 +450,7 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
       const topic = `${strategy2.title}：${topicAngles[postIndex % topicAngles.length]}`;
       const contentFormat = formats[(sequence - 1) % formats.length];
       const coreMessage = strategy2.actions[postIndex % strategy2.actions.length];
-      const callToAction = "查看相关资源，并记录下一次可验证的聚合行为。";
+      const callToAction = "查看经批准的临床证据或法规资料，并记录医疗专业人员与医院采购相关的聚合互动。";
       const experiment = isExperiment ? {
         experimentId: `${itemId}-experiment`,
         hypothesis: `如果围绕“${strategy2.title}”只改变内容形式，则可用同口径逐帖指标判断该形式是否值得继续测试。`,
@@ -498,7 +504,7 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
     const tasks = [
       {
         taskId: `week-${weekNumber}-prepare`,
-        title: "确认主题、素材和单一 CTA",
+        title: "确认产品主题、临床证据、法规表述和单一 CTA",
         ownerPlaceholder: owner,
         dueDate: weekStart,
         status: "ai_draft",
@@ -514,7 +520,7 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
       },
       {
         taskId: `week-${weekNumber}-review`,
-        title: "按 KPI 口径复盘，不做个人级归因",
+        title: "按 KPI 复盘专业受众互动，不推断采购或患者层面结果",
         ownerPlaceholder: owner,
         dueDate: weekEnd,
         status: "ai_draft",
@@ -530,7 +536,7 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
       ownerPlaceholder: owner,
       publishDate: firstPublishDate,
       targetAudience: input.preferences.focusAudience,
-      callToAction: "使用单一 CTA，并在下一次导入时复核聚合指标。",
+      callToAction: "使用单一专业 CTA 指向临床、法规或经济价值资料，并在下一次导入时复核聚合指标。",
       kpiMetricIds: metricIds,
       reviewAction: "比较本周逐帖指标与 Snapshot 基线，记录方向和限制，不把时间相关性解释为因果。",
       dependencies: previousReviewTask
@@ -1038,7 +1044,7 @@ function generateActionPlan(input, now = /* @__PURE__ */ new Date()) {
       `Maximum weekly publishing volume: ${input.preferences.postsPerWeek}; time zone: ${input.preferences.timeZone}.`
     ],
     risksAndLimitations: [
-      "LinkedIn data is aggregated and cannot identify anonymous visitors, individual followers, or purchase intent.",
+      "LinkedIn data is aggregated and cannot verify healthcare professional roles, KOL identities, or hospital procurement intent.",
       "The Visitor-to-Follower Proxy is not a verified user-level conversion rate.",
       "Correlation between publishing windows and metric changes does not establish causation.",
       "Future KPI results require like-for-like collection in the next import and cannot be forecast from the current data."
@@ -1056,7 +1062,7 @@ function generateActionPlan(input, now = /* @__PURE__ */ new Date()) {
       "下一次导入是否覆盖完整的计划日期范围？",
       "逐帖 Impressions、Clicks 与 Engagement Rate 是否可按相同口径获得？",
       "哪些实验内容按计划发布，哪些被修改或取消？",
-      "是否有 CRM、网站分析或线索数据可补充验证业务结果？"
+      "是否有合规记录的医疗专业人员互动、KOL 反馈或医院采购里程碑可补充验证业务结果？"
     ],
     revisionHistory: []
   };
@@ -1081,7 +1087,11 @@ function reviseCalendarItem(plan, itemId, patch, now = /* @__PURE__ */ new Date(
     status: "ai_draft",
     updatedAt,
     contentCalendar: plan.contentCalendar.map((candidate) => {
-      const revised = candidate.itemId === itemId ? {
+      var _a;
+      if (candidate.itemId !== itemId) {
+        return candidate;
+      }
+      const revised = {
         ...candidate,
         ...patch,
         mediaRequirement: patch.contentFormat === void 0 ? candidate.mediaRequirement : mediaRequirement(patch.contentFormat),
@@ -1089,11 +1099,11 @@ function reviseCalendarItem(plan, itemId, patch, now = /* @__PURE__ */ new Date(
         validationStatus: "not_validated",
         validationIssues: [],
         lastEditedAt: updatedAt
-      } : candidate;
+      };
       return {
         ...revised,
-        postText: "",
-        status: revised.status === "rejected" ? "rejected" : "ai_draft",
+        postText: patch.postText === void 0 ? "" : revised.postText,
+        status: (_a = patch.status) != null ? _a : revised.status === "rejected" ? "rejected" : "ai_draft",
         workflowStatus: "planning"
       };
     }),
@@ -1592,13 +1602,13 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
       insight(snapshot, {
         insightId: "insight-audience-followers",
         category: "audience",
-        title: "Follower Change Baseline",
+        title: "Healthcare Professional Reach Baseline",
         statement: `${primary.label} is ${primary.formattedValue} for the available analysis period.`,
-        possibleMeaning: "The aggregate result establishes a direction for follower acquisition; it does not identify individual followers or intent.",
-        suggestedValidation: "Repeat the analysis with the same definitions and evaluate publishing windows separately.",
+        possibleMeaning: "The aggregate result establishes a direction for healthcare professional and KOL reach; it does not verify stakeholder role or procurement intent.",
+        suggestedValidation: "Repeat the analysis with the same definitions and compare clinical-evidence, regulatory, and economic-value publishing windows.",
         metrics: followerMetrics,
         limitations: [
-          "Aggregate data cannot identify individual followers.",
+          "Aggregate data cannot verify individual healthcare professional or KOL identities.",
           "Follower changes cannot be attributed directly to a single content item."
         ]
       })
@@ -1617,10 +1627,10 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
       insight(snapshot, {
         insightId: "insight-audience-visitors",
         category: "audience",
-        title: "Page Visit Baseline",
+        title: "Hospital Stakeholder Page Visit Baseline",
         statement: `${primary.label} is ${primary.formattedValue} for the available analysis period.`,
-        possibleMeaning: "The result quantifies aggregate page traffic without identifying anonymous visitors or purchase intent.",
-        suggestedValidation: "Track Page Views, Unique Visitors, and CTA clicks over equivalent periods.",
+        possibleMeaning: "The result quantifies aggregate page traffic without identifying healthcare professionals, hospital procurement teams, or evaluation intent.",
+        suggestedValidation: "Track Page Views, Unique Visitors, and clinical-evidence CTA clicks over equivalent periods.",
         metrics: visitorMetrics,
         limitations: [
           "Visitor data is anonymous and aggregated.",
@@ -1643,10 +1653,10 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
       insight(snapshot, {
         insightId: "insight-content-performance",
         category: "content",
-        title: "Content Performance Baseline",
+        title: "Clinical Evidence Content Baseline",
         statement: `${primary.label} is ${primary.formattedValue} for the available analysis period.`,
         possibleMeaning: "Current content performance provides an experiment baseline, not a forecast of future results.",
-        suggestedValidation: "Run single-variable tests across format, topic, and CTA, then review the next comparable import.",
+        suggestedValidation: "Run single-variable tests across product area, evidence type, and healthcare-professional CTA, then review the next comparable import.",
         metrics: contentMetrics,
         limitations: [
           "Historical performance does not guarantee future results.",
@@ -1663,13 +1673,13 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
     strategies.push(
       strategy(snapshot, {
         strategyId: "strategy-content-experiment",
-        title: "Establish a Measurable Content Experiment Cadence",
-        objective: "Use a consistent publishing cadence to compare format, topic, and CTA performance.",
-        rationale: "The strategy uses the calculated content baseline to design experiments without forecasting a specific growth rate.",
+        title: "Establish a Clinical Evidence Publishing Cadence",
+        objective: "Use a consistent publishing cadence to compare clinical evidence, regulatory, patient-outcome, and economic-value topics.",
+        rationale: "The strategy uses the calculated content baseline to evaluate evidence themes without forecasting adoption or patient outcomes.",
         actions: [
-          "Maintain an operationally sustainable weekly publishing volume.",
-          "Change one primary variable in each experiment.",
-          "Review the same metrics after the next import."
+          "Maintain a reviewable cadence across ultrasound, patient monitoring, endoscopy, IVD, MRI, CT, digital health, and surgical robotics.",
+          "Validate clinical and regulatory statements, including FDA or CE status, before publication.",
+          "Compare engagement with clinical workflow, patient outcomes, and economic value evidence after the next import."
         ],
         insightIds: [contentInsight.insightId],
         metricIds: contentInsight.evidence.map((item) => item.metricId)
@@ -1683,13 +1693,13 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
     strategies.push(
       strategy(snapshot, {
         strategyId: "strategy-audience-path",
-        title: "Align Audience Messaging and the Page CTA Path",
-        objective: "Create an observable path from content to the page CTA for the priority audience.",
-        rationale: "Follower and visitor data is aggregated; measurement should focus on observable metrics rather than individual conversion attribution.",
+        title: "Align Medical Device Evidence with the Procurement Pathway",
+        objective: "Create an observable path from product evidence to resources for healthcare professionals and hospital procurement stakeholders.",
+        rationale: "Follower and visitor data is aggregated; measurement should focus on evidence engagement rather than individual procurement attribution.",
         actions: [
-          "Use one clear CTA in each content item.",
-          "Record publishing windows alongside aggregate page metrics.",
-          "Classify proxy ratios separately from verified conversion rates."
+          "Use one clear CTA to an approved clinical evidence, regulatory, or health-economic resource.",
+          "Record product area and intended clinical workflow alongside aggregate page metrics.",
+          "Separate engagement proxies from verified KOL activity or hospital procurement milestones."
         ],
         insightIds: audienceInsights.map((item) => item.insightId),
         metricIds: audienceInsights.flatMap(
@@ -4653,9 +4663,9 @@ var SYNTHETIC_FILES = {
     content: [
       "Synthetic demo data - not a real LinkedIn export",
       "Post title,Created date,Content Type,Impressions,Clicks,Likes,Comments,Reposts,Engagement rate,Click through rate (CTR)",
-      '"Synthetic: imaging workflow guide",2026-05-08,Document,"12,800",486,412,31,22,7.4%,3.8%',
-      '"Synthetic: customer story",2026-05-22,Video,"9,600",298,276,18,14,6.3%,3.1%',
-      '"Synthetic: product update",2026-06-12,Image,"8,400",218,184,12,9,5.0%,2.6%'
+      '"Ultrasound and MRI clinical evidence for imaging workflows",2026-05-08,Document,"12,800",486,412,31,22,7.4%,3.8%',
+      '"Patient monitoring and digital health outcomes for care teams",2026-05-22,Video,"9,600",298,276,18,14,6.3%,3.1%',
+      '"Endoscopy IVD CT and surgical robotics regulatory briefing",2026-06-12,Image,"8,400",218,184,12,9,5.0%,2.6%'
     ].join("\n")
   }
 };

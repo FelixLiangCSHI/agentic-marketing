@@ -58,7 +58,7 @@ TIME_ZONES = (
     "UTC",
 )
 QUICK_QUESTIONS = (
-    "How is healthcare professional reach trending?",
+    "How is healthcare professional follower growth trending?",
     "How is engagement with clinical evidence trending?",
     "Which medical device evidence topics have the strongest engagement?",
     "What should the campaign publish for hospital procurement teams next month?",
@@ -322,7 +322,11 @@ def initialize_state() -> None:
         "plan_start_date": default_start_date(),
         "posts_per_week": 2,
         "team_size": 0,
-        "content_resources": ["Clinical Evidence", "Product Specialist"],
+        "content_resources": [
+            "Clinical Evidence",
+            "Clinical Design",
+            "Product Specialist",
+        ],
         "target_market": "North America",
         "focus_audience": (
             "Healthcare professionals, clinical KOLs, hospital procurement teams, "
@@ -1772,7 +1776,7 @@ def render_plan() -> None:
             "Available Content Resources",
             (
                 "Copywriting",
-                "Design",
+                "Clinical Design",
                 "Video",
                 "Clinical Evidence",
                 "Product Specialist",
