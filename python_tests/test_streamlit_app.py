@@ -219,7 +219,7 @@ class StreamlitDemoTests(unittest.TestCase):
         format_control = next(
             item for item in app.selectbox if item.label == "Content Format"
         )
-        app = format_control.set_value("文字短帖").run(timeout=60)
+        app = format_control.set_value("Text Post").run(timeout=60)
         app = click_label(app, "Save and Revalidate", timeout=90)
         preview = app.session_state.filtered_state["buffer_preview"]
         self.assertIsNotNone(preview)

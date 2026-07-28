@@ -60,7 +60,7 @@ TIME_ZONES = (
 QUICK_QUESTIONS = (
     "How is follower growth trending?",
     "How is company page traffic trending?",
-    "Which content format performs best?",
+    "What is the current engagement rate?",
     "What should the campaign publish next month?",
     "What are the current data quality limitations?",
 )

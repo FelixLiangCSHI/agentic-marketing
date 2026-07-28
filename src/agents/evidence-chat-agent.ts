@@ -241,7 +241,11 @@ export function answerProjectQuestion(
       "建议同时查看中位互动率和逐帖排名，避免只依赖平均值。",
     );
   }
-  if (/(关注者|followers?).*(增长|变化|趋势)|增长.*关注者/i.test(normalized)) {
+  if (
+    /(关注者|followers?).*(增长|变化|趋势|growth|change|trend)|增长.*关注者/i.test(
+      normalized,
+    )
+  ) {
     const answer = metricAnswer(
       catalog.get("followers.netGrowth"),
       now,
@@ -273,7 +277,11 @@ export function answerProjectQuestion(
     );
   }
 
-  if (/(数据质量|质量问题|为什么.*不可用|可靠性)/i.test(normalized)) {
+  if (
+    /(数据质量|质量问题|为什么.*不可用|可靠性|data quality|quality issue|reliability)/i.test(
+      normalized,
+    )
+  ) {
     const blocking = context.snapshot.quality.issues.find(
       (issue) => issue.blocksAnalysis,
     );
@@ -343,7 +351,11 @@ export function answerProjectQuestion(
     });
   }
 
-  if (/(建议|应该发布什么|内容方向|下个月.*发布)/i.test(normalized)) {
+  if (
+    /(建议|应该发布什么|内容方向|下个月.*发布|what.*publish|next month)/i.test(
+      normalized,
+    )
+  ) {
     const strategy = context.strategies.find(
       (item) => item.approvalStatus === "approved",
     );
