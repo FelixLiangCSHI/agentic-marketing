@@ -58,10 +58,10 @@ TIME_ZONES = (
     "UTC",
 )
 QUICK_QUESTIONS = (
-    "How is follower growth trending?",
-    "How is company page traffic trending?",
-    "What is the current engagement rate?",
-    "What should the campaign publish next month?",
+    "How is healthcare professional reach trending?",
+    "How is engagement with clinical evidence trending?",
+    "Which medical device evidence topics have the strongest engagement?",
+    "What should the campaign publish for hospital procurement teams next month?",
     "What are the current data quality limitations?",
 )
 BUFFER_CHANNEL_LABELS = {

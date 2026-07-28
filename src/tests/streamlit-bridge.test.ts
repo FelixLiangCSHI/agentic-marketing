@@ -60,7 +60,7 @@ async function confirmedBridgePlan() {
       strategyBundle: analysis.strategyBundle,
       businessGoal: {
         goalId: "goal-buffer-bridge",
-        statement: "建立可复盘的 Buffer 人工交接节奏",
+        statement: "建立经医学与法规审阅的医疗器械专业内容交接流程",
         confirmed: true,
         confirmedAt: BRIDGE_NOW,
       },
@@ -69,9 +69,9 @@ async function confirmedBridgePlan() {
         timeZone: "Asia/Shanghai",
         postsPerWeek: 3,
         teamSize: null,
-        contentResources: ["文案", "设计"],
-        targetMarket: "APAC",
-        focusAudience: "Synthetic 决策者",
+        contentResources: ["临床证据", "法规资料", "KOL 访谈"],
+        targetMarket: "北美医院系统",
+        focusAudience: "医疗专业人员、临床 KOL 和医院采购团队",
       },
     }),
   );
@@ -148,7 +148,7 @@ test("Streamlit upload path reuses signature validation and unified models", asy
   assert.deepEqual(data.snapshot.records, {
     followers: 3,
     visitors: 3,
-    content: 3,
+    content: 8,
   });
 });
 
@@ -200,7 +200,7 @@ test("plan generation enforces approval, then returns a valid four-week plan", a
     strategyBundle: analysis.strategyBundle,
     businessGoal: {
       goalId: "goal-streamlit-test",
-      statement: "建立可复盘的内容运营节奏",
+      statement: "以临床证据和经济价值支持医院医疗器械评估",
       confirmed: true,
       confirmedAt: BRIDGE_NOW,
     },
@@ -209,9 +209,9 @@ test("plan generation enforces approval, then returns a valid four-week plan", a
       timeZone: "Asia/Shanghai",
       postsPerWeek: 2,
       teamSize: null,
-      contentResources: ["文案", "设计"],
-      targetMarket: "APAC",
-      focusAudience: "医疗行业决策者",
+      contentResources: ["临床证据", "健康经济学分析", "产品专家"],
+      targetMarket: "欧盟医疗机构",
+      focusAudience: "医疗专业人员、医院采购和法规事务负责人",
     },
   };
 

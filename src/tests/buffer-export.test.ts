@@ -39,7 +39,7 @@ function exportablePlan(postsPerWeek = 3): ActionPlan {
     contentCalendar: plan.contentCalendar.map((item, index) => ({
       ...item,
       contentFormat: "文字短帖",
-      postText: `Synthetic Buffer 文案 ${index + 1}`,
+      postText: `医疗器械临床证据审阅稿 ${index + 1}`,
       mediaRequirement: null,
       mediaUrls: [],
       linkUrl: null,
@@ -206,7 +206,7 @@ test("exports valid items when another selected item has a blocking error", () =
   plan.contentCalendar[0].postText = "";
   const result = createBufferHandoffExport(
     plan,
-    "Synthetic APAC / Demo",
+    "Ultrasound Clinical Evidence Campaign",
     options(plan),
     PLANNING_NOW,
   );
@@ -253,14 +253,14 @@ test("uses dated channel filenames and warns on repeat export", () => {
   const plan = exportablePlan();
   const first = createBufferHandoffExport(
     plan,
-    "Synthetic APAC / Demo",
+    "Ultrasound Clinical Evidence Campaign",
     options(plan),
     PLANNING_NOW,
   );
   assert.ok(
     first.artifacts.every((artifact) =>
       artifact.fileName.match(
-        /^Synthetic-APAC-Demo-buffer-linkedin-(?:page|profile)-2026-07-28-to-2026-08-10-2026-07-28\.csv$/,
+        /^Ultrasound-Clinical-Evidence-Campaign-buffer-linkedin-(?:page|profile)-2026-07-28-to-2026-08-10-2026-07-28\.csv$/,
       ),
     ),
   );

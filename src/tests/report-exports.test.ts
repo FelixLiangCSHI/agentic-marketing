@@ -17,7 +17,7 @@ function exportInput(): ReportExportInput {
   const planningInput = approvedPlanningInput();
   const plan = generateActionPlan(planningInput, PLANNING_NOW);
   return {
-    projectId: "Synthetic APAC / Demo",
+    projectId: "Ultrasound Clinical Evidence Campaign",
     snapshot: planningInput.snapshot,
     strategyBundle: {
       promptVersion: "evidence-strategy-v1.0",
@@ -35,15 +35,15 @@ test("creates dated project filenames for all three export types", () => {
 
   assert.equal(
     artifacts.markdown.fileName,
-    "Synthetic-APAC-Demo-analysis-report-2026-07-28.md",
+    "Ultrasound-Clinical-Evidence-Campaign-analysis-report-2026-07-28.md",
   );
   assert.equal(
     artifacts.calendarCsv.fileName,
-    "Synthetic-APAC-Demo-content-calendar-2026-07-28.csv",
+    "Ultrasound-Clinical-Evidence-Campaign-content-calendar-2026-07-28.csv",
   );
   assert.equal(
     artifacts.structuredJson.fileName,
-    "Synthetic-APAC-Demo-analysis-data-2026-07-28.json",
+    "Ultrasound-Clinical-Evidence-Campaign-analysis-data-2026-07-28.json",
   );
 });
 

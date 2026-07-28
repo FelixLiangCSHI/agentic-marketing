@@ -157,7 +157,10 @@ function PlanItemCard({
           <dl className="plan-item__details">
             <div>
               <dt>Post objective</dt>
-              <dd>{strategy?.objective ?? "Build qualified audience engagement"}</dd>
+              <dd>
+                {strategy?.objective ??
+                  "Support healthcare professional evaluation with approved clinical evidence"}
+              </dd>
             </div>
             <div>
               <dt>Content angle</dt>
@@ -243,7 +246,7 @@ function DraftCard({
 }) {
   const campaignHashtag = item.campaignTag
     ? `#${item.campaignTag.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, "")}`
-    : "#LinkedInMarketing";
+    : "#ClinicalEvidence";
 
   return (
     <article className="buffer-draft-card">
