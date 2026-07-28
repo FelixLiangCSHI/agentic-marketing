@@ -13,12 +13,14 @@ import {
   confirmActionPlan,
   defaultPlanStartDate,
   localDateInTimeZone,
+  reviewActionPlan,
   reviseActionPlanSchedule,
   reviseCalendarItem,
   runActionPlanAgent,
 } from "@/agents/action-plan-agent";
 import { generateEvidenceStrategyBundle } from "@/agents/evidence-strategy-agent";
 import { ActionPlanReport } from "@/components/analysis/action-plan-report";
+import { EnterpriseApprovalControls } from "@/components/analysis/enterprise-approval-controls";
 import { Icon } from "@/components/ui/icon";
 import { ConsultingReport } from "@/components/analysis/consulting-report";
 import type {
@@ -53,6 +55,7 @@ type GenerationStatus =
 const STATUS_LABELS: Record<ApprovalStatus, string> = {
   draft: "AI 初稿",
   approved: "用户已批准",
+  revision_requested: "需要修改",
   rejected: "用户已拒绝",
 };
 
@@ -75,27 +78,45 @@ function WorkflowPipeline({
   const stages = [
     {
       number: "01",
-      title: "Historical LinkedIn Analysis",
+      title: "Analysis",
       detail: "Audience, content and posting intelligence",
       status: "complete",
     },
     {
       number: "02",
-      title: "AI Marketing Strategy",
-      detail: "Recommendation and human approval",
-      status: strategyApproved ? "complete" : "active",
+      title: "Strategy",
+      detail: "AI Marketing Strategy Recommendation",
+      status: "complete",
     },
     {
       number: "03",
-      title: "30-Day Content Calendar",
-      detail: "Schedule, angles and approval",
-      status: calendarReady ? "complete" : strategyApproved ? "active" : "locked",
+      title: "Approval",
+      detail: "Strategy reviewer checkpoint",
+      status: strategyApproved ? "complete" : "active",
     },
     {
       number: "04",
+      title: "Content Calendar",
+      detail: "30-day schedule and content angles",
+      status: calendarReady ? "complete" : strategyApproved ? "active" : "locked",
+    },
+    {
+      number: "05",
+      title: "Approval",
+      detail: "Calendar reviewer checkpoint",
+      status: draftsReady ? "complete" : calendarReady ? "active" : "locked",
+    },
+    {
+      number: "06",
       title: "Draft Generation",
       detail: "Buffer-ready LinkedIn drafts",
-      status: draftsReady ? "complete" : calendarReady ? "active" : "locked",
+      status: draftsReady ? "complete" : "locked",
+    },
+    {
+      number: "07",
+      title: "Ready for Buffer",
+      detail: "Approved drafts ready for handoff",
+      status: draftsReady ? "complete" : "locked",
     },
   ] as const;
 
@@ -181,25 +202,11 @@ function EvidenceInsightCard({
         </ul>
         <p>{insight.limitations.join(" ")}</p>
       </details>
-      <div className="approval-card__actions">
-        <button
-          className="secondary-button secondary-button--small"
-          type="button"
-          disabled={insight.approvalStatus === "rejected"}
-          onClick={() => onStatus("rejected")}
-        >
-          拒绝
-        </button>
-        <button
-          className="primary-button"
-          type="button"
-          disabled={insight.approvalStatus === "approved"}
-          onClick={() => onStatus("approved")}
-        >
-          <Icon name="check" size={14} />
-          批准洞察
-        </button>
-      </div>
+      <EnterpriseApprovalControls
+        recommendation={insight.title}
+        status={insight.approvalStatus}
+        onDecision={onStatus}
+      />
     </article>
   );
 }
@@ -252,25 +259,12 @@ function StrategyCard({
           必须先批准该策略引用的全部洞察。
         </p>
       )}
-      <div className="approval-card__actions">
-        <button
-          className="secondary-button secondary-button--small"
-          type="button"
-          disabled={strategy.approvalStatus === "rejected"}
-          onClick={() => onStatus("rejected")}
-        >
-          拒绝
-        </button>
-        <button
-          className="primary-button"
-          type="button"
-          disabled={!canApprove || strategy.approvalStatus === "approved"}
-          onClick={() => onStatus("approved")}
-        >
-          <Icon name="check" size={14} />
-          批准策略
-        </button>
-      </div>
+      <EnterpriseApprovalControls
+        recommendation={strategy.title}
+        status={strategy.approvalStatus}
+        canApprove={canApprove}
+        onDecision={onStatus}
+      />
     </article>
   );
 }
@@ -504,6 +498,16 @@ export function StrategyPlanningWorkspace({
   function confirmCurrentPlan() {
     if (!planState.current) {
       return;
+    }
+
+    function reviewCurrentPlan(status: "revision_requested" | "rejected") {
+      if (!planState.current) {
+        return;
+      }
+      dispatchPlan({
+        type: "APPLY_REVISION",
+        plan: reviewActionPlan(planState.current, status),
+      });
     }
     dispatchPlan({
       type: "APPLY_REVISION",
@@ -892,6 +896,7 @@ export function StrategyPlanningWorkspace({
           onUndo={() => dispatchPlan({ type: "UNDO_LAST_REVISION" })}
           onUpdateItem={updateCalendarItem}
           onConfirmPlan={confirmCurrentPlan}
+          onReviewPlan={reviewCurrentPlan}
           onDownload={() => downloadPlan(planState.current)}
         />
       )}

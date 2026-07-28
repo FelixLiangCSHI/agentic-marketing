@@ -8,7 +8,11 @@ import type {
 import type { ConsultingReport } from "@/domain/consulting-report";
 
 export type PlanItemStatus = "ai_draft" | "confirmed" | "rejected";
-export type ActionPlanStatus = "ai_draft" | "user_confirmed";
+export type ActionPlanStatus =
+  | "ai_draft"
+  | "user_confirmed"
+  | "revision_requested"
+  | "rejected";
 export type SocialChannel = "linkedin_page" | "linkedin_profile";
 export type ContentWorkflowStatus =
   | "planning"

@@ -15,6 +15,7 @@ import {
 } from "@/tests/planning-fixtures";
 
 const noop = () => undefined;
+const noopReview = () => undefined;
 
 test("planning workspace starts with explicit goal and approval gates", () => {
   const input = approvedPlanningInput();
@@ -32,6 +33,14 @@ test("planning workspace starts with explicit goal and approval gates", () => {
   assert.match(markup, /Draft Generation/);
   assert.match(markup, /确认业务目标/);
   assert.match(markup, /Human approval required/i);
+  assert.match(markup, /AI Recommendation/);
+  assert.match(markup, /Approval Status/);
+  assert.match(markup, /Reviewer/);
+  assert.match(markup, /Comments/);
+  assert.match(markup, /Approve/);
+  assert.match(markup, /Request Revision/);
+  assert.match(markup, /Rejected/);
+  assert.match(markup, /Ready for Buffer/);
   assert.match(markup, /必须先批准该策略引用的全部洞察/);
   assert.doesNotMatch(markup, /chat-message/);
 });
@@ -48,6 +57,7 @@ test("action plan report shows status, risks, views, metadata, and evidence", ()
       onUndo: noop,
       onUpdateItem: noop,
       onConfirmPlan: noop,
+      onReviewPlan: noopReview,
       onDownload: noop,
     }),
   );
@@ -62,6 +72,7 @@ test("action plan report shows status, risks, views, metadata, and evidence", ()
   assert.match(markup, /Post objective/);
   assert.match(markup, /Content angle/);
   assert.match(markup, /Approval checkpoint/);
+  assert.doesNotMatch(markup, /Draft Ready/);
 });
 
 test("approved calendar exposes Buffer-ready draft cards", () => {
@@ -76,6 +87,7 @@ test("approved calendar exposes Buffer-ready draft cards", () => {
       onUndo: noop,
       onUpdateItem: noop,
       onConfirmPlan: noop,
+      onReviewPlan: noopReview,
       onDownload: noop,
     }),
   );

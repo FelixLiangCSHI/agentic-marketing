@@ -1309,7 +1309,7 @@ select:disabled {
 
 .agent-pipeline ol {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   padding: 0;
   list-style: none;
 }
@@ -1805,6 +1805,13 @@ select:disabled {
   background: var(--danger-soft);
 }
 
+.approval-status--revision_requested,
+.plan-status--revision_requested {
+  border-color: #efd89d;
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
 .approval-status--draft,
 .plan-status--ai_draft {
   border-color: #d8cdf5;
@@ -1895,6 +1902,90 @@ select:disabled {
   gap: 7px;
   margin-top: auto;
   padding-top: 14px;
+}
+
+.enterprise-approval {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.enterprise-approval__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(130px, 0.6fr);
+  gap: 8px;
+}
+
+.enterprise-approval__summary > div {
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-muted);
+}
+
+.enterprise-approval dt,
+.enterprise-approval__fields label {
+  color: var(--ink-muted);
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.enterprise-approval dd {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.enterprise-approval__fields {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.4fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.enterprise-approval__fields label {
+  display: grid;
+  gap: 5px;
+}
+
+.enterprise-approval__fields input,
+.enterprise-approval__fields textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  text-transform: none;
+}
+
+.enterprise-approval__fields input {
+  height: 36px;
+  padding: 0 9px;
+}
+
+.enterprise-approval__fields textarea {
+  min-height: 64px;
+  resize: vertical;
+  padding: 8px 9px;
+}
+
+.calendar-approval-card {
+  min-height: 0;
+  padding: 20px;
+  border-color: #d8cdf5;
+}
+
+.calendar-approval-card .enterprise-approval {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .strategy-edit-field {
@@ -4225,11 +4316,11 @@ select:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .agent-stage:nth-child(2) {
+  .agent-stage:nth-child(even) {
     border-right: 0;
   }
 
-  .agent-stage:nth-child(-n + 2) {
+  .agent-stage:not(:last-child) {
     border-bottom: 1px solid var(--line);
   }
 
@@ -4477,6 +4568,11 @@ select:disabled {
   .plan-item__editor > div {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .enterprise-approval__summary,
+  .enterprise-approval__fields {
+    grid-template-columns: 1fr;
   }
 
   .approval-card__actions button,

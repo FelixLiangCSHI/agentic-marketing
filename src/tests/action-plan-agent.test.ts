@@ -9,6 +9,7 @@ import {
   isActionPlanShape,
   localDateInTimeZone,
   normalizeActionPlan,
+  reviewActionPlan,
   reviseActionPlanSchedule,
   reviseCalendarItem,
   runActionPlanAgent,
@@ -80,7 +81,7 @@ test("builds a timezone-safe four-week plan within the 30-day range", () => {
   assert.ok(
     plan.contentCalendar.every(
       (item) =>
-        item.postText.length > 0 &&
+        item.postText.length === 0 &&
         item.scheduledTime.length === 5 &&
         item.timeZone === input.preferences.timeZone &&
         item.workflowStatus === "planning" &&
@@ -187,6 +188,21 @@ test("applies scoped plan edits and supports undoing the latest revision", () =>
   assert.equal(confirmed.status, "user_confirmed");
   assert.ok(
     confirmed.contentCalendar.every((item) => item.status === "confirmed"),
+  );
+  assert.ok(
+    confirmed.contentCalendar.every((item) => item.postText.length > 0),
+  );
+
+  const returned = reviewActionPlan(
+    confirmed,
+    "revision_requested",
+    PLANNING_NOW,
+  );
+  assert.equal(returned.status, "revision_requested");
+  assert.ok(
+    returned.contentCalendar.every(
+      (item) => item.status !== "confirmed" && item.postText.length === 0,
+    ),
   );
 });
 

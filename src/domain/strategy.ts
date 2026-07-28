@@ -6,7 +6,11 @@ import type {
 import type { LinkedInModule } from "@/domain/linkedin";
 import type { ConsultingReport } from "@/domain/consulting-report";
 
-export type ApprovalStatus = "draft" | "approved" | "rejected";
+export type ApprovalStatus =
+  | "draft"
+  | "approved"
+  | "revision_requested"
+  | "rejected";
 export type InsightCategory =
   | "audience"
   | "content"

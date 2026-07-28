@@ -390,7 +390,7 @@ function buildSchedule(
         contentFormat,
         targetAudience: input.preferences.focusAudience,
         coreMessage,
-        postText: `${topic}\n\n${coreMessage}\n\n${callToAction}`,
+        postText: "",
         channel: CONTENT_CHANNELS[(sequence - 1) % CONTENT_CHANNELS.length],
         scheduledTime: POST_TIMES[(sequence - 1) % POST_TIMES.length],
         timeZone: input.preferences.timeZone,
@@ -662,7 +662,9 @@ export function isActionPlanShape(value: unknown): value is ActionPlan {
     typeof candidate.startDate === "string" &&
     typeof candidate.endDate === "string" &&
     (candidate.status === "ai_draft" ||
-      candidate.status === "user_confirmed") &&
+      candidate.status === "user_confirmed" ||
+      candidate.status === "revision_requested" ||
+      candidate.status === "rejected") &&
     typeof candidate.executiveSummary === "string" &&
     isStringArray(candidate.assumptions) &&
     isStringArray(candidate.risksAndLimitations) &&
@@ -1375,9 +1377,10 @@ export function reviseCalendarItem(
     ...plan,
     status: "ai_draft",
     updatedAt,
-    contentCalendar: plan.contentCalendar.map((candidate) =>
-      candidate.itemId === itemId
-        ? {
+    contentCalendar: plan.contentCalendar.map((candidate) => {
+      const revised =
+        candidate.itemId === itemId
+          ? {
             ...candidate,
             ...patch,
             mediaRequirement:
@@ -1389,8 +1392,14 @@ export function reviseCalendarItem(
             validationIssues: [],
             lastEditedAt: updatedAt,
           }
-        : candidate,
-    ),
+          : candidate;
+      return {
+        ...revised,
+        postText: "",
+        status: revised.status === "rejected" ? "rejected" : "ai_draft",
+        workflowStatus: "planning",
+      };
+    }),
     revisionHistory: [
       ...plan.revisionHistory,
       makeRevision(
@@ -1454,10 +1463,49 @@ export function confirmActionPlan(
     contentCalendar: plan.contentCalendar.map((item) => ({
       ...item,
       status: item.status === "rejected" ? "rejected" : "confirmed",
+      postText:
+        item.status === "rejected"
+          ? ""
+          : `${item.topic}\n\n${item.coreMessage}\n\n${item.callToAction}`,
     })),
     revisionHistory: [
       ...plan.revisionHistory,
       makeRevision("plan_status", "用户确认当前行动计划。", now),
+    ],
+  };
+}
+
+export function reviewActionPlan(
+  plan: ActionPlan,
+  status: "revision_requested" | "rejected",
+  now: Date = new Date(),
+): ActionPlan {
+  return {
+    ...plan,
+    status,
+    updatedAt: now.toISOString(),
+    fourWeekPlan: plan.fourWeekPlan.map((week) => ({
+      ...week,
+      tasks: week.tasks.map((task) => ({
+        ...task,
+        status: task.status === "rejected" ? "rejected" : "ai_draft",
+      })),
+    })),
+    contentCalendar: plan.contentCalendar.map((item) => ({
+      ...item,
+      postText: "",
+      status: item.status === "rejected" ? "rejected" : "ai_draft",
+      workflowStatus: "planning",
+    })),
+    revisionHistory: [
+      ...plan.revisionHistory,
+      makeRevision(
+        "plan_status",
+        status === "rejected"
+          ? "Reviewer rejected the current action plan."
+          : "Reviewer requested revisions to the current action plan.",
+        now,
+      ),
     ],
   };
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { ConsultingReport } from "@/components/analysis/consulting-report";
+import { EnterpriseApprovalControls } from "@/components/analysis/enterprise-approval-controls";
 import { Icon } from "@/components/ui/icon";
 import type {
   ActionPlan,
@@ -10,6 +11,7 @@ import type {
 } from "@/domain/action-plan";
 import type {
   EvidenceInsight,
+  ApprovalStatus,
   StrategyRecommendation,
 } from "@/domain/strategy";
 
@@ -34,8 +36,16 @@ interface ActionPlanReportProps {
     >,
   ) => void;
   onConfirmPlan: () => void;
+  onReviewPlan: (status: "revision_requested" | "rejected") => void;
   onDownload: () => void;
 }
+
+const PLAN_APPROVAL_STATUS: Record<ActionPlan["status"], ApprovalStatus> = {
+  ai_draft: "draft",
+  user_confirmed: "approved",
+  revision_requested: "revision_requested",
+  rejected: "rejected",
+};
 
 function PlanItemCard({
   item,
@@ -299,6 +309,7 @@ export function ActionPlanReport({
   onUndo,
   onUpdateItem,
   onConfirmPlan,
+  onReviewPlan,
   onDownload,
 }: ActionPlanReportProps) {
   const [view, setView] = useState<"list" | "calendar">("list");
@@ -323,7 +334,13 @@ export function ActionPlanReport({
         </div>
         <div className="report-hero__actions">
           <span className={`plan-status plan-status--${plan.status}`}>
-            {plan.status === "ai_draft" ? "Human Approval Required" : "Calendar Approved"}
+            {plan.status === "user_confirmed"
+              ? "Calendar Approved"
+              : plan.status === "revision_requested"
+                ? "Revision Requested"
+                : plan.status === "rejected"
+                  ? "Rejected"
+                  : "Human Approval Required"}
           </span>
           <button
             className="secondary-button"
@@ -338,16 +355,21 @@ export function ActionPlanReport({
             <Icon name="download" size={15} />
             下载计划 JSON
           </button>
-          <button
-            className="primary-button"
-            type="button"
-            disabled={plan.status === "user_confirmed"}
-            onClick={onConfirmPlan}
-          >
-            <Icon name="check" size={15} />
-            Approve calendar
-          </button>
         </div>
+      </section>
+
+      <section className={`approval-card approval-card--${PLAN_APPROVAL_STATUS[plan.status]} calendar-approval-card`}>
+        <EnterpriseApprovalControls
+          recommendation="Approve the 30-day content calendar before draft generation."
+          status={PLAN_APPROVAL_STATUS[plan.status]}
+          onDecision={(status) => {
+            if (status === "approved") {
+              onConfirmPlan();
+            } else if (status !== "draft") {
+              onReviewPlan(status);
+            }
+          }}
+        />
       </section>
 
       <dl className="report-metadata">
