@@ -2335,7 +2335,8 @@ def render_buffer_handoff() -> None:
         '<span class="section-kicker">Human-reviewed handoff</span>',
         unsafe_allow_html=True,
     )
-    st.header("Buffer Handoff")
+    st.header("Buffer Connection")
+    st.caption("Mock / Demo · Local simulation only · No network or API calls")
     st.write("Prepare approved campaign content for review and scheduling in Buffer.")
     st.warning(
         "The workflow creates CSV files for manual import and does not connect "
@@ -2349,6 +2350,16 @@ def render_buffer_handoff() -> None:
         item.get("status") == "confirmed"
         for item in plan.get("contentCalendar", [])
     )
+    queue_columns = st.columns(5)
+    queue_columns[0].metric("Workspace", "Marketing Operations Demo")
+    queue_columns[1].metric(
+        "Scheduled Drafts", len(plan.get("contentCalendar", []))
+    )
+    queue_columns[2].metric("Ready to Publish", approved_count)
+    queue_columns[3].metric(
+        "Pending Review", len(plan.get("contentCalendar", [])) - approved_count
+    )
+    queue_columns[4].metric("Publishing Queue", "Local preview")
     if approved_count == 0:
         st.warning(
             "No content is approved. Review items below or return to the campaign plan."

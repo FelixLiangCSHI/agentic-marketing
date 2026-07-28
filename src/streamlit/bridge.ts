@@ -146,7 +146,7 @@ function operationError(
     message,
     retryable: options.retryable ?? true,
     preserveProjectData: options.preserveProjectData ?? true,
-    nextAction: options.nextAction ?? "请修正输入后重试当前阶段。",
+    nextAction: options.nextAction ?? "Correct the input and retry this stage.",
   });
 }
 
@@ -159,7 +159,7 @@ function requiredRecord(
   fieldName: string,
 ): Record<string, unknown> {
   if (!isRecord(value)) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 缺失或格式无效。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} is missing or invalid.`, {
       retryable: false,
     });
   }
@@ -176,7 +176,7 @@ function requiredString(
     !value.trim() ||
     value.length > maxLength
   ) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 缺失或长度无效。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} is missing or has an invalid length.`, {
       retryable: false,
     });
   }
@@ -210,7 +210,7 @@ function parseRequest(value: unknown): BridgeRequest {
   if (!allowed.includes(operation)) {
     throw operationError(
       "UNSUPPORTED_OPERATION",
-      "Bridge 不支持该操作。",
+      "The bridge does not support this operation.",
       { retryable: false },
     );
   }
@@ -225,13 +225,13 @@ function parseRequest(value: unknown): BridgeRequest {
 function parseUploadedFile(value: unknown): UploadedFilePayload {
   const file = requiredRecord(value, "files[]");
   if (!isLinkedInModule(file.slot)) {
-    throw operationError("INVALID_REQUEST", "上传文件的模块槽位无效。", {
+    throw operationError("INVALID_REQUEST", "The upload module slot is invalid.", {
       retryable: false,
     });
   }
   const size = file.size;
   if (!Number.isInteger(size) || (size as number) < 0) {
-    throw operationError("INVALID_REQUEST", "上传文件大小无效。", {
+    throw operationError("INVALID_REQUEST", "The upload size is invalid.", {
       retryable: false,
     });
   }
@@ -252,7 +252,7 @@ function decodeBase64(value: string, declaredSize: number): Uint8Array {
     compact.length % 4 !== 0 ||
     !/^[A-Za-z0-9+/]*={0,2}$/.test(compact)
   ) {
-    throw operationError("INVALID_REQUEST", "上传文件编码无效。", {
+    throw operationError("INVALID_REQUEST", "The upload encoding is invalid.", {
       retryable: false,
     });
   }
@@ -261,7 +261,7 @@ function decodeBase64(value: string, declaredSize: number): Uint8Array {
     bytes.fill(0);
     throw operationError(
       "INVALID_REQUEST",
-      "上传文件大小与内容不一致，已停止处理。",
+      "The upload size does not match its content, so processing stopped.",
       { retryable: false },
     );
   }
@@ -373,12 +373,12 @@ function parseUploadedResults(
   filesValue: unknown,
 ): Partial<Record<LinkedInModule, FileParseResult>> {
   if (!Array.isArray(filesValue) || filesValue.length === 0) {
-    throw operationError("MISSING_FILE", "没有可分析的上传文件。", {
-      nextAction: "请至少选择一个 Followers、Visitors 或 Content 文件。",
+    throw operationError("MISSING_FILE", "No uploaded files are available for analysis.", {
+      nextAction: "Select at least one Followers, Visitors, or Content file.",
     });
   }
   if (filesValue.length > LINKEDIN_MODULES.length) {
-    throw operationError("INVALID_REQUEST", "一次最多上传三个模块文件。", {
+    throw operationError("INVALID_REQUEST", "A maximum of three module files can be uploaded.", {
       retryable: false,
     });
   }
@@ -387,8 +387,8 @@ function parseUploadedResults(
   if (new Set(files.map((file) => file.slot)).size !== files.length) {
     throw operationError(
       "DUPLICATE_MODULE",
-      "同一模块被重复上传，请保留一个文件后重试。",
-      { nextAction: "移除重复模块文件，再重试数据接入。" },
+      "The same module was uploaded more than once. Retain one file and retry.",
+      { nextAction: "Remove duplicate module files, then retry intake." },
     );
   }
 
@@ -440,8 +440,8 @@ function parseUploadedResults(
         if (existingSlot && existingSlot !== file.slot) {
           throw operationError(
             "DUPLICATE_MODULE",
-            `${detectedModule} 模块在多个上传文件中重复出现。`,
-            { nextAction: "检查文件内容和模块选择，移除重复数据后重试。" },
+            `${detectedModule} appears in multiple uploaded files.`,
+            { nextAction: "Check file content and module selection, remove duplicates, and retry." },
           );
         }
         detectedOwners.set(detectedModule, file.slot);
@@ -468,7 +468,7 @@ function dateFromPayload(value: unknown): Date {
   }
   const date = new Date(value);
   if (Number.isNaN(date.valueOf())) {
-    throw operationError("INVALID_REQUEST", "now 不是有效时间。", {
+    throw operationError("INVALID_REQUEST", "now is not a valid time.", {
       retryable: false,
     });
   }
@@ -479,7 +479,7 @@ function snapshotFromPayload(value: unknown): AnalysisSnapshot {
   const snapshot = requiredRecord(value, "snapshot");
   requiredString(snapshot.snapshotId, "snapshot.snapshotId", 200);
   if (snapshot.snapshotVersion !== "1.0" || !isRecord(snapshot.metrics)) {
-    throw operationError("INVALID_REQUEST", "Snapshot 结构无效。", {
+    throw operationError("INVALID_REQUEST", "The snapshot structure is invalid.", {
       retryable: false,
     });
   }
@@ -496,7 +496,7 @@ function bundleFromPayload(
     !Array.isArray(bundle.insights) ||
     !Array.isArray(bundle.strategies)
   ) {
-    throw operationError("INVALID_REQUEST", "洞察与 Snapshot 引用不一致。", {
+    throw operationError("INVALID_REQUEST", "Insight and snapshot references are inconsistent.", {
       retryable: false,
     });
   }
@@ -514,7 +514,7 @@ function planFromPayload(
   }
   const plan = normalizeActionPlan(value);
   if (!plan) {
-    throw operationError("INVALID_REQUEST", "行动计划结构无效。", {
+    throw operationError("INVALID_REQUEST", "The action plan structure is invalid.", {
       retryable: false,
     });
   }
@@ -532,7 +532,7 @@ function boundedString(
     value.length > maxLength ||
     (!allowEmpty && !value.trim())
   ) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 格式或长度无效。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} has an invalid format or length.`, {
       retryable: false,
     });
   }
@@ -563,7 +563,7 @@ function stringArray(
       (item) => typeof item === "string" && item.length <= maxItemLength,
     )
   ) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 格式或数量无效。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} has an invalid format or count.`, {
       retryable: false,
     });
   }
@@ -582,7 +582,7 @@ function channelArray(value: unknown, fieldName: string): BufferSupportedChannel
     100,
   );
   if (!channels.every(isBufferChannel)) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 包含不支持的渠道。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} contains an unsupported channel.`, {
       retryable: false,
     });
   }
@@ -604,7 +604,7 @@ function bufferExportRecordFromPayload(value: unknown): BufferExportRecord {
     record.status !== "partial" &&
     record.status !== "failed"
   ) {
-    throw operationError("INVALID_REQUEST", "导出记录状态无效。", {
+    throw operationError("INVALID_REQUEST", "The export record status is invalid.", {
       retryable: false,
     });
   }
@@ -637,7 +637,7 @@ function bufferOptionsFromPayload(value: unknown): BufferHandoffOptions {
     !Array.isArray(options.previousExports) ||
     options.previousExports.length > 100
   ) {
-    throw operationError("INVALID_REQUEST", "previousExports 格式或数量无效。", {
+    throw operationError("INVALID_REQUEST", "previousExports has an invalid format or count.", {
       retryable: false,
     });
   }
@@ -668,8 +668,8 @@ function goalFromPayload(value: unknown): BusinessGoal {
   if (goal.confirmed !== true) {
     throw operationError(
       "PLAN_VALIDATION_FAILED",
-      "请先确认业务目标。",
-      { nextAction: "确认业务目标后重试计划生成。" },
+      "Confirm the business goal first.",
+      { nextAction: "Confirm the business goal, then retry plan preparation." },
     );
   }
   return goal as unknown as BusinessGoal;
@@ -677,8 +677,8 @@ function goalFromPayload(value: unknown): BusinessGoal {
 
 function actionPlanError(reason: ActionPlanAgentError): BridgeOperationError {
   if (reason.code === "GENERATION_CANCELLED") {
-    return operationError("GENERATION_CANCELLED", "计划生成已取消。", {
-      nextAction: "当前上传和 Snapshot 仍保留，可以直接重试计划生成。",
+    return operationError("GENERATION_CANCELLED", "Plan preparation was cancelled.", {
+      nextAction: "Current uploads and the snapshot are retained; retry plan preparation.",
     });
   }
 
@@ -691,11 +691,11 @@ function actionPlanError(reason: ActionPlanAgentError): BridgeOperationError {
   );
   return operationError(
     approvalIssue ? "STRATEGY_APPROVAL_REQUIRED" : "PLAN_VALIDATION_FAILED",
-    reason.issues[0]?.message ?? "行动计划结构校验失败。",
+    reason.issues[0]?.message ?? "Action plan structure validation failed.",
     {
       nextAction: approvalIssue
-        ? "批准至少一条有证据的洞察及其关联策略后重试。"
-        : "修正计划设置后重试；无需重新上传文件。",
+        ? "Approve at least one evidence-backed insight and related strategy, then retry."
+        : "Correct plan settings and retry without uploading files again.",
     },
   );
 }
@@ -733,8 +733,8 @@ export function bridgeErrorFromUnknown(reason: unknown): BridgeError {
     return operationError(code, reason.message, {
       nextAction:
         reason.code === "WARNING_ACKNOWLEDGEMENT_REQUIRED"
-          ? "审阅警告并明确确认后重试；当前计划仍保留。"
-          : "修正对应内容或范围后重试；无需重新分析或上传。",
+          ? "Review and acknowledge warnings, then retry; the current plan is retained."
+          : "Correct the relevant content or range and retry without reanalysis or upload.",
     }).details;
   }
 
@@ -742,21 +742,21 @@ export function bridgeErrorFromUnknown(reason: unknown): BridgeError {
   if (code === "REQUEST_TOO_LARGE") {
     return operationError(
       "REQUEST_TOO_LARGE",
-      "Bridge 请求超过大小限制，已停止处理。",
-      { nextAction: "请减少文件数量或选择更小的文件后重试。" },
+      "The bridge request exceeds the size limit, so processing stopped.",
+      { nextAction: "Reduce the file count or select smaller files, then retry." },
     ).details;
   }
   if (code === "INVALID_REQUEST") {
-    return operationError("INVALID_REQUEST", "Bridge 请求格式无效。", {
+    return operationError("INVALID_REQUEST", "The bridge request format is invalid.", {
       retryable: false,
-      nextAction: "请刷新页面后重试；已有上传不会写入磁盘。",
+      nextAction: "Refresh and retry; existing uploads are not written to disk.",
     }).details;
   }
   if (code === 429 || code === "RATE_LIMITED") {
     return operationError(
       "AI_RATE_LIMIT",
-      "AI 服务暂时达到请求限制。",
-      { nextAction: "当前数据仍保留，请稍后从本阶段重试。" },
+      "The recommendation service is temporarily rate limited.",
+      { nextAction: "Current data is retained; retry this stage later." },
     ).details;
   }
   if (
@@ -764,15 +764,15 @@ export function bridgeErrorFromUnknown(reason: unknown): BridgeError {
     code === "TIMEOUT" ||
     (reason instanceof Error && reason.name === "TimeoutError")
   ) {
-    return operationError("AI_TIMEOUT", "AI 服务响应超时。", {
-      nextAction: "当前数据仍保留，可以直接重试，不需要重新上传。",
+    return operationError("AI_TIMEOUT", "The recommendation service timed out.", {
+      nextAction: "Current data is retained; retry without uploading again.",
     }).details;
   }
   if (code === "INVALID_MODEL_OUTPUT") {
     return operationError(
       "INVALID_MODEL_OUTPUT",
-      "模型输出未通过结构与引用校验。",
-      { nextAction: "保留当前 Snapshot，重试本阶段或切换 Mock 模式。" },
+      "The prepared output failed structure and reference validation.",
+      { nextAction: "Retain the current snapshot and retry this stage or use demo mode." },
     ).details;
   }
   if (
@@ -780,17 +780,17 @@ export function bridgeErrorFromUnknown(reason: unknown): BridgeError {
     code === "ENETUNREACH" ||
     code === "NETWORK_ERROR"
   ) {
-    return operationError("NETWORK_ERROR", "网络连接中断。", {
-      nextAction: "检查网络后重试当前阶段；已有数据不会被清除。",
+    return operationError("NETWORK_ERROR", "The network connection was interrupted.", {
+      nextAction: "Check the network and retry; existing data will not be cleared.",
     }).details;
   }
 
   return {
     code: "INTERNAL_ERROR",
-    message: "本地演示处理失败，未记录原始文件内容。",
+    message: "Local demo processing failed; source file content was not recorded.",
     retryable: true,
     preserveProjectData: true,
-    nextAction: "请重试当前阶段；如仍失败，请检查本地服务状态。",
+    nextAction: "Retry this stage; if it still fails, check the local service.",
   };
 }
 
@@ -856,8 +856,8 @@ async function runOperation(request: BridgeRequest): Promise<unknown> {
     if (!snapshot.canEnterInsights) {
       throw operationError(
         "BLOCKING_DATA_QUALITY",
-        "当前 Snapshot 存在阻断质量问题，不能生成计划。",
-        { nextAction: "返回数据质量页，修复阻断问题后重新分析。" },
+        "Blocking snapshot quality issues prevent plan preparation.",
+        { nextAction: "Return to data quality, resolve blocking issues, and analyze again." },
       );
     }
     const businessGoal = goalFromPayload(request.payload.businessGoal);
@@ -921,7 +921,7 @@ async function runOperation(request: BridgeRequest): Promise<unknown> {
     if ("channel" in patchValue) {
       const channel = boundedString(patchValue.channel, "patch.channel", 100);
       if (!isBufferChannel(channel)) {
-        throw operationError("INVALID_REQUEST", "内容渠道无效。", {
+        throw operationError("INVALID_REQUEST", "The content channel is invalid.", {
           retryable: false,
         });
       }
@@ -951,7 +951,7 @@ async function runOperation(request: BridgeRequest): Promise<unknown> {
         patchValue.status !== "confirmed" &&
         patchValue.status !== "rejected"
       ) {
-        throw operationError("INVALID_REQUEST", "内容项状态无效。", {
+        throw operationError("INVALID_REQUEST", "The content item status is invalid.", {
           retryable: false,
         });
       }
@@ -1014,7 +1014,7 @@ async function runOperation(request: BridgeRequest): Promise<unknown> {
 
   throw operationError(
     "UNSUPPORTED_OPERATION",
-    "Bridge 不支持该操作。",
+    "The bridge does not support this operation.",
     { retryable: false },
   );
 }

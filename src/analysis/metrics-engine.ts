@@ -141,11 +141,11 @@ function selectedContentRecords(records: readonly ContentRecord[]): {
   return itemRecords.length > 0
     ? {
         records: itemRecords,
-        reason: "优先使用具有内容标识的逐帖记录，未混入日级汇总。",
+        reason: "Post-level records with content identifiers are preferred over daily summaries.",
       }
     : {
         records: unique,
-        reason: "没有逐帖记录，使用唯一可用的时间序列记录。",
+        reason: "No post-level records exist, so the available time-series records are used.",
       };
 }
 
@@ -209,7 +209,7 @@ function sumMetric(input: {
     values,
     value: sumAvailable(values),
     unit: "count",
-    formula: `SUM(${input.field})，排除已标记重复记录；null 不参与，0 保留`,
+    formula: `SUM(${input.field}), excluding flagged duplicates; null is omitted and zero retained`,
     period: input.period,
     records: input.records,
     fields: [input.field],
@@ -253,7 +253,7 @@ function buildSeries<T extends FollowersRecord | VisitorsRecord>(
       label,
       unit: "count",
       sourceModules: [module],
-      reasons: [`缺少 ${field} 的带日期有效值。`],
+      reasons: [`No valid dated values are available for ${field}.`],
     });
   }
   const period = periodForRecords(available);
@@ -340,7 +340,7 @@ function demographicTopN(
       metricId: `${module}.demographic.${dimension}`,
       label: `${dimension} Top ${topN}`,
       formula:
-        "按 demographicDimension / demographicValue 分组，对可用 count 求和；无 count 时使用 percentage",
+        "Group by demographicDimension / demographicValue and sum available counts; use percentage when counts are absent",
       period,
       sourceModules: [module],
       items,
@@ -352,8 +352,8 @@ function demographicTopN(
             : "reliable",
       reliabilityReasons:
         dimensionRecords.length < MIN_GROUP_SAMPLE
-          ? [`${dimension} 仅 ${dimensionRecords.length} 条画像记录。`]
-          : ["画像分组样本量满足当前规则。"],
+          ? [`${dimension} has only ${dimensionRecords.length} audience records.`]
+          : ["Audience segment sample size meets the current rule."],
     };
   });
 }
@@ -392,8 +392,8 @@ function rankItems(
           : "reliable",
       reliabilityReasons:
         entry.records.length < MIN_GROUP_SAMPLE
-          ? [`分组样本仅 ${entry.records.length} 条。`]
-          : ["分组样本量满足当前规则。"],
+          ? [`The group has only ${entry.records.length} samples.`]
+          : ["Group sample size meets the current rule."],
       sourceReferences: referencesForRecords(entry.records, fields),
     };
   });
@@ -415,15 +415,15 @@ export function calculateFollowersMetrics(
   const growthRate = safeDivide(net, start);
   const totalReasons =
     totals.length < 2
-      ? ["需要至少两个带 totalFollowers 的可比较周期。"]
+      ? ["At least two comparable periods with totalFollowers are required."]
       : [];
   const startMetric = metricFromValues({
     metricId: "followers.start",
-    label: "起始关注者数",
+    label: "Starting followers",
     values: temporal.map((record) => record.totalFollowers),
     value: start,
     unit: "count",
-    formula: "按日期升序后的首个非 null totalFollowers",
+    formula: "First non-null totalFollowers value in ascending date order",
     period,
     records: first ? [first] : [],
     fields: ["date", "totalFollowers"],
@@ -433,11 +433,11 @@ export function calculateFollowersMetrics(
   });
   const endMetric = metricFromValues({
     metricId: "followers.end",
-    label: "结束关注者数",
+    label: "Ending followers",
     values: temporal.map((record) => record.totalFollowers),
     value: end,
     unit: "count",
-    formula: "按日期升序后的最后一个非 null totalFollowers",
+    formula: "Last non-null totalFollowers value in ascending date order",
     period,
     records: last ? [last] : [],
     fields: ["date", "totalFollowers"],
@@ -447,11 +447,11 @@ export function calculateFollowersMetrics(
   });
   const netMetric = metricFromValues({
     metricId: "followers.netGrowth",
-    label: "净增长",
+    label: "Net growth",
     values: totals.map((record) => record.totalFollowers),
     value: net,
     unit: "count",
-    formula: "结束 totalFollowers − 起始 totalFollowers",
+    formula: "Ending totalFollowers − starting totalFollowers",
     period,
     records: first && last ? [first, last] : [],
     fields: ["date", "totalFollowers"],
@@ -461,12 +461,12 @@ export function calculateFollowersMetrics(
   });
   const growthMetric = metricFromValues({
     metricId: "followers.growthRate",
-    label: "关注者增长率",
+    label: "Follower growth rate",
     values: totals.map((record) => record.totalFollowers),
     value: growthRate,
     unit: "percentage",
     formula:
-      "(结束 totalFollowers − 起始 totalFollowers) ÷ 起始 totalFollowers；起始为 0 时 unavailable",
+      "(ending totalFollowers − starting totalFollowers) ÷ starting totalFollowers; unavailable when starting value is zero",
     period,
     records: first && last ? [first, last] : [],
     fields: ["date", "totalFollowers"],
@@ -474,7 +474,7 @@ export function calculateFollowersMetrics(
     minReliableSample: 2,
     extraReasons:
       start === 0
-        ? ["起始关注者为 0，不能计算增长率。"]
+        ? ["Growth rate cannot be calculated because starting followers are zero."]
         : totalReasons,
   });
   const mixRecords = temporal.filter(
@@ -492,7 +492,7 @@ export function calculateFollowersMetrics(
   const mixCoverageReasons =
     mixRecords.length < temporal.length
       ? [
-          `仅 ${mixRecords.length}/${temporal.length} 个周期同时具备 Organic 与 Sponsored。`,
+          `Only ${mixRecords.length}/${temporal.length} periods contain both organic and sponsored values.`,
         ]
       : [];
 
@@ -503,7 +503,7 @@ export function calculateFollowersMetrics(
     growthRate: growthMetric,
     newFollowersTotal: sumMetric({
       metricId: "followers.newTotal",
-      label: "新增关注者总量",
+      label: "Total new followers",
       records: temporal,
       field: "newFollowers",
       sourceModule: "followers",
@@ -511,7 +511,7 @@ export function calculateFollowersMetrics(
     }),
     organicShare: metricFromValues({
       metricId: "followers.organicShare",
-      label: "Organic 占比",
+      label: "Organic share",
       values: temporal.map((record) =>
         record.organicFollowers !== null &&
         record.sponsoredFollowers !== null
@@ -521,19 +521,19 @@ export function calculateFollowersMetrics(
       value: safeDivide(organic, mixTotal),
       unit: "percentage",
       formula:
-        "在 Organic 与 Sponsored 均非 null 的相同周期中，SUM(organicFollowers) ÷ (SUM(organicFollowers) + SUM(sponsoredFollowers))",
+        "For periods with both values: SUM(organicFollowers) ÷ (SUM(organicFollowers) + SUM(sponsoredFollowers))",
       period: mixPeriod,
       records: mixRecords,
       fields: ["organicFollowers", "sponsoredFollowers"],
       sourceModules: ["followers"],
       extraReasons: [
         ...mixCoverageReasons,
-        ...(mixTotal === 0 ? ["Organic 与 Sponsored 合计为 0。"] : []),
+        ...(mixTotal === 0 ? ["Organic and sponsored values total zero."] : []),
       ],
     }),
     sponsoredShare: metricFromValues({
       metricId: "followers.sponsoredShare",
-      label: "Sponsored 占比",
+      label: "Sponsored share",
       values: temporal.map((record) =>
         record.organicFollowers !== null &&
         record.sponsoredFollowers !== null
@@ -543,21 +543,21 @@ export function calculateFollowersMetrics(
       value: safeDivide(sponsored, mixTotal),
       unit: "percentage",
       formula:
-        "在 Organic 与 Sponsored 均非 null 的相同周期中，SUM(sponsoredFollowers) ÷ (SUM(organicFollowers) + SUM(sponsoredFollowers))",
+        "For periods with both values: SUM(sponsoredFollowers) ÷ (SUM(organicFollowers) + SUM(sponsoredFollowers))",
       period: mixPeriod,
       records: mixRecords,
       fields: ["organicFollowers", "sponsoredFollowers"],
       sourceModules: ["followers"],
       extraReasons: [
         ...mixCoverageReasons,
-        ...(mixTotal === 0 ? ["Organic 与 Sponsored 合计为 0。"] : []),
+        ...(mixTotal === 0 ? ["Organic and sponsored values total zero."] : []),
       ],
     }),
     newFollowersTrend: buildSeries(
       temporal,
       "newFollowers",
       "followers.newTrend",
-      "每期新增关注者",
+      "New followers per period",
       "followers",
     ),
     demographicTopN: demographicTopN(
@@ -567,13 +567,13 @@ export function calculateFollowersMetrics(
     ),
     demographicTrend: unavailableMetric({
       metricId: "followers.demographicTrend",
-      label: "画像变化趋势",
+      label: "Audience segment trend",
       unit: "text",
       formula:
-        "同一 demographicDimension / demographicValue 在至少两个日期快照间比较",
+        "Compare the same demographicDimension / demographicValue across at least two dated snapshots",
       sourceModules: ["followers"],
       reliabilityReasons: [
-        "当前标准模型中的画像记录没有可比较的日期快照。",
+        "Audience records in the current model have no comparable dated snapshots.",
       ],
     }),
   };
@@ -598,7 +598,7 @@ export function calculateVisitorsMetrics(
   const pairCoverageReasons =
     completePairs.length < temporal.length
       ? [
-          `仅 ${completePairs.length}/${temporal.length} 个周期同时具备 Page Views 与 Unique Visitors。`,
+          `Only ${completePairs.length}/${temporal.length} periods contain both page views and unique visitors.`,
         ]
       : [];
   const comparable = temporal.filter(
@@ -627,7 +627,7 @@ export function calculateVisitorsMetrics(
   return {
     pageViewsTotal: sumMetric({
       metricId: "visitors.pageViewsTotal",
-      label: "Page Views 总量",
+      label: "Total page views",
       records: temporal,
       field: "pageViews",
       sourceModule: "visitors",
@@ -635,7 +635,7 @@ export function calculateVisitorsMetrics(
     }),
     uniqueVisitorsTotal: sumMetric({
       metricId: "visitors.uniqueVisitorsTotal",
-      label: "Unique Visitors 总量",
+      label: "Total unique visitors",
       records: temporal,
       field: "uniqueVisitors",
       sourceModule: "visitors",
@@ -643,7 +643,7 @@ export function calculateVisitorsMetrics(
     }),
     pageViewsPerVisitor: metricFromValues({
       metricId: "visitors.pageViewsPerVisitor",
-      label: "平均 Page Views per Visitor",
+      label: "Average page views per visitor",
       values: temporal.map((record) =>
         record.pageViews !== null && record.uniqueVisitors !== null
           ? record.uniqueVisitors
@@ -652,7 +652,7 @@ export function calculateVisitorsMetrics(
       value: safeDivide(pairedPageViewsTotal, pairedUniqueVisitorsTotal),
       unit: "ratio",
       formula:
-        "在 pageViews 与 uniqueVisitors 均非 null 的相同记录中，SUM(pageViews) ÷ SUM(uniqueVisitors)",
+        "For records with both values: SUM(pageViews) ÷ SUM(uniqueVisitors)",
       period: pairPeriod,
       records: completePairs,
       fields: ["pageViews", "uniqueVisitors"],
@@ -660,7 +660,7 @@ export function calculateVisitorsMetrics(
       extraReasons: [
         ...pairCoverageReasons,
         ...(pairedUniqueVisitorsTotal === 0
-          ? ["成对完整记录的 Unique Visitors 合计为 0。"]
+          ? ["Unique visitors total zero across complete pairs."]
           : []),
       ],
     }),
@@ -676,23 +676,23 @@ export function calculateVisitorsMetrics(
       temporal,
       "pageViews",
       "visitors.pageViewsTrend",
-      "Page Views 趋势",
+      "Page views trend",
       "visitors",
     ),
     uniqueVisitorsTrend: buildSeries(
       temporal,
       "uniqueVisitors",
       "visitors.uniqueVisitorsTrend",
-      "Unique Visitors 趋势",
+      "Unique visitors trend",
       "visitors",
     ),
     periodOverPeriodChange: metricFromValues({
       metricId: "visitors.periodChange",
-      label: "Page Views 环比变化",
+      label: "Page views period-over-period change",
       values: lastTwo.map((record) => record.pageViews),
       value: periodChange,
       unit: "percentage",
-      formula: "(最新一期 pageViews − 前一期 pageViews) ÷ 前一期 pageViews",
+      formula: "(latest pageViews − prior pageViews) ÷ prior pageViews",
       period: periodChangePeriod,
       records: lastTwo,
       fields: ["date", "pageViews"],
@@ -700,11 +700,11 @@ export function calculateVisitorsMetrics(
       minReliableSample: 2,
       extraReasons:
         lastTwo.length < 2
-          ? ["至少需要两个可比较周期。"]
+          ? ["At least two comparable periods are required."]
           : !periodChangeComparable
-            ? ["最新两个有效周期的间隔不符合日、周或月可比粒度。"]
+            ? ["The latest two valid periods are not comparably spaced by day, week, or month."]
           : lastTwo[0].pageViews === 0
-            ? ["前一期 Page Views 为 0。"]
+            ? ["Prior-period page views are zero."]
             : [],
     }),
     demographicTopN: demographicTopN(
@@ -726,7 +726,7 @@ function contentLabel(record: ContentRecord): string {
   return (
     record.title ??
     record.contentId ??
-    `${record.source.sheetName} 第 ${record.source.rowNumber} 行`
+    `${record.source.sheetName} row ${record.source.rowNumber}`
   );
 }
 
@@ -765,8 +765,8 @@ function contentGroupMetrics(
         group.length < MIN_GROUP_SAMPLE ? "directional" : "reliable";
       const reasons =
         group.length < MIN_GROUP_SAMPLE
-          ? [`分组仅 ${group.length} 条内容，低于 ${MIN_GROUP_SAMPLE} 条规则。`]
-          : ["分组样本量满足当前规则。"];
+          ? [`The group has only ${group.length} items, below the ${MIN_GROUP_SAMPLE}-item rule.`]
+          : ["Group sample size meets the current rule."];
 
       return {
         key,
@@ -781,7 +781,7 @@ function contentGroupMetrics(
             values: impressions,
             value: sumAvailable(impressions),
             unit: "count",
-            formula: "组内 SUM(impressions)",
+            formula: "SUM(impressions) within the group",
             period,
             records: group,
             fields: ["impressions"],
@@ -798,7 +798,7 @@ function contentGroupMetrics(
             value: safeDivide(pairedClicks, pairedImpressions),
             unit: "percentage",
             formula:
-              "组内仅在 clicks 与 impressions 均非 null 的相同记录中，SUM(clicks) ÷ SUM(impressions)",
+              "Within the group, for records with both values: SUM(clicks) ÷ SUM(impressions)",
             period: periodForRecords(clickThroughPairs),
             records: clickThroughPairs,
             fields: ["clicks", "impressions"],
@@ -808,21 +808,21 @@ function contentGroupMetrics(
               ...reasons,
               ...(clickThroughPairs.length < group.length
                 ? [
-                    `仅 ${clickThroughPairs.length}/${group.length} 条组内内容同时具备 clicks 与 impressions。`,
+                    `Only ${clickThroughPairs.length}/${group.length} group items contain both clicks and impressions.`,
                   ]
                 : []),
               ...(pairedImpressions === 0
-                ? ["成对完整记录的 Impressions 合计为 0。"]
+                ? ["Impressions total zero across complete pairs."]
                 : []),
             ],
           }),
           metricFromValues({
             metricId: `${prefix}.${key}.medianEngagement`,
-            label: "中位互动率",
+            label: "Median engagement rate",
             values: group.map(contentPerformance),
             value: median(engagementValues),
             unit: "percentage",
-            formula: "MEDIAN(逐条内容互动率)",
+            formula: "MEDIAN(per-item engagement rate)",
             period,
             records: group,
             fields: [
@@ -868,13 +868,13 @@ export function calculateContentMetrics(
   const engagementCoverageReasons =
     engagementPairs.length < records.length
       ? [
-          `仅 ${engagementPairs.length}/${records.length} 条内容同时具备 impressions、clicks、reactions、comments 与 reposts。`,
+          `Only ${engagementPairs.length}/${records.length} items contain impressions, clicks, reactions, comments, and reposts.`,
         ]
       : [];
   const clickThroughCoverageReasons =
     clickThroughPairs.length < records.length
       ? [
-          `仅 ${clickThroughPairs.length}/${records.length} 条内容同时具备 clicks 与 impressions。`,
+          `Only ${clickThroughPairs.length}/${records.length} items contain both clicks and impressions.`,
         ]
       : [];
   const rankingEntries = records.flatMap((record) => {
@@ -908,26 +908,26 @@ export function calculateContentMetrics(
     { extraReasons: [selection.reason] },
   );
   const weekdays = [
-    "星期日",
-    "星期一",
-    "星期二",
-    "星期三",
-    "星期四",
-    "星期五",
-    "星期六",
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
   ];
 
   return {
     publishedCount: metricFromValues({
       metricId: "content.publishedCount",
-      label: "发布内容数量",
+      label: "Published content count",
       values: records.map((record) =>
         record.publishedAt === null ? null : 1,
       ),
       value:
         records.filter((record) => record.publishedAt !== null).length || null,
       unit: "count",
-      formula: "COUNT(具有 publishedAt 的唯一逐帖记录)",
+      formula: "COUNT(unique post-level records with publishedAt)",
       period,
       records,
       fields: ["publishedAt", "contentId", "title"],
@@ -936,7 +936,7 @@ export function calculateContentMetrics(
     }),
     impressionsTotal: sumMetric({
       metricId: "content.impressions",
-      label: "Impressions 总量",
+      label: "Total impressions",
       records,
       field: "impressions",
       sourceModule: "content",
@@ -945,7 +945,7 @@ export function calculateContentMetrics(
     }),
     clicksTotal: sumMetric({
       metricId: "content.clicks",
-      label: "Clicks 总量",
+      label: "Total clicks",
       records,
       field: "clicks",
       sourceModule: "content",
@@ -954,7 +954,7 @@ export function calculateContentMetrics(
     }),
     reactionsTotal: sumMetric({
       metricId: "content.reactions",
-      label: "Reactions 总量",
+      label: "Total reactions",
       records,
       field: "reactions",
       sourceModule: "content",
@@ -963,7 +963,7 @@ export function calculateContentMetrics(
     }),
     commentsTotal: sumMetric({
       metricId: "content.comments",
-      label: "Comments 总量",
+      label: "Total comments",
       records,
       field: "comments",
       sourceModule: "content",
@@ -972,7 +972,7 @@ export function calculateContentMetrics(
     }),
     repostsTotal: sumMetric({
       metricId: "content.reposts",
-      label: "Reposts 总量",
+      label: "Total reposts",
       records,
       field: "reposts",
       sourceModule: "content",
@@ -990,7 +990,7 @@ export function calculateContentMetrics(
       value: safeDivide(pairedClicks, pairedClickImpressions),
       unit: "percentage",
       formula:
-        "在 clicks 与 impressions 均非 null 的相同记录中，SUM(clicks) ÷ SUM(impressions)",
+        "For records with both values: SUM(clicks) ÷ SUM(impressions)",
       period: periodForRecords(clickThroughPairs),
       records: clickThroughPairs,
       fields: ["clicks", "impressions"],
@@ -999,7 +999,7 @@ export function calculateContentMetrics(
         selection.reason,
         ...clickThroughCoverageReasons,
         ...(pairedClickImpressions === 0
-          ? ["成对完整记录的 Impressions 合计为 0。"]
+          ? ["Impressions total zero across complete pairs."]
           : []),
       ],
     }),
@@ -1014,7 +1014,7 @@ export function calculateContentMetrics(
       value: safeDivide(totalEngagements, engagementImpressions),
       unit: "percentage",
       formula:
-        "仅在五个字段均非 null 的相同记录中，SUM(clicks + reactions + comments + reposts) ÷ SUM(impressions)",
+        "For records with all five fields: SUM(clicks + reactions + comments + reposts) ÷ SUM(impressions)",
       period: periodForRecords(engagementPairs),
       records: engagementPairs,
       fields: [
@@ -1029,17 +1029,17 @@ export function calculateContentMetrics(
         selection.reason,
         ...engagementCoverageReasons,
         ...(engagementImpressions === 0
-          ? ["成对完整记录的 Impressions 合计为 0。"]
+          ? ["Impressions total zero across complete pairs."]
           : []),
       ],
     }),
     medianEngagementRate: metricFromValues({
       metricId: "content.medianEngagementRate",
-      label: "内容互动率中位数",
+      label: "Median content engagement rate",
       values: records.map(contentPerformance),
       value: median(engagementValues),
       unit: "percentage",
-      formula: "MEDIAN(逐条内容互动率)",
+      formula: "MEDIAN(per-item engagement rate)",
       period,
       records,
       fields: [
@@ -1055,9 +1055,9 @@ export function calculateContentMetrics(
     }),
     contentRanking: {
       metricId: "content.ranking",
-      label: "内容表现排名",
+      label: "Content performance ranking",
       formula:
-        "优先按 (clicks + reactions + comments + reposts) ÷ impressions 排名；缺少组成项时使用导出 engagementRate",
+        "Rank by (clicks + reactions + comments + reposts) ÷ impressions; use exported engagementRate when components are missing",
       period,
       sourceModules: ["content"],
       items: rankingItems,
@@ -1221,12 +1221,12 @@ export function calculateCrossModuleMetrics(
   return {
     visitorFollowerTrendComparison: metricFromValues({
       metricId: "cross.visitorFollowerTrend",
-      label: "Visitors 与 Followers 同期趋势相关性",
+      label: "Concurrent visitor and follower trend correlation",
       values: pairCoverageValues,
       value: trendCorrelation,
       unit: "score",
       formula:
-        "Pearson correlation(同期 uniqueVisitors, 同期 newFollowers)，至少 3 个同粒度共同周期",
+        "Pearson correlation(concurrent uniqueVisitors, concurrent newFollowers) across at least three shared periods",
       period: commonPeriod,
       records: trendPairs.flatMap(({ follower, visitor }) => [
         follower,
@@ -1236,15 +1236,15 @@ export function calculateCrossModuleMetrics(
       sourceModules: ["visitors", "followers"],
       minReliableSample: 3,
       extraReasons: [
-        "相关性只描述时间上的共同变化，不表示因果关系。",
+        "Correlation describes concurrent movement, not causation.",
         ...(!sameGranularity
-          ? ["Followers 与 Visitors 粒度不一致或不规则。"]
+          ? ["Follower and visitor granularity differs or is irregular."]
           : []),
         ...(trendPairs.length < 3
-          ? [`共同周期仅 ${trendPairs.length} 个。`]
+          ? [`Only ${trendPairs.length} shared periods are available.`]
           : []),
       ],
-      caveat: "相关性不代表 Visitors 导致 Followers 增长，反之亦然。",
+      caveat: "Correlation does not mean visitors cause follower growth or vice versa.",
     }),
     visitorToFollowerProxyRatio: metricFromValues({
       metricId: "cross.visitorToFollowerProxy",
@@ -1257,34 +1257,34 @@ export function calculateCrossModuleMetrics(
       value: proxyRatio,
       unit: "percentage",
       formula:
-        "在 newFollowers 与 uniqueVisitors 均存在的同日期周期中，SUM(newFollowers) ÷ SUM(uniqueVisitors)",
+        "For same-date periods with both values: SUM(newFollowers) ÷ SUM(uniqueVisitors)",
       period: commonPeriod,
       records: pairedAudienceRecords,
       fields: ["date", "newFollowers", "uniqueVisitors"],
       sourceModules: ["followers", "visitors"],
       extraReasons: [
-        "这是聚合数据代理比率，不是用户级真实转化率。",
+        "This aggregate proxy ratio is not a user-level conversion rate.",
         ...(!sameGranularity
-          ? ["Followers 与 Visitors 粒度不一致或不规则。"]
+          ? ["Follower and visitor granularity differs or is irregular."]
           : []),
         ...(trendPairs.length === 0
-          ? ["没有 newFollowers 与 uniqueVisitors 均存在的同日期周期。"]
+          ? ["No same-date periods contain both newFollowers and uniqueVisitors."]
           : []),
         ...(pairedUniqueVisitors === 0
-          ? ["同日期成对周期内 Unique Visitors 合计为 0。"]
+          ? ["Unique visitors total zero across same-date pairs."]
           : []),
       ],
       caveat:
-        "该指标不能识别某位访客是否成为关注者，也不能当作真实转化率。",
+        "This metric cannot identify whether a visitor became a follower and is not a conversion rate.",
     }),
     publishingWindowCorrelation: metricFromValues({
       metricId: "cross.publishingWindowCorrelation",
-      label: "发布窗口与受众变化的时间相关性",
+      label: "Publishing window and audience change correlation",
       values: pairCoverageValues,
       value: publishingCorrelation,
       unit: "score",
       formula:
-        "Pearson correlation(同期发布数量, 同期 newFollowers + uniqueVisitors)，至少 3 个同粒度共同周期",
+        "Pearson correlation(concurrent publishing count, concurrent newFollowers + uniqueVisitors) across at least three shared periods",
       period: commonPeriod,
       records: [
         ...content.filter(
@@ -1302,15 +1302,15 @@ export function calculateCrossModuleMetrics(
       sourceModules: ["content", "followers", "visitors"],
       minReliableSample: 3,
       extraReasons: [
-        "只衡量同期相关性，不表示内容发布导致受众变化。",
+        "This measures concurrent correlation and does not show publishing caused audience change.",
         ...(!sameGranularity
-          ? ["模块粒度不一致或不规则。"]
+          ? ["Module granularity differs or is irregular."]
           : []),
         ...(publishingPairs.length < 3
-          ? [`可比较发布周期仅 ${publishingPairs.length} 个。`]
+          ? [`Only ${publishingPairs.length} comparable publishing periods are available.`]
           : []),
       ],
-      caveat: "不得将该时间相关性表述为内容发布造成增长。",
+      caveat: "Do not describe this temporal correlation as publishing-driven growth.",
     }),
   };
 }

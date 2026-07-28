@@ -93,7 +93,7 @@ export function createInitialIngestionState(): IngestionState {
     activeSlot: null,
     analysisReady: false,
     qualityWarningsAcknowledged: false,
-    announcement: "请选择三类 LinkedIn 导出文件，或载入脱敏示例数据。",
+    announcement: "Select the three LinkedIn export types or load demo data.",
   };
 }
 
@@ -139,7 +139,7 @@ export function ingestionReducer(
       activeSlot: "followers",
       analysisReady: false,
       qualityWarningsAcknowledged: false,
-      announcement: "已载入完全虚构的脱敏示例数据，三个模块已确认。",
+      announcement: "Fictional demo data loaded; all three modules are confirmed.",
     };
   }
 
@@ -166,7 +166,7 @@ export function ingestionReducer(
       activeSlot: action.module,
       analysisReady: false,
       qualityWarningsAcknowledged: false,
-      announcement: `正在安全解析 ${action.file.name}。`,
+      announcement: `Securely parsing ${action.file.name}.`,
     };
   }
 
@@ -185,7 +185,7 @@ export function ingestionReducer(
       activeSlot: action.module,
       analysisReady: false,
       qualityWarningsAcknowledged: false,
-      announcement: `${action.result.file.name} 解析完成，请确认识别结果。`,
+      announcement: `${action.result.file.name} was parsed. Confirm the recognition result.`,
     };
   }
 
@@ -219,7 +219,7 @@ export function ingestionReducer(
         state.activeSlot === action.module ? null : state.activeSlot,
       analysisReady: false,
       qualityWarningsAcknowledged: false,
-      announcement: `已移除 ${action.module} 文件。`,
+      announcement: `Removed the ${action.module} file.`,
     };
   }
 
@@ -246,7 +246,7 @@ export function ingestionReducer(
       }),
       analysisReady: false,
       qualityWarningsAcknowledged: false,
-      announcement: `已确认 ${action.module} 的识别与字段映射。`,
+      announcement: `Confirmed ${action.module} recognition and field mappings.`,
     };
   }
 
@@ -270,7 +270,7 @@ export function ingestionReducer(
       }),
       analysisReady: false,
       qualityWarningsAcknowledged: false,
-      announcement: "字段映射已修改，请应用后重新校验。",
+      announcement: "Field mappings changed. Apply them to revalidate.",
     };
   }
 
@@ -278,7 +278,7 @@ export function ingestionReducer(
     return {
       ...state,
       qualityWarningsAcknowledged: true,
-      announcement: "已确认非阻断数据质量警告。",
+      announcement: "Non-blocking data quality warnings acknowledged.",
     };
   }
 
@@ -287,7 +287,7 @@ export function ingestionReducer(
       ...state,
       analysisReady: true,
       qualityWarningsAcknowledged: false,
-      announcement: "Analysis Snapshot 已生成。",
+      announcement: "Analysis snapshot prepared.",
     };
   }
 

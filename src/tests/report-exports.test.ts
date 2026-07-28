@@ -68,7 +68,7 @@ test("Markdown report includes required sections and evidence identifiers", () =
   }
   assert.ok(markdown.content.includes("followers.netGrowth"));
   assert.ok(markdown.content.includes("insight-audience-followers"));
-  assert.ok(markdown.content.includes("相关性不代表内容导致增长"));
+  assert.ok(markdown.content.includes("does not show content caused growth"));
 });
 
 test("calendar CSV escapes formulas, quotes, commas, newlines, and Unicode", () => {

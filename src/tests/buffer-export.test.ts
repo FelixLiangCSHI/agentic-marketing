@@ -170,7 +170,7 @@ test("invalid links, media URLs, unsupported formats, and conflicts are explicit
     ...plan.contentCalendar[0],
     linkUrl: "javascript:alert(1)",
     mediaUrls: ["https://example.invalid/not-an-image"],
-    contentFormat: "文档轮播",
+    contentFormat: "Document carousel",
   };
   plan.contentCalendar[1] = {
     ...plan.contentCalendar[1],

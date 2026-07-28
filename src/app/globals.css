@@ -25,8 +25,7 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
-  --font-sans: "Segoe UI", "Microsoft YaHei", "PingFang SC", Arial,
-    sans-serif;
+  --font-sans: "Segoe UI", Arial, sans-serif;
 }
 
 * {
@@ -234,6 +233,54 @@ select:disabled {
 .header-button:hover {
   background: var(--surface-muted);
   color: var(--ink);
+}
+
+.buffer-handoff {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--line-strong);
+  border-left: 4px solid var(--brand);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.buffer-handoff__summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  margin: 20px 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--line);
+}
+
+.buffer-handoff__summary > div {
+  min-height: 82px;
+  padding: 14px;
+  background: var(--surface-muted);
+}
+
+.buffer-handoff__summary dt {
+  margin-bottom: 8px;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.buffer-handoff__summary dd {
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .buffer-handoff__summary {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .page-frame {

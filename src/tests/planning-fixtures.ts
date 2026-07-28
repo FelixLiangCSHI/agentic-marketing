@@ -21,7 +21,7 @@ export function approvedPlanningInput(
   }));
   const businessGoal: BusinessGoal = {
     goalId: "goal-synthetic",
-    statement: "以临床证据、法规进展和经济价值支持医院医疗器械评估",
+    statement: "Support hospital medical device evaluation with clinical evidence, regulatory progress, and economic value.",
     confirmed: true,
     confirmedAt: PLANNING_NOW.toISOString(),
   };
@@ -37,14 +37,14 @@ export function approvedPlanningInput(
       postsPerWeek: 3,
       teamSize: null,
       contentResources: [
-        "临床证据",
-        "法规资料",
-        "健康经济学分析",
-        "KOL 访谈",
-        "医学设计",
+        "clinical evidence",
+        "regulatory materials",
+        "health economics analysis",
+        "expert interviews",
+        "medical design",
       ],
-      targetMarket: "北美与欧盟医院系统",
-      focusAudience: "医疗专业人员、临床 KOL、医院采购和法规事务负责人",
+      targetMarket: "North American and European hospital systems",
+      focusAudience: "Healthcare professionals, clinical experts, procurement teams, and regulatory leaders",
     },
     ...overrides,
   };

@@ -23,10 +23,10 @@ interface ChatMessage {
 }
 
 const QUICK_QUESTIONS = [
-  "最近关注者增长怎么样？",
-  "数据质量有什么限制？",
-  "洞察的证据是什么？",
-  "下个月应该发布什么？",
+  "How has follower growth changed recently?",
+  "What are the data quality limitations?",
+  "What evidence supports the insights?",
+  "What should we publish next month?",
 ] as const;
 
 export function EvidenceChatPanel({
@@ -92,16 +92,16 @@ export function EvidenceChatPanel({
       <header className="evidence-chat__header">
         <div>
           <span className="section-label">EVIDENCE CHAT · MOCK</span>
-          <h2>基于证据的问答</h2>
-          <p>不会调用真实 LLM，不会访问当前会话以外的数据。</p>
+          <h2>Evidence review</h2>
+          <p>Deterministic demo responses use only the current session data.</p>
         </div>
         <span className="mode-badge mode-badge--mock">
-          <Icon name="sparkles" size={14} />
+          <Icon name="database" size={14} />
           evidence-chat-v1.0
         </span>
       </header>
 
-      <div className="chat-quick-questions" aria-label="快捷问题">
+      <div className="chat-quick-questions" aria-label="Suggested questions">
         {QUICK_QUESTIONS.map((question) => (
           <button
             key={question}
@@ -121,7 +121,7 @@ export function EvidenceChatPanel({
             className={`chat-message chat-message--${message.role}`}
           >
             <span className="chat-message__role">
-              {message.role === "agent" ? "Agent" : "你"}
+              {message.role === "agent" ? "Evidence Review" : "You"}
             </span>
             {message.answer ? (
               <ConsultingReport report={message.answer.report} />
@@ -131,7 +131,7 @@ export function EvidenceChatPanel({
             {message.answer && message.answer.citations.length > 0 && (
               <details className="chat-evidence">
                 <summary>
-                  查看证据（{message.answer.citations.length}）
+                  Review evidence ({message.answer.citations.length})
                 </summary>
                 <ul>
                   {message.answer.citations.map((citation) => (
@@ -146,10 +146,10 @@ export function EvidenceChatPanel({
                           <span>
                             {citation.metric.period
                               ? `${citation.metric.period.start} — ${citation.metric.period.end}`
-                              : "无可用时间范围"}
+                              : "No date range available"}
                           </span>
                           <span>
-                            来源：{citation.metric.sourceModules.join("、")}
+                            Sources: {citation.metric.sourceModules.join(", ")}
                           </span>
                         </>
                       )}
@@ -170,7 +170,7 @@ export function EvidenceChatPanel({
                 }}
               >
                 <Icon name="check" size={14} />
-                应用这项计划修改
+                Apply plan change
               </button>
             )}
           </article>
@@ -178,7 +178,7 @@ export function EvidenceChatPanel({
         {loading && (
           <div className="chat-loading" role="status">
             <Icon name="spinner" size={16} className="spin" />
-            正在检索当前项目证据…
+            Reviewing current project evidence...
           </div>
         )}
         <div ref={endRef} />
@@ -186,14 +186,14 @@ export function EvidenceChatPanel({
 
       <form className="chat-composer" onSubmit={submit}>
         <label className="visually-hidden" htmlFor="evidence-chat-input">
-          输入问题
+          Enter a question
         </label>
         <input
           id="evidence-chat-input"
           value={input}
           disabled={loading}
           maxLength={400}
-          placeholder="询问指标、证据、建议或修改计划…"
+          placeholder="Ask about metrics, evidence, recommendations, or plan changes..."
           onChange={(event) => setInput(event.target.value)}
         />
         <button
@@ -201,7 +201,7 @@ export function EvidenceChatPanel({
           type="submit"
           disabled={loading || !input.trim()}
         >
-          发送
+          Review
           <Icon name="arrow" size={15} />
         </button>
       </form>

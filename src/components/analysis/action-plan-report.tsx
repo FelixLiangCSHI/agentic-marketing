@@ -77,22 +77,22 @@ function PlanItemCard({
       <header>
         <div>
           <span>
-            {item.date} {item.scheduledTime}（{item.timeZone}）
+            {item.date} {item.scheduledTime} ({item.timeZone})
           </span>
           <strong>{item.topic}</strong>
         </div>
         <span className={`plan-status plan-status--${item.status}`}>
           {item.status === "ai_draft"
-            ? "AI 初稿"
+            ? "Prepared draft"
             : item.status === "confirmed"
-              ? "用户已确认"
-              : "已拒绝"}
+              ? "Approved"
+              : "Rejected"}
         </span>
       </header>
       {editing ? (
         <div className="plan-item__editor">
           <label>
-            主题
+            Topic
             <input
               value={draft.topic}
               onChange={(event) =>
@@ -104,7 +104,7 @@ function PlanItemCard({
             />
           </label>
           <label>
-            目标受众
+            Target audience
             <input
               value={draft.targetAudience}
               onChange={(event) =>
@@ -133,7 +133,7 @@ function PlanItemCard({
               type="button"
               onClick={() => setEditing(false)}
             >
-              取消
+              Cancel
             </button>
             <button
               className="primary-button"
@@ -148,7 +148,7 @@ function PlanItemCard({
                 setEditing(false);
               }}
             >
-              保存修改
+              Save changes
             </button>
           </div>
         </div>
@@ -186,23 +186,23 @@ function PlanItemCard({
           {item.isExperiment && item.experiment && (
             <div className="experiment-card">
               <span>
-                <Icon name="sparkles" size={14} />
-                实验
+                <Icon name="content" size={14} />
+                Experiment
               </span>
               <strong>{item.experiment.hypothesis}</strong>
               <p>{item.experiment.successCriteria}</p>
-              <small>复盘：{item.experiment.reviewDate}</small>
+              <small>Review: {item.experiment.reviewDate}</small>
             </div>
           )}
           <details className="plan-evidence">
-            <summary>查看策略与衡量证据</summary>
+            <summary>Review strategy and measurement evidence</summary>
             <div>
               <strong>
-                {strategy?.title ?? `策略 ${item.strategyId}`}
+                {strategy?.title ?? `Strategy ${item.strategyId}`}
               </strong>
               <span>{strategy?.rationale}</span>
               <code>{item.measurementMetricIds.join(", ")}</code>
-              <small>负责人：{item.ownerPlaceholder}</small>
+              <small>Owner: {item.ownerPlaceholder}</small>
             </div>
           </details>
           <div className="plan-item__actions">
@@ -211,7 +211,7 @@ function PlanItemCard({
               type="button"
               onClick={startEditing}
             >
-              修改
+              Edit
             </button>
             <button
               className="secondary-button secondary-button--small"
@@ -219,7 +219,7 @@ function PlanItemCard({
               disabled={item.status === "rejected"}
               onClick={() => onUpdate(item.itemId, { status: "rejected" })}
             >
-              拒绝
+              Reject
             </button>
             <button
               className="primary-button"
@@ -228,7 +228,7 @@ function PlanItemCard({
               onClick={() => onUpdate(item.itemId, { status: "confirmed" })}
             >
               <Icon name="check" size={14} />
-              接受
+              Approve
             </button>
           </div>
         </>
@@ -268,7 +268,7 @@ function DraftCard({
         <div><dt>Hashtags</dt><dd>{campaignHashtag} #B2BMarketing #ContentStrategy</dd></div>
         <div><dt>Media suggestion</dt><dd>{item.mediaRequirement ?? "Text-led post with a branded insight card"}</dd></div>
         <div><dt>Professional terminology</dt><dd>{strategy?.title ?? item.contentFormat} · {item.coreMessage}</dd></div>
-        <div><dt>Buffer Status</dt><dd>Ready for Buffer</dd></div>
+        <div><dt>Publishing status</dt><dd>Ready to Publish</dd></div>
       </dl>
     </article>
   );
@@ -285,7 +285,7 @@ function EvidenceSummary({
     <section className="report-evidence-section">
       <h3>{title}</h3>
       {items.length === 0 ? (
-        <p>没有已批准的相关洞察。</p>
+        <p>No approved related insights.</p>
       ) : (
         <ul>
           {items.map((insight) => (
@@ -316,6 +316,9 @@ export function ActionPlanReport({
   onDownload,
 }: ActionPlanReportProps) {
   const [view, setView] = useState<"list" | "calendar">("list");
+  const [queueState, setQueueState] = useState<"pending" | "ready" | "queued">(
+    "pending",
+  );
   const contentInsights = approvedInsights.filter(
     (item) => item.category === "content",
   );
@@ -352,18 +355,18 @@ export function ActionPlanReport({
             onClick={onUndo}
           >
             <Icon name="refresh" size={15} />
-            撤销最近修改
+            Undo latest change
           </button>
           <button className="secondary-button" type="button" onClick={onDownload}>
             <Icon name="download" size={15} />
-            下载计划 JSON
+            Download plan JSON
           </button>
         </div>
       </section>
 
       <section className={`approval-card approval-card--${PLAN_APPROVAL_STATUS[plan.status]} calendar-approval-card`}>
         <EnterpriseApprovalControls
-          recommendation="Approve the 30-day content calendar before draft generation."
+          recommendation="Approve the 30-day content calendar before content preparation."
           status={PLAN_APPROVAL_STATUS[plan.status]}
           onDecision={(status) => {
             if (status === "approved") {
@@ -377,19 +380,19 @@ export function ActionPlanReport({
 
       <dl className="report-metadata">
         <div>
-          <dt>生成时间</dt>
-          <dd>{new Date(plan.generatedAt).toLocaleString("zh-CN")}</dd>
+          <dt>Prepared at</dt>
+          <dd>{new Date(plan.generatedAt).toLocaleString("en-US")}</dd>
         </div>
         <div>
-          <dt>分析范围</dt>
+          <dt>Analysis period</dt>
           <dd>
             {plan.analysisPeriod
               ? `${plan.analysisPeriod.start} — ${plan.analysisPeriod.end}`
-              : "无共同时间范围"}
+              : "No common date range"}
           </dd>
         </div>
         <div>
-          <dt>Prompt 版本</dt>
+          <dt>Prompt version</dt>
           <dd>{plan.promptVersion}</dd>
         </div>
         <div>
@@ -397,8 +400,8 @@ export function ActionPlanReport({
           <dd>{plan.snapshotId}</dd>
         </div>
         <div>
-          <dt>数据模块</dt>
-          <dd>{plan.sourceModules.join("、")}</dd>
+          <dt>Data modules</dt>
+          <dd>{plan.sourceModules.join(", ")}</dd>
         </div>
       </dl>
 
@@ -407,7 +410,7 @@ export function ActionPlanReport({
           <Icon name="alert" size={21} />
           <div>
             <span className="section-label">RISKS & LIMITATIONS</span>
-            <h3>风险与数据限制</h3>
+            <h3>Risks and data limitations</h3>
           </div>
         </div>
         <ul>
@@ -428,10 +431,10 @@ export function ActionPlanReport({
                 <strong>{strategy.title}</strong>
                 <span>{strategy.objective}</span>
                 <details>
-                  <summary>引用关系</summary>
+                  <summary>Evidence references</summary>
                   <code>{strategy.metricIds.join(", ")}</code>
                   <small>
-                    洞察：{strategy.insightIds.join(", ")}
+                    Insights: {strategy.insightIds.join(", ")}
                   </small>
                 </details>
               </li>
@@ -444,7 +447,7 @@ export function ActionPlanReport({
         <div className="section-heading section-heading--large">
           <div>
             <span className="section-label">FOUR-WEEK PLAN</span>
-            <h2>四周目标与任务</h2>
+            <h2>Four-week objectives and tasks</h2>
             <p>
               {plan.startDate} — {plan.endDate} · {plan.preferences.timeZone}
             </p>
@@ -470,7 +473,7 @@ export function ActionPlanReport({
                 ))}
               </ul>
               <details>
-                <summary>复盘与依赖</summary>
+                <summary>Review and dependencies</summary>
                 <p>{week.reviewAction}</p>
                 <code>{week.kpiMetricIds.join(", ")}</code>
               </details>
@@ -488,20 +491,20 @@ export function ActionPlanReport({
               Date · Post objective · Topic · Content angle · Target audience · CTA · Status
             </p>
           </div>
-          <div className="view-toggle" role="group" aria-label="日历视图">
+          <div className="view-toggle" role="group" aria-label="Calendar view">
             <button
               type="button"
               className={view === "list" ? "is-active" : ""}
               onClick={() => setView("list")}
             >
-              列表
+              List
             </button>
             <button
               type="button"
               className={view === "calendar" ? "is-active" : ""}
               onClick={() => setView("calendar")}
             >
-              日历
+              Calendar
             </button>
           </div>
         </div>
@@ -524,7 +527,7 @@ export function ActionPlanReport({
             {plan.fourWeekPlan.map((week) => (
               <section key={week.weekNumber}>
                 <header>
-                  <strong>第 {week.weekNumber} 周</strong>
+                  <strong>Week {week.weekNumber}</strong>
                   <span>{week.dateRange.start}</span>
                 </header>
                 {week.contentItems.map((itemId) => {
@@ -537,7 +540,7 @@ export function ActionPlanReport({
                       <strong>{item.topic}</strong>
                       <small>
                         {item.contentFormat}
-                        {item.isExperiment ? " · 实验" : ""}
+                        {item.isExperiment ? " · Experiment" : ""}
                       </small>
                     </article>
                   ) : null;
@@ -552,9 +555,9 @@ export function ActionPlanReport({
         <div className="workflow-block__header">
           <span className="workflow-block__step">STEP 4</span>
           <div>
-            <span className="section-label">DRAFT GENERATION</span>
-            <h2>Buffer-ready LinkedIn drafts</h2>
-            <p>Generated only after the 30-day calendar is approved.</p>
+            <span className="section-label">CONTENT PREPARATION</span>
+            <h2>LinkedIn publishing drafts</h2>
+            <p>Prepared only after the 30-day calendar is approved.</p>
           </div>
           <span className={`workflow-state ${plan.status === "user_confirmed" ? "workflow-state--complete" : "workflow-state--approval"}`}>
             <Icon name={plan.status === "user_confirmed" ? "check" : "lock"} size={14} />
@@ -578,16 +581,50 @@ export function ActionPlanReport({
             <Icon name="lock" size={20} />
             <div>
               <strong>Human Approval Required</strong>
-              <p>Approve the calendar to unlock title, body, hashtags, media guidance and Buffer handoff status.</p>
+              <p>Approve the calendar to unlock titles, copy, hashtags, media guidance, and publishing status.</p>
             </div>
           </div>
         )}
       </section>
 
+      <section className="buffer-handoff" aria-label="Buffer publishing handoff">
+        <div className="workflow-block__header">
+          <span className="workflow-block__step">FINAL</span>
+          <div>
+            <span className="section-label">BUFFER CONNECTION</span>
+            <h2>Buffer Connection</h2>
+            <p>Mock integration preview · Demo only · No network or API calls</p>
+          </div>
+          <span className="mode-badge mode-badge--mock">Mock / Demo</span>
+        </div>
+        <dl className="buffer-handoff__summary">
+          <div><dt>Workspace</dt><dd>Marketing Operations Demo</dd></div>
+          <div><dt>Scheduled Drafts</dt><dd>{plan.contentCalendar.length}</dd></div>
+          <div><dt>Ready to Publish</dt><dd>{queueState === "pending" ? 0 : plan.contentCalendar.length}</dd></div>
+          <div><dt>Pending Review</dt><dd>{queueState === "pending" ? plan.contentCalendar.length : 0}</dd></div>
+          <div><dt>Publishing Queue</dt><dd>{queueState === "queued" ? `${plan.contentCalendar.length} drafts staged locally` : "Not queued"}</dd></div>
+        </dl>
+        <button
+          className="primary-button"
+          type="button"
+          disabled={plan.status !== "user_confirmed"}
+          onClick={() =>
+            setQueueState((current) => current === "pending" ? "ready" : "queued")
+          }
+        >
+          <Icon name={queueState === "queued" ? "check" : "arrow"} size={15} />
+          {queueState === "pending"
+            ? "Review for Publishing"
+            : queueState === "ready"
+              ? "Add to Publishing Queue"
+              : "Publishing Queue Prepared"}
+        </button>
+      </section>
+
       <section className="report-bottom-grid">
         <article>
           <span className="section-label">ASSUMPTIONS</span>
-          <h3>执行假设</h3>
+          <h3>Execution assumptions</h3>
           <ul>
             {plan.assumptions.map((assumption) => (
               <li key={assumption}>{assumption}</li>
@@ -596,7 +633,7 @@ export function ActionPlanReport({
         </article>
         <article>
           <span className="section-label">KPI REVIEW</span>
-          <h3>KPI 复盘</h3>
+          <h3>KPI review</h3>
           <ul>
             {plan.kpiReviewPlan.map((review) => (
               <li key={review.reviewId}>
@@ -609,7 +646,7 @@ export function ActionPlanReport({
         </article>
         <article>
           <span className="section-label">NEXT IMPORT</span>
-          <h3>下次导入问题</h3>
+          <h3>Questions for the next import</h3>
           <ul>
             {plan.nextImportQuestions.map((question) => (
               <li key={question}>{question}</li>

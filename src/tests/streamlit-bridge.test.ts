@@ -60,7 +60,7 @@ async function confirmedBridgePlan() {
       strategyBundle: analysis.strategyBundle,
       businessGoal: {
         goalId: "goal-buffer-bridge",
-        statement: "建立经医学与法规审阅的医疗器械专业内容交接流程",
+        statement: "Establish a medically and regulatorily reviewed content handoff process.",
         confirmed: true,
         confirmedAt: BRIDGE_NOW,
       },
@@ -69,9 +69,9 @@ async function confirmedBridgePlan() {
         timeZone: "Asia/Shanghai",
         postsPerWeek: 3,
         teamSize: null,
-        contentResources: ["临床证据", "法规资料", "KOL 访谈", "医学设计"],
-        targetMarket: "北美医院系统",
-        focusAudience: "医疗专业人员、临床 KOL 和医院采购团队",
+        contentResources: ["clinical evidence", "regulatory materials", "expert interviews", "medical design"],
+        targetMarket: "North American hospital systems",
+        focusAudience: "Healthcare professionals, clinical experts, and procurement teams",
       },
     }),
   );
@@ -382,6 +382,6 @@ test("bridge maps retryable service failures without leaking raw errors", () => 
   );
   assert.equal(
     bridgeErrorFromUnknown(new Error("sensitive raw cell")).message,
-    "本地演示处理失败，未记录原始文件内容。",
+    "Local demo processing failed; source file content was not recorded.",
   );
 });

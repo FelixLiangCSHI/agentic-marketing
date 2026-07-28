@@ -76,7 +76,7 @@ test("builds a timezone-safe four-week plan within the 30-day range", () => {
   assert.equal(new Set(plan.contentCalendar.map((item) => item.date)).size, 12);
   assert.ok(plan.contentCalendar.every((item) => item.date >= plan.startDate));
   assert.ok(
-    plan.contentCalendar.every((item) => item.ownerPlaceholder.includes("待指定")),
+    plan.contentCalendar.every((item) => item.ownerPlaceholder.includes("assign")),
   );
   assert.ok(
     plan.contentCalendar.every(
@@ -143,7 +143,7 @@ test("labels experiments with hypothesis, success criteria, and review date", ()
   for (const item of experiments) {
     assert.ok(item.experiment);
     assert.ok(item.experiment.hypothesis.length > 0);
-    assert.ok(item.experiment.successCriteria.includes("不承诺固定增长幅度"));
+    assert.ok(item.experiment.successCriteria.includes("without promising fixed growth"));
     assert.ok(item.experiment.reviewDate >= item.date);
   }
 });

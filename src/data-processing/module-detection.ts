@@ -79,12 +79,12 @@ function keywordScore(
 
   if (sheetMatch) {
     score += 14;
-    reasons.push(`Sheet 名包含“${sheetMatch}”`);
+    reasons.push(`Sheet name contains "${sheetMatch}"`);
   }
 
   if (fileMatch) {
     score += 6;
-    reasons.push(`文件名提供 ${module} 弱提示`);
+    reasons.push(`File name provides a weak ${module} signal`);
   }
 
   return { score, reasons };
@@ -113,7 +113,7 @@ function moduleCandidate(
     matchedFields.size * 12 + distinctiveCount * 8 + keyword.score,
   );
   const reasons = [
-    `表头命中 ${matchedFields.size} 个标准字段`,
+    `Header matches ${matchedFields.size} standard fields`,
     ...keyword.reasons,
   ];
 
@@ -141,7 +141,7 @@ export function detectModule(
       confidence: "high",
       requiresConfirmation: false,
       candidates,
-      reasons: ["用户已手动确认模块；字段仍按映射规则逐项校验。"],
+      reasons: ["The reviewer confirmed the module; fields remain validated against mapping rules."],
     };
   }
 
@@ -155,7 +155,7 @@ export function detectModule(
       confidence: "low",
       requiresConfirmation: true,
       candidates,
-      reasons: ["表头、Sheet 名与文件名提供的证据不足，需手动选择模块。"],
+      reasons: ["Headers, sheet name, and file name do not provide enough evidence; select a module."],
     };
   }
 
@@ -168,9 +168,9 @@ export function detectModule(
     candidates,
     reasons: [
       ...top.reasons,
-      `领先下一候选 ${margin} 分`,
+      `${margin} points ahead of the next candidate`,
       ...(confidence === "low" || margin < 7
-        ? ["识别差异较小，需要用户确认。"]
+        ? ["The recognition margin is small and requires confirmation."]
         : []),
     ],
   };
@@ -284,7 +284,7 @@ function initialMapping(
           standardField: null,
           status: "unmapped",
           confidence: "high",
-          reason: "用户明确选择忽略该字段。",
+          reason: "The reviewer chose to ignore this field.",
           alternatives: [],
         },
       };
@@ -299,7 +299,7 @@ function initialMapping(
           standardField: override,
           status: "mapped",
           confidence: "high",
-          reason: "用户手动确认字段映射。",
+          reason: "The reviewer confirmed the field mapping.",
           alternatives: [],
         },
       };
@@ -322,7 +322,7 @@ function initialMapping(
         standardField: null,
         status: "unmapped",
         confidence: "low",
-        reason: "未在当前模块的集中式别名表中找到匹配。",
+        reason: "No match was found in the module alias registry.",
         alternatives: [],
       },
     };
@@ -342,7 +342,7 @@ function initialMapping(
         standardField: null,
         status: "conflict",
         confidence: "low",
-        reason: "一个原始字段同等匹配多个标准字段，需要用户选择。",
+        reason: "One source field matches multiple standard fields and requires selection.",
         alternatives: tied.map(({ field }) => field),
       },
     };
@@ -359,8 +359,8 @@ function initialMapping(
       status: "mapped",
       confidence: usedContextRule || first.priority >= 100 ? "high" : "medium",
       reason: usedContextRule
-        ? "根据 Sheet 语义和字段组合应用了可解释的上下文规则。"
-        : "与集中式字段别名精确匹配。",
+        ? "An explainable contextual rule was applied from sheet semantics and field combinations."
+        : "Exact match in the centralized field alias registry.",
       alternatives: candidates.slice(1).map(({ field }) => field),
     },
   };
@@ -415,8 +415,8 @@ export function buildFieldMappings(
           confidence: "low",
           reason:
             tiedWinners.length > 1
-              ? `多个原始字段同等匹配 ${field}，未自动选择。`
-              : `优先使用更明确的字段“${winner.mapping.rawHeader}”；该字段需人工确认。`,
+              ? `Multiple source fields match ${field} equally; none was selected automatically.`
+              : `The more specific field "${winner.mapping.rawHeader}" was preferred and requires confirmation.`,
           alternatives: [field],
         };
       }

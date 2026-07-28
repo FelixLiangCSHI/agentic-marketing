@@ -6,8 +6,8 @@ export default function Loading() {
       <span className="route-state__icon">
         <Icon name="spinner" size={28} className="spin" />
       </span>
-      <h1>正在准备安全解析工作区</h1>
-      <p>正在载入合成示例接口与字段字典…</p>
+      <h1>Preparing the secure analysis workspace</h1>
+      <p>Loading demo data and field definitions...</p>
     </main>
   );
 }

@@ -25,14 +25,14 @@ interface AnalysisSnapshotViewProps {
 }
 
 const RELIABILITY_LABELS: Record<MetricReliability, string> = {
-  reliable: "可靠",
-  directional: "方向性",
-  unavailable: "不可用",
+  reliable: "Reliable",
+  directional: "Directional",
+  unavailable: "Unavailable",
 };
 
 function periodLabel(metric: Metric): string {
   if (!metric.period) {
-    return "无可用时间范围";
+    return "No date range available";
   }
   return `${metric.period.start} — ${metric.period.end} · ${metric.period.granularity}`;
 }
@@ -43,7 +43,7 @@ function SourceList({
   references: readonly SourceReference[];
 }) {
   if (references.length === 0) {
-    return <p className="metric-empty-note">没有可用于计算的来源行。</p>;
+    return <p className="metric-empty-note">No source rows are available for calculation.</p>;
   }
   return (
     <ul className="source-reference-list">
@@ -54,12 +54,12 @@ function SourceList({
           <strong>{MODULE_CONFIG[reference.module].label}</strong>
           <span title={reference.fileName}>{reference.fileName}</span>
           <span>
-            {reference.sheetName} · 行 {reference.rowStart}
+            {reference.sheetName} · Row {reference.rowStart}
             {reference.rowEnd === reference.rowStart
               ? ""
               : `–${reference.rowEnd}`}
           </span>
-          <small>{reference.fields.join(", ") || "记录级来源"}</small>
+          <small>{reference.fields.join(", ") || "Record-level source"}</small>
         </li>
       ))}
     </ul>
@@ -89,17 +89,17 @@ function MetricCard({ metric }: { metric: Metric }) {
         </p>
       )}
       <details className="metric-details">
-        <summary>这个数字如何计算</summary>
+        <summary>How this value is calculated</summary>
         <div>
-          <strong>公式</strong>
+          <strong>Formula</strong>
           <code>{metric.formula}</code>
-          <strong>可靠性依据</strong>
+          <strong>Reliability basis</strong>
           <ul>
             {metric.reliabilityReasons.map((reason) => (
               <li key={reason}>{reason}</li>
             ))}
           </ul>
-          <strong>数据来源</strong>
+          <strong>Data sources</strong>
           <SourceList references={metric.sourceReferences} />
         </div>
       </details>
@@ -129,11 +129,11 @@ function SeriesCard({ series }: { series: MetricSeries }) {
       {series.points.length === 0 ? (
         <EmptyState
           icon="table"
-          title="趋势不可用"
+          title="Trend unavailable"
           description={series.reliabilityReasons.join(" ")}
         />
       ) : (
-        <div className="snapshot-bars" role="img" aria-label={`${series.label} 柱状趋势`}>
+        <div className="snapshot-bars" role="img" aria-label={`${series.label} bar trend`}>
           {series.points.map((point) => (
             <div key={`${series.seriesId}-${point.period}`}>
               <span className="snapshot-bars__value">
@@ -176,7 +176,7 @@ function RankingCard({ ranking }: { ranking: RankedMetric }) {
       {ranking.items.length === 0 ? (
         <EmptyState
           icon="table"
-          title="排名不可用"
+          title="Ranking unavailable"
           description={ranking.reliabilityReasons.join(" ")}
         />
       ) : (
@@ -187,7 +187,7 @@ function RankingCard({ ranking }: { ranking: RankedMetric }) {
               <div>
                 <strong>{item.label}</strong>
                 <small>
-                  {item.tied ? "并列 · " : ""}
+                  {item.tied ? "Tied · " : ""}
                   {RELIABILITY_LABELS[item.reliability]}
                 </small>
               </div>
@@ -197,7 +197,7 @@ function RankingCard({ ranking }: { ranking: RankedMetric }) {
         </ol>
       )}
       <details className="metric-details">
-        <summary>查看排名公式与可靠性</summary>
+        <summary>Review ranking formula and reliability</summary>
         <div>
           <code>{ranking.formula}</code>
           <ul>
@@ -223,8 +223,8 @@ function GroupTable({
       <article className="group-card">
         <EmptyState
           icon="table"
-          title={`${title}不可用`}
-          description="缺少可用于分组的字段。"
+          title={`${title} unavailable`}
+          description="Required grouping fields are missing."
         />
       </article>
     );
@@ -242,12 +242,12 @@ function GroupTable({
         <table className="snapshot-table">
           <thead>
             <tr>
-              <th>分组</th>
-              <th>样本</th>
+              <th>Group</th>
+              <th>Sample</th>
               <th>Impressions</th>
               <th>CTR</th>
-              <th>中位互动率</th>
-              <th>可靠性</th>
+              <th>Median engagement rate</th>
+              <th>Reliability</th>
             </tr>
           </thead>
           <tbody>
@@ -341,18 +341,18 @@ export function AnalysisSnapshotView({
             <Icon name="table" size={15} />
             ANALYSIS SNAPSHOT · V{snapshot.snapshotVersion}
           </span>
-          <h2>确定性指标与数据质量快照</h2>
+          <h2>Deterministic metrics and data quality snapshot</h2>
           <p>
-            所有数字由程序从统一模型计算。Snapshot 记录公式、时间范围、来源和可靠性，后续 Agent 只负责解释。
+            Every value is calculated from the standardized model. The snapshot records formulas, periods, sources, and reliability for governed interpretation.
           </p>
         </div>
         <div className="snapshot-hero__actions">
           <button className="secondary-button" type="button" onClick={onBack}>
-            返回字段确认
+            Back to field confirmation
           </button>
           <button className="secondary-button" type="button" onClick={onDownload}>
             <Icon name="download" size={16} />
-            下载 Snapshot JSON
+            Download snapshot JSON
           </button>
         </div>
       </section>
@@ -361,21 +361,21 @@ export function AnalysisSnapshotView({
         <header className="quality-panel__header">
           <div>
             <span className="section-label">DATA QUALITY</span>
-            <h2>数据质量摘要</h2>
+            <h2>Data quality summary</h2>
             <p>
               {snapshot.analysisPeriod
                 ? `${snapshot.analysisPeriod.start} — ${snapshot.analysisPeriod.end}`
-                : "没有三个模块共同的可用时间范围"}
+                : "No common date range across all three modules"}
             </p>
           </div>
           <div className="quality-scorecards">
             <div className="quality-score quality-score--error">
               <strong>{snapshot.quality.blockingIssueCount}</strong>
-              <span>阻断问题</span>
+              <span>Blocking issues</span>
             </div>
             <div className="quality-score quality-score--warning">
               <strong>{snapshot.quality.warningCount}</strong>
-              <span>警告</span>
+              <span>Warnings</span>
             </div>
             <div className="quality-score">
               <strong>
@@ -384,7 +384,7 @@ export function AnalysisSnapshotView({
                   0,
                 )}
               </strong>
-              <span>标准记录</span>
+              <span>Standard records</span>
             </div>
           </div>
         </header>
@@ -409,8 +409,8 @@ export function AnalysisSnapshotView({
               <div>
                 <strong>{MODULE_CONFIG[summary.module].label}</strong>
                 <span>
-                  {summary.totalRecords} 条 ·{" "}
-                  {summary.period?.granularity ?? "无日期粒度"}
+                  {summary.totalRecords} records ·{" "}
+                  {summary.period?.granularity ?? "No date granularity"}
                 </span>
               </div>
               <small>
@@ -424,7 +424,7 @@ export function AnalysisSnapshotView({
         {snapshot.quality.issues.length === 0 ? (
           <div className="quality-clear quality-clear--large">
             <Icon name="check" size={20} />
-            <span>未发现质量问题，可以进入后续洞察。</span>
+            <span>No quality issues found. Recommendation review is available.</span>
           </div>
         ) : (
           <ul className="snapshot-issue-list">
@@ -448,7 +448,7 @@ export function AnalysisSnapshotView({
                   <p>{issue.suggestedAction}</p>
                   <details>
                     <summary>
-                      查看受影响来源（{issue.affectedRows.length} 组）
+                      Review affected sources ({issue.affectedRows.length} groups)
                     </summary>
                     <SourceList references={issue.affectedRows} />
                   </details>
@@ -460,7 +460,7 @@ export function AnalysisSnapshotView({
                       : "nonblocking-badge"
                   }
                 >
-                  {issue.blocksAnalysis ? "阻断" : "非阻断"}
+                  {issue.blocksAnalysis ? "Blocking" : "Non-blocking"}
                 </span>
               </li>
             ))}
@@ -473,8 +473,8 @@ export function AnalysisSnapshotView({
               <div>
                 <Icon name="alert" size={19} />
                 <div>
-                  <strong>有 {nonBlockingWarnings.length} 项非阻断警告</strong>
-                  <p>可以继续，但应在后续 Agent 解释中保留这些可靠性限制。</p>
+                  <strong>{nonBlockingWarnings.length} non-blocking warnings</strong>
+                  <p>You may continue, but retain these reliability limitations in later reviews.</p>
                 </div>
               </div>
               <button
@@ -484,7 +484,7 @@ export function AnalysisSnapshotView({
                 onClick={onAcknowledgeWarnings}
               >
                 <Icon name={warningsAcknowledged ? "check" : "shield"} size={16} />
-                {warningsAcknowledged ? "已确认警告" : "确认并继续"}
+                {warningsAcknowledged ? "Warnings acknowledged" : "Acknowledge and continue"}
               </button>
             </div>
           )}
@@ -493,7 +493,7 @@ export function AnalysisSnapshotView({
       <MetricSection
         eyebrow="FOLLOWERS METRICS"
         title="Followers"
-        description="总量、增长与来源结构；缺少 totalFollowers 时不会用新增量估算存量。"
+        description="Totals, growth, and source mix; new followers never estimate total followers."
         metrics={[
           snapshot.metrics.followers.startFollowers,
           snapshot.metrics.followers.endFollowers,
@@ -517,8 +517,8 @@ export function AnalysisSnapshotView({
             <article className="ranking-card">
               <EmptyState
                 icon="followers"
-                title="画像 Top N 不可用"
-                description="缺少 demographicDimension、demographicValue 与计数或占比。"
+                title="Top audience segments unavailable"
+                description="Audience dimensions, values, counts, or percentages are missing."
               />
             </article>
           )}
@@ -528,7 +528,7 @@ export function AnalysisSnapshotView({
       <MetricSection
         eyebrow="VISITORS METRICS"
         title="Visitors"
-        description="浏览与独立访客聚合指标；Page Views per Visitor 使用总量比值。"
+        description="Aggregate page view and unique visitor metrics using total-based ratios."
         metrics={[
           snapshot.metrics.visitors.pageViewsTotal,
           snapshot.metrics.visitors.uniqueVisitorsTotal,
@@ -548,7 +548,7 @@ export function AnalysisSnapshotView({
       <MetricSection
         eyebrow="CONTENT METRICS"
         title="Content"
-        description="优先使用逐帖数据，基于中位数与确定性互动组成项评估表现。"
+        description="Prioritizes post-level data and evaluates performance with medians and deterministic engagement inputs."
         metrics={[
           snapshot.metrics.content.publishedCount,
           snapshot.metrics.content.impressionsTotal,
@@ -564,11 +564,11 @@ export function AnalysisSnapshotView({
         <RankingCard ranking={snapshot.metrics.content.contentRanking} />
         <div className="snapshot-secondary-grid">
           <GroupTable
-            title="按内容类型"
+            title="By content type"
             groups={snapshot.metrics.content.byContentType}
           />
           <GroupTable
-            title="按发布时间（星期）"
+            title="By publication weekday"
             groups={snapshot.metrics.content.byWeekday}
           />
         </div>
@@ -576,8 +576,8 @@ export function AnalysisSnapshotView({
 
       <MetricSection
         eyebrow="CROSS-MODULE METRICS"
-        title="跨模块观察"
-        description="只在时间范围与粒度可比时计算；相关性和代理比率均不得解释为因果或真实用户转化。"
+        title="Cross-module observations"
+        description="Calculated only for comparable periods and granularity; correlations and proxies are not causation or user conversion."
         metrics={[
           snapshot.metrics.crossModule.visitorFollowerTrendComparison,
           snapshot.metrics.crossModule.visitorToFollowerProxyRatio,
@@ -599,15 +599,15 @@ export function AnalysisSnapshotView({
           <div>
             <strong>
               {insightsAllowed
-                ? "Snapshot 可安全交给后续 Agent"
+                ? "Snapshot is ready for governed review"
                 : snapshot.quality.hasBlockingIssues
-                  ? "存在阻断问题，不能进入 AI 洞察"
-                  : "请先确认非阻断警告"}
+                  ? "Blocking issues prevent recommendation review"
+                  : "Acknowledge non-blocking warnings first"}
             </strong>
             <p>
               {insightsAllowed
-                ? "Agent 只能解释这些已计算指标，不应重新计算或补造 unavailable 数值。"
-                : "修复数据或完成警告确认后再继续。"}
+                ? "Later recommendations may interpret only these calculated metrics and may not invent unavailable values."
+                : "Resolve data issues or acknowledge warnings before continuing."}
             </p>
           </div>
         </div>
@@ -617,8 +617,8 @@ export function AnalysisSnapshotView({
           disabled={!insightsAllowed}
           onClick={() => setPlanningOpen(true)}
         >
-          <Icon name="sparkles" size={16} />
-          进入策略与 30 天计划
+          <Icon name="arrow" size={16} />
+          Review strategy and 30-day plan
         </button>
       </section>
     </div>

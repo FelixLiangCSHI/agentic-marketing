@@ -19,11 +19,11 @@ export interface EvidenceChatContext {
 }
 
 const SECURITY_REQUEST =
-  /(system\s*prompt|系统提示词|提示词全文|api\s*key|密钥|secret|内部配置|开发者指令|忽略.{0,8}(之前|以上|规则)|reveal.{0,12}(prompt|config|secret))/i;
+  /(system\s*prompt|api\s*key|secret|internal\s*config|developer\s*instruction|ignore.{0,8}(previous|above|rules)|reveal.{0,12}(prompt|config|secret))/i;
 const IDENTITY_REQUEST =
-  /(识别|告诉我|列出|找到).{0,12}(匿名访客|具体访客|具体关注者|个人身份|购买意向)/i;
+  /(identify|tell me|list|find).{0,12}(anonymous visitor|specific visitor|specific follower|identity|purchase intent)/i;
 const OUT_OF_SCOPE =
-  /(销售额|收入|营收|订单|成交|pipeline|crm|网站转化|广告花费|预算回报|roi)/i;
+  /(sales|revenue|orders|pipeline|crm|website conversion|ad spend|return on budget|roi)/i;
 
 function answerId(now: Date): string {
   return `answer-${now.toISOString().replace(/\D/g, "")}`;
@@ -182,7 +182,7 @@ export function answerProjectQuestion(
     );
   }
 
-  const postsMatch = normalized.match(/每周\s*(?:发布|发)?\s*(\d)\s*(?:篇|条|次)/);
+  const postsMatch = normalized.match(/(\d)\s*(?:posts?)?\s*(?:per|a)\s*week/);
   if (postsMatch) {
     const postsPerWeek = Number(postsMatch[1]);
     if (!context.plan) {
@@ -218,7 +218,7 @@ export function answerProjectQuestion(
   }
 
   const audienceMatch = normalized.match(
-    /(?:重点受众|目标受众)\s*(?:改为|设为|调整为|是)?\s*[:：]?\s*(.{2,80})$/i,
+    /(?:focus audience|target audience)\s*(?:to|is)?\s*:?\s*(.{2,80})$/i,
   );
   if (audienceMatch && context.plan) {
     const focusAudience = audienceMatch[1].trim();
@@ -241,7 +241,7 @@ export function answerProjectQuestion(
   }
 
   const catalog = metricCatalog(context.snapshot);
-  if (/(proxy|代理比率|转化率|访客.*关注者|visitor.*follower)/i.test(normalized)) {
+  if (/(proxy|conversion rate|visitor.*follower)/i.test(normalized)) {
     const metric = catalog.get("cross.visitorToFollowerProxy");
     const answer = metricAnswer(
       metric,
@@ -251,7 +251,7 @@ export function answerProjectQuestion(
     );
     return { ...answer, intent: "trend_explanation" };
   }
-  if (/(ctr|点击率|click.?through)/i.test(normalized)) {
+  if (/(ctr|click.?through)/i.test(normalized)) {
     return metricAnswer(
       catalog.get("content.ctr"),
       now,
@@ -259,7 +259,7 @@ export function answerProjectQuestion(
       "Run single-variable tests by content format and topic, then review the next comparable import.",
     );
   }
-  if (/(互动率|engagement)/i.test(normalized)) {
+  if (/engagement/i.test(normalized)) {
     return metricAnswer(
       catalog.get("content.engagementRate"),
       now,
@@ -268,7 +268,7 @@ export function answerProjectQuestion(
     );
   }
   if (
-    /(关注者|followers?).*(增长|变化|趋势|growth|change|trend)|增长.*关注者/i.test(
+    /followers?.*(growth|change|trend)|growth.*followers?/i.test(
       normalized,
     )
   ) {
@@ -280,7 +280,7 @@ export function answerProjectQuestion(
     );
     return { ...answer, intent: "trend_explanation" };
   }
-  if (/(访客|visitors?|page\s*views?|浏览量)/i.test(normalized)) {
+  if (/(visitors?|page\s*views?)/i.test(normalized)) {
     const answer = metricAnswer(
       catalog.get("visitors.pageViewsTotal"),
       now,
@@ -289,12 +289,12 @@ export function answerProjectQuestion(
     );
     return {
       ...answer,
-      intent: /(趋势|变化|怎么样)/.test(normalized)
+      intent: /(trend|change|how)/.test(normalized)
         ? "trend_explanation"
         : "metric_query",
     };
   }
-  if (/(发布|内容数量|发了多少)/i.test(normalized) && !/(建议|应该|计划)/i.test(normalized)) {
+  if (/(publish|content count|how many posts)/i.test(normalized) && !/(recommend|should|plan)/i.test(normalized)) {
     return metricAnswer(
       catalog.get("content.publishedCount"),
       now,
@@ -304,7 +304,7 @@ export function answerProjectQuestion(
   }
 
   if (
-    /(数据质量|质量问题|为什么.*不可用|可靠性|data quality|quality issue|reliability)/i.test(
+    /(data quality|quality issue|why.*unavailable|reliability)/i.test(
       normalized,
     )
   ) {
@@ -343,7 +343,7 @@ export function answerProjectQuestion(
     });
   }
 
-  if (/(洞察.*证据|为什么.*洞察|证据是什么)/i.test(normalized)) {
+  if (/(insight.*evidence|why.*insight|what.*evidence)/i.test(normalized)) {
     const insight =
       context.insights.find((item) => item.approvalStatus === "approved") ??
       context.insights[0];
@@ -351,7 +351,7 @@ export function answerProjectQuestion(
       return unavailable(
         now,
         "The project contains no reportable findings.",
-        "Generate findings with valid metric references.",
+        "Prepare findings with valid metric references.",
       );
     }
     const metrics = referencedMetrics(
@@ -378,7 +378,7 @@ export function answerProjectQuestion(
   }
 
   if (
-    /(建议|应该发布什么|内容方向|下个月.*发布|what.*publish|next month)/i.test(
+    /(recommend|what.*publish|content direction|next month)/i.test(
       normalized,
     )
   ) {
@@ -403,7 +403,7 @@ export function answerProjectQuestion(
       status: "answered",
       dataStatement:
         planItems.length > 0
-          ? `已批准策略“${strategy.title}”对应的近期安排包括：${planItems.join(
+          ? `The near-term schedule for approved strategy "${strategy.title}" includes: ${planItems.join(
               "；",
             )}。`
           : `Approved strategy — ${strategy.title}: ${strategy.objective}`,

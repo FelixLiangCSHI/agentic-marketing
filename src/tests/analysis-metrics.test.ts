@@ -305,7 +305,7 @@ test("does not calculate period change across an irregular series", () => {
   assert.equal(metrics.periodOverPeriodChange.reliability, "unavailable");
   assert.equal(
     metrics.periodOverPeriodChange.reliabilityReasons.some((reason) =>
-      reason.includes("间隔不符合"),
+      reason.includes("not comparably spaced"),
     ),
     true,
   );

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "LinkedIn Marketing Intelligence",
-  description: "安全识别和标准化 LinkedIn 聚合营销分析导出。",
+  description: "Securely analyze and standardize LinkedIn marketing exports.",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

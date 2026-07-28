@@ -26,22 +26,23 @@ test("planning workspace starts with explicit goal and approval gates", () => {
     }),
   );
 
-  assert.match(markup, /Multi-stage AI agent pipeline/);
+  assert.match(markup, /Governed campaign workflow/);
   assert.match(markup, /Historical LinkedIn Analysis/);
-  assert.match(markup, /AI Marketing Strategy Recommendation/);
+  assert.match(markup, /Campaign Strategy/);
   assert.match(markup, /30-Day Content Calendar/);
-  assert.match(markup, /Draft Generation/);
-  assert.match(markup, /确认业务目标/);
+  assert.match(markup, /Prepare Content/);
+  assert.match(markup, /Confirm business goal/);
   assert.match(markup, /Human approval required/i);
-  assert.match(markup, /AI Recommendation/);
+  assert.match(markup, /Marketing Recommendation/);
   assert.match(markup, /Approval Status/);
   assert.match(markup, /Reviewer/);
   assert.match(markup, /Comments/);
   assert.match(markup, /Approve/);
   assert.match(markup, /Request Revision/);
   assert.match(markup, /Rejected/);
-  assert.match(markup, /Ready for Buffer/);
-  assert.match(markup, /必须先批准该策略引用的全部洞察/);
+  assert.match(markup, /Publishing Handoff/);
+  assert.match(markup, /Approve every referenced insight/);
+  assert.doesNotMatch(markup, /\bAI\b|sparkle/i);
   assert.doesNotMatch(markup, /chat-message/);
 });
 
@@ -62,13 +63,13 @@ test("action plan report shows status, risks, views, metadata, and evidence", ()
     }),
   );
 
-  assert.match(markup, /AI 初稿/);
-  assert.match(markup, /风险与数据限制/);
+  assert.match(markup, /Prepared draft/);
+  assert.match(markup, /Risks and data limitations/);
   assert.match(markup, /Audience Insights/);
   assert.match(markup, /Content Insights/);
-  assert.match(markup, /Prompt 版本/);
-  assert.match(markup, /内容日历/);
-  assert.match(markup, /实验/);
+  assert.match(markup, /Prompt version/);
+  assert.match(markup, /Content calendar/i);
+  assert.match(markup, /Experiment/);
   assert.match(markup, /Post objective/);
   assert.match(markup, /Content angle/);
   assert.match(markup, /Approval checkpoint/);
@@ -93,7 +94,20 @@ test("approved calendar exposes Buffer-ready draft cards", () => {
   );
 
   assert.match(markup, /Draft Ready/);
-  assert.match(markup, /Ready for Buffer/);
+  assert.match(markup, /Ready to Publish/);
   assert.match(markup, /Media suggestion/);
   assert.match(markup, /Professional terminology/);
+  for (const label of [
+    "Buffer Connection",
+    "Workspace",
+    "Scheduled Drafts",
+    "Ready to Publish",
+    "Pending Review",
+    "Publishing Queue",
+    "Mock / Demo",
+  ]) {
+    assert.match(markup, new RegExp(label));
+  }
+  assert.match(markup, /No network or API calls/);
+  assert.doesNotMatch(markup, /\bAI\b|sparkle/i);
 });

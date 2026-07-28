@@ -13,7 +13,6 @@ export type IconName =
   | "lock"
   | "refresh"
   | "shield"
-  | "sparkles"
   | "spinner"
   | "table"
   | "trash"
@@ -115,13 +114,6 @@ export function Icon({
       <>
         <path d="M12 3 4.5 6v5.5c0 4.8 3.1 7.8 7.5 9.5 4.4-1.7 7.5-4.7 7.5-9.5V6z" />
         <path d="m9 12 2 2 4-4" />
-      </>
-    ),
-    sparkles: (
-      <>
-        <path d="m12 3 1.3 3.7L17 8l-3.7 1.3L12 13l-1.3-3.7L7 8l3.7-1.3z" />
-        <path d="m18.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z" />
-        <path d="m5 13 .7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z" />
       </>
     ),
     spinner: (

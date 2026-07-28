@@ -79,7 +79,7 @@ export function normalizeText(raw: RawCellValue): NormalizationResult<string> {
         {
           code: "FORMULA_LIKE_TEXT",
           severity: "warning",
-          message: "检测到类似公式的文本；已按普通文本保留，未执行。",
+          message: "Formula-like text was retained as plain text and not executed.",
         },
       ],
     };
@@ -124,7 +124,7 @@ export function normalizeNumber(
         {
           code: "INVALID_NUMBER",
           severity: "error",
-          message: "布尔值不能作为数值使用。",
+          message: "Boolean values cannot be used as numbers.",
         },
       ],
     };
@@ -144,7 +144,7 @@ export function normalizeNumber(
           {
             code: "FORMULA_LIKE_TEXT",
             severity: "error",
-            message: "类似公式的文本不会被当作数值计算。",
+            message: "Formula-like text is not calculated as a number.",
           },
         ],
       };
@@ -163,7 +163,7 @@ export function normalizeNumber(
         {
           code: "INVALID_NUMBER",
           severity: "error",
-          message: "无法将该值识别为有效数字。",
+          message: "The value could not be recognized as a valid number.",
         },
       ],
     };
@@ -175,7 +175,7 @@ export function normalizeNumber(
     problems.push({
       code: "NEGATIVE_VALUE",
       severity: "warning",
-      message: "检测到负数，请确认导出数据含义。",
+      message: "A negative number was detected. Confirm its meaning in the export.",
     });
   }
 
@@ -212,7 +212,7 @@ export function normalizePercentage(
     problems.push({
       code: "PERCENTAGE_SCALE_INFERRED",
       severity: "warning",
-      message: "数值缺少百分号，已按百分数缩放并标记供确认。",
+      message: "A percent sign was missing; the value was scaled and flagged for confirmation.",
     });
   }
 
@@ -220,7 +220,7 @@ export function normalizePercentage(
     problems.push({
       code: "PERCENTAGE_OUT_OF_RANGE",
       severity: "warning",
-      message: "百分比超出 0%–100% 范围，请确认数据。",
+      message: "The percentage is outside 0%–100%. Confirm the source data.",
     });
   }
 
@@ -367,7 +367,7 @@ export function normalizeDate(
         {
           code: "INVALID_DATE",
           severity: "error",
-          message: "无法识别日期格式，已保留原始值供确认。",
+          message: "The date format was not recognized; the source value was retained.",
         },
       ],
     };
@@ -380,7 +380,7 @@ export function normalizeDate(
     problems.push({
       code: "AMBIGUOUS_DATE",
       severity: "warning",
-      message: "日期的月/日顺序存在歧义，当前按月/日/年解释。",
+      message: "The month/day order is ambiguous and was interpreted as month/day/year.",
     });
   }
 
@@ -388,7 +388,7 @@ export function normalizeDate(
     problems.push({
       code: "UNREASONABLE_DATE",
       severity: "warning",
-      message: "日期超出合理范围，请确认导出内容。",
+      message: "The date is outside a reasonable range. Confirm the export.",
     });
   }
 

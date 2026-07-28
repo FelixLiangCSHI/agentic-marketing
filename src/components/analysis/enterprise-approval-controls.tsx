@@ -32,7 +32,7 @@ export function EnterpriseApprovalControls({
     <section className="enterprise-approval">
       <dl className="enterprise-approval__summary">
         <div>
-          <dt>AI Recommendation</dt>
+          <dt>Marketing Recommendation</dt>
           <dd>{recommendation}</dd>
         </div>
         <div>

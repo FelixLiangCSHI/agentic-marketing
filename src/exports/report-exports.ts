@@ -117,7 +117,7 @@ function exportFileName(
 
 function periodLabel(period: AnalysisPeriod | null): string {
   return period
-    ? `${period.start} 至 ${period.end}（${period.granularity}，样本 ${period.sampleSize}）`
+    ? `${period.start} to ${period.end} (${period.granularity}, sample ${period.sampleSize})`
     : "unavailable";
 }
 
@@ -129,13 +129,13 @@ function metricLine(metric: Metric): string {
   const reasons =
     metric.reliabilityReasons.length > 0
       ? metric.reliabilityReasons.join("；")
-      : "无额外说明";
+      : "No additional details";
   return [
     `- **${metric.label}** (\`${metric.metricId}\`): ${metric.formattedValue}`,
-    `  - 可靠性：${metric.reliability}（${reasons}）`,
-    `  - 时间范围：${periodLabel(metric.period)}`,
-    `  - 公式：${metric.formula}`,
-    `  - 来源模块：${modulesLabel(metric.sourceModules)}`,
+    `  - Reliability: ${metric.reliability} (${reasons})`,
+    `  - Date range: ${periodLabel(metric.period)}`,
+    `  - Formula: ${metric.formula}`,
+    `  - Source modules: ${modulesLabel(metric.sourceModules)}`,
     `  - Evidence ID：\`${metric.metricId}\``,
   ].join("\n");
 }
@@ -147,10 +147,10 @@ export function generateMarkdownReport(input: ReportExportInput): string {
   const insights = strategyBundle.insights;
   const strategies = strategyBundle.strategies;
   const limitations = new Set([
-    "LinkedIn 导出主要为聚合数据，不能识别匿名访客、具体关注者或个人购买意向。",
-    "Visitor-to-Follower Proxy 不是用户级真实转化率。",
-    "发布窗口与指标变化的时间相关性不代表内容导致增长。",
-    "无法支持的指标显示 unavailable，不进行估算。",
+    "LinkedIn exports are primarily aggregate data and cannot identify visitors, followers, or individual purchase intent.",
+    "The visitor-to-follower proxy is not a user-level conversion rate.",
+    "Temporal correlation between publishing and metric changes does not show content caused growth.",
+    "Unsupported metrics display as unavailable and are not estimated.",
     ...(plan?.risksAndLimitations ?? []),
   ]);
 
@@ -159,7 +159,7 @@ export function generateMarkdownReport(input: ReportExportInput): string {
     "",
     `- Project: ${input.projectId}`,
     `- Snapshot ID：\`${snapshot.snapshotId}\``,
-    `- Generated: ${plan?.updatedAt ?? strategyBundle.generatedAt}`,
+    `- Prepared: ${plan?.updatedAt ?? strategyBundle.generatedAt}`,
     `- Analysis period: ${periodLabel(snapshot.analysisPeriod)}`,
     `- Data modules: ${modulesLabel(snapshot.sourceModules)}`,
     `- Prompt version: ${strategyBundle.promptVersion}${
@@ -202,7 +202,7 @@ export function generateMarkdownReport(input: ReportExportInput): string {
       ? insights.flatMap((insight) => [
           `### ${insight.title}`,
           "",
-          `- 状态：${insight.approvalStatus}`,
+          `- Status: ${insight.approvalStatus}`,
           `- ${insight.report.executiveSummary}`,
           `- Evidence IDs：${insight.evidence
             .map((item) => `\`${item.metricId}\``)
@@ -224,9 +224,9 @@ export function generateMarkdownReport(input: ReportExportInput): string {
       ? strategies.flatMap((strategy) => [
           `### ${strategy.title}`,
           "",
-          `- 状态：${strategy.approvalStatus}`,
+          `- Status: ${strategy.approvalStatus}`,
           `- ${strategy.report.executiveSummary}`,
-          `- 来源洞察：${strategy.insightIds
+          `- Source insights: ${strategy.insightIds
             .map((id) => `\`${id}\``)
             .join("、")}`,
           `- Evidence IDs：${strategy.metricIds
@@ -258,38 +258,38 @@ export function generateMarkdownReport(input: ReportExportInput): string {
     ...(plan
       ? [
           `- Plan ID：\`${plan.planId}\``,
-          `- 状态：${plan.status}`,
-          `- 计划范围：${plan.startDate} 至 ${plan.endDate}`,
-          "- 假设：",
+          `- Status: ${plan.status}`,
+          `- Plan range: ${plan.startDate} to ${plan.endDate}`,
+          "- Assumptions:",
           ...plan.assumptions.map((item) => `  - ${item}`),
           "",
           ...plan.fourWeekPlan.flatMap((week) => [
-            `### 第 ${week.weekNumber} 周 · ${week.dateRange.start} 至 ${week.dateRange.end}`,
+            `### Week ${week.weekNumber} · ${week.dateRange.start} to ${week.dateRange.end}`,
             "",
-            `- 目标：${week.objective}`,
-            `- 负责人：${week.ownerPlaceholder}`,
+            `- Objective: ${week.objective}`,
+            `- Owner: ${week.ownerPlaceholder}`,
             `- CTA：${week.callToAction}`,
             `- KPI Evidence IDs：${week.kpiMetricIds
               .map((id) => `\`${id}\``)
               .join("、")}`,
             ...week.tasks.map(
               (task) =>
-                `- 任务（${task.dueDate}）：${task.title} · ${task.status}`,
+                `- Task (${task.dueDate}): ${task.title} · ${task.status}`,
             ),
             "",
           ]),
-          "### 内容日历",
+          "### Content calendar",
           "",
           ...plan.contentCalendar.map(
             (item) =>
-              `- ${item.date} ${item.scheduledTime} (${item.timeZone}) · ${item.topic} · ${item.channel} · ${item.contentFormat} · 审批 ${item.status} · 交接 ${item.workflowStatus}${
-                item.isExperiment ? " · 实验" : ""
+              `- ${item.date} ${item.scheduledTime} (${item.timeZone}) · ${item.topic} · ${item.channel} · ${item.contentFormat} · Approval ${item.status} · Handoff ${item.workflowStatus}${
+                item.isExperiment ? " · Experiment" : ""
               } · Strategy \`${item.strategyId}\` · KPI ${item.measurementMetricIds
                 .map((id) => `\`${id}\``)
                 .join("、")}`,
           ),
           "",
-          "### KPI 复盘计划",
+          "### KPI review plan",
           "",
           ...plan.kpiReviewPlan.map(
             (review) =>
@@ -298,7 +298,7 @@ export function generateMarkdownReport(input: ReportExportInput): string {
                 .join("、")} · ${review.comparisonRule}`,
           ),
           "",
-          "### 下一次导入问题",
+          "### Questions for the next import",
           "",
           ...plan.nextImportQuestions.map((question) => `- ${question}`),
           "",
@@ -316,27 +316,27 @@ export function generateMarkdownReport(input: ReportExportInput): string {
 export function generateContentCalendarCsv(plan: ActionPlan): string {
   const rows: unknown[][] = [
     [
-      "日期",
-      "时间",
-      "时区",
-      "渠道",
-      "主题",
-      "内容形式",
-      "目标受众",
-      "发布文案",
-      "核心信息",
+      "Date",
+      "Time",
+      "Time zone",
+      "Channel",
+      "Topic",
+      "Content format",
+      "Target audience",
+      "Publishing copy",
+      "Core message",
       "CTA",
-      "链接",
-      "媒体链接",
-      "策略 ID",
-      "衡量指标",
-      "审批状态",
-      "Buffer 工作流",
-      "是否实验",
-      "实验假设",
-      "成功标准",
-      "复盘日期",
-      "负责人",
+      "Link",
+      "Media link",
+      "Strategy ID",
+      "Measurement metrics",
+      "Approval status",
+      "Buffer workflow",
+      "Experiment",
+      "Experiment hypothesis",
+      "Success criteria",
+      "Review date",
+      "Owner",
     ],
     ...plan.contentCalendar.map((item) => [
       item.date,
@@ -355,7 +355,7 @@ export function generateContentCalendarCsv(plan: ActionPlan): string {
       item.measurementMetricIds,
       item.status,
       item.workflowStatus,
-      item.isExperiment ? "是" : "否",
+      item.isExperiment ? "Yes" : "No",
       item.experiment?.hypothesis ?? "",
       item.experiment?.successCriteria ?? "",
       item.experiment?.reviewDate ?? "",

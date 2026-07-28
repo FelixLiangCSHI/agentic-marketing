@@ -93,7 +93,7 @@ function parseModule(
   ) {
     throw stableError(
       "INVALID_MODULE_OVERRIDE",
-      `${fieldName} 不是有效的数据模块。`,
+      `${fieldName} is not a valid data module.`,
       false,
     );
   }
@@ -115,7 +115,7 @@ function parseMappingOverrides(
   ) {
     throw stableError(
       "INVALID_MAPPING_OVERRIDE",
-      "字段映射配置无效或过大。",
+      "The field mapping configuration is invalid or too large.",
       false,
     );
   }
@@ -126,7 +126,7 @@ function parseMappingOverrides(
   } catch {
     throw stableError(
       "INVALID_MAPPING_OVERRIDE",
-      "字段映射配置不是有效 JSON。",
+      "The field mapping configuration is not valid JSON.",
       false,
     );
   }
@@ -138,7 +138,7 @@ function parseMappingOverrides(
   ) {
     throw stableError(
       "INVALID_MAPPING_OVERRIDE",
-      "字段映射配置必须是对象。",
+      "The field mapping configuration must be an object.",
       false,
     );
   }
@@ -147,7 +147,7 @@ function parseMappingOverrides(
   if (entries.length > MAX_MAPPING_OVERRIDES) {
     throw stableError(
       "INVALID_MAPPING_OVERRIDE",
-      "字段映射数量超过限制。",
+      "The number of field mappings exceeds the limit.",
       false,
     );
   }
@@ -166,7 +166,7 @@ function parseMappingOverrides(
     ) {
       throw stableError(
         "INVALID_MAPPING_OVERRIDE",
-        "字段映射包含无效键或标准字段。",
+        "The field mapping contains an invalid key or standard field.",
         false,
       );
     }
@@ -197,7 +197,7 @@ export async function POST(request: Request): Promise<Response> {
     return failure(
       stableError(
         "REQUEST_TOO_LARGE",
-        "上传请求超过大小限制，请选择更小的文件。",
+        "The upload exceeds the size limit. Select a smaller file.",
       ),
     );
   }
@@ -209,7 +209,7 @@ export async function POST(request: Request): Promise<Response> {
     return failure(
       stableError(
         "PARSE_FAILED",
-        "无法读取上传请求，请重新选择文件。",
+        "The upload request could not be read. Select the file again.",
       ),
     );
   }
@@ -217,7 +217,7 @@ export async function POST(request: Request): Promise<Response> {
   const fileEntry = formData.get("file");
   if (!(fileEntry instanceof File)) {
     return failure(
-      stableError("MISSING_FILE", "请求中没有可解析的文件。"),
+      stableError("MISSING_FILE", "The request contains no parseable file."),
     );
   }
 
@@ -255,7 +255,7 @@ export async function POST(request: Request): Promise<Response> {
         ? reason
         : stableError(
             "INVALID_MAPPING_OVERRIDE",
-            "上传配置无效。",
+            "The upload configuration is invalid.",
             false,
           ),
     );

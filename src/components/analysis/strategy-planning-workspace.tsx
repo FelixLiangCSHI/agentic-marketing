@@ -53,10 +53,10 @@ type GenerationStatus =
   | "error";
 
 const STATUS_LABELS: Record<ApprovalStatus, string> = {
-  draft: "AI 初稿",
-  approved: "用户已批准",
-  revision_requested: "需要修改",
-  rejected: "用户已拒绝",
+  draft: "Prepared for review",
+  approved: "Approved",
+  revision_requested: "Revision requested",
+  rejected: "Rejected",
 };
 
 const INSIGHT_CATEGORY_LABELS: Record<EvidenceInsight["category"], string> = {
@@ -85,7 +85,7 @@ function WorkflowPipeline({
     {
       number: "02",
       title: "Strategy",
-      detail: "AI Marketing Strategy Recommendation",
+      detail: "Campaign Strategy",
       status: "complete",
     },
     {
@@ -108,24 +108,24 @@ function WorkflowPipeline({
     },
     {
       number: "06",
-      title: "Draft Generation",
-      detail: "Buffer-ready LinkedIn drafts",
+      title: "Prepare Content",
+      detail: "LinkedIn publishing drafts",
       status: draftsReady ? "complete" : "locked",
     },
     {
       number: "07",
-      title: "Ready for Buffer",
+      title: "Publishing Handoff",
       detail: "Approved drafts ready for handoff",
       status: draftsReady ? "complete" : "locked",
     },
   ] as const;
 
   return (
-    <nav className="agent-pipeline" aria-label="AI marketing workflow progress">
+    <nav className="agent-pipeline" aria-label="Marketing workflow progress">
       <div className="agent-pipeline__header">
         <div>
           <span className="section-label">WORKFLOW PROGRESS</span>
-          <h2>Multi-stage AI agent pipeline</h2>
+          <h2>Governed campaign workflow</h2>
         </div>
         <span className="agent-pipeline__run">RUN · {draftsReady ? "COMPLETE" : "IN PROGRESS"}</span>
       </div>
@@ -185,7 +185,7 @@ function EvidenceInsightCard({
       </header>
       <ConsultingReport report={insight.report} />
       <details className="approval-evidence">
-        <summary>查看 Metric 证据与限制</summary>
+        <summary>Review metric evidence and limitations</summary>
         <ul>
           {insight.evidence.map((reference) => (
             <li key={reference.metricId}>
@@ -194,8 +194,8 @@ function EvidenceInsightCard({
               <small>
                 {reference.period
                   ? `${reference.period.start} — ${reference.period.end}`
-                  : "无可用时间范围"}{" "}
-                · {reference.sourceModules.join("、")}
+                  : "No date range available"}{" "}
+                · {reference.sourceModules.join(", ")}
               </small>
             </li>
           ))}
@@ -226,7 +226,7 @@ function StrategyCard({
     <article className={`approval-card approval-card--${strategy.approvalStatus}`}>
       <header>
         <div>
-          <span>strategy</span>
+          <span>Campaign Strategy</span>
           <h3>{strategy.title}</h3>
         </div>
         <span className={`approval-status approval-status--${strategy.approvalStatus}`}>
@@ -234,7 +234,7 @@ function StrategyCard({
         </span>
       </header>
       <label className="strategy-edit-field">
-        策略目标
+        Strategy objective
         <textarea
           value={strategy.objective}
           rows={3}
@@ -249,14 +249,14 @@ function StrategyCard({
       </label>
       <ConsultingReport report={strategy.report} />
       <details className="approval-evidence">
-        <summary>查看洞察与 Metric 引用</summary>
+        <summary>Review insight and metric references</summary>
         <code>{strategy.insightIds.join(", ")}</code>
         <code>{strategy.metricIds.join(", ")}</code>
       </details>
       {!canApprove && (
         <p className="approval-dependency">
           <Icon name="lock" size={14} />
-          必须先批准该策略引用的全部洞察。
+          Approve every referenced insight before approving this strategy.
         </p>
       )}
       <EnterpriseApprovalControls
@@ -280,11 +280,11 @@ export function StrategyPlanningWorkspace({
   const [insights, setInsights] = useState(bundle.insights);
   const [strategies, setStrategies] = useState(bundle.strategies);
   const [goalText, setGoalText] = useState(
-    "以临床证据、法规进展和经济价值支持医疗器械专业受众与医院采购沟通",
+    "Support healthcare professionals and hospital procurement teams with clinical evidence, regulatory progress, and economic value.",
   );
   const [businessGoal, setBusinessGoal] = useState<BusinessGoal | null>(null);
   const initialTimeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Shanghai";
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York";
   const [preferences, setPreferences] = useState<ActionPlanPreferences>({
     startDate: defaultPlanStartDate(initialTimeZone),
     timeZone: initialTimeZone,
@@ -292,7 +292,7 @@ export function StrategyPlanningWorkspace({
     teamSize: null,
     contentResources: [],
     targetMarket: null,
-    focusAudience: "医疗专业人员、KOL、临床科室负责人和医院采购团队",
+    focusAudience: "Healthcare professionals, clinical leaders, and hospital procurement teams",
   });
   const [resourcesText, setResourcesText] = useState("");
   const [planState, dispatchPlan] = useReducer(
@@ -401,14 +401,14 @@ export function StrategyPlanningWorkspace({
     const input = actionInput();
     if (!input) {
       setGenerationStatus("error");
-      setGenerationMessage("请先确认业务目标。");
+      setGenerationMessage("Confirm the business goal before preparing the plan.");
       return;
     }
     generationController.current?.abort();
     const controller = new AbortController();
     generationController.current = controller;
     setGenerationStatus("generating");
-    setGenerationMessage("正在校验引用并生成四周计划…");
+    setGenerationMessage("Validating references and preparing the four-week plan...");
     try {
       const plan = await runActionPlanAgent(input, {
         signal: controller.signal,
@@ -418,7 +418,7 @@ export function StrategyPlanningWorkspace({
       }
       dispatchPlan({ type: "LOAD_PLAN", plan });
       setGenerationStatus("completed");
-      setGenerationMessage("计划结构与引用完整性校验通过。");
+      setGenerationMessage("Plan structure and reference validation passed.");
       setPreferencesDirty(false);
     } catch (reason) {
       if (generationController.current !== controller) {
@@ -429,11 +429,11 @@ export function StrategyPlanningWorkspace({
         reason.code === "GENERATION_CANCELLED"
       ) {
         setGenerationStatus("cancelled");
-        setGenerationMessage("已取消生成；可以保留当前审批并重试。");
+        setGenerationMessage("Preparation cancelled. Existing approvals were retained.");
       } else {
         setGenerationStatus("error");
         setGenerationMessage(
-          reason instanceof Error ? reason.message : "计划生成失败，请重试。",
+          reason instanceof Error ? reason.message : "Plan preparation failed. Try again.",
         );
       }
     } finally {
@@ -466,13 +466,13 @@ export function StrategyPlanningWorkspace({
       dispatchPlan({ type: "APPLY_REVISION", plan: revised });
       setGenerationStatus("completed");
       setGenerationMessage(
-        "仅更新四周排期、内容日历和 KPI 复盘；Snapshot 与洞察未重跑。",
+        "Updated the schedule, content calendar, and KPI review without rerunning the snapshot.",
       );
       setPreferencesDirty(false);
     } catch (reason) {
       setGenerationStatus("error");
       setGenerationMessage(
-        reason instanceof Error ? reason.message : "计划设置更新失败。",
+        reason instanceof Error ? reason.message : "Plan settings could not be updated.",
       );
     }
   }
@@ -530,12 +530,12 @@ export function StrategyPlanningWorkspace({
         <div>
           <button className="text-button" type="button" onClick={onBack}>
             <Icon name="chevron" size={15} />
-            返回 Snapshot
+            Back to snapshot
           </button>
-          <span className="section-label">AI MARKETING OPERATIONS</span>
+          <span className="section-label">MARKETING OPERATIONS</span>
           <h2>LinkedIn Campaign Intelligence Workflow</h2>
           <p>
-            从历史表现分析到 Buffer-ready 草稿，每个 Agent 阶段都有明确输入、结构化输出与人工审批检查点。
+            Move from historical performance to approved publishing drafts through clear inputs, structured recommendations, and reviewer checkpoints.
           </p>
         </div>
         <dl>
@@ -548,7 +548,7 @@ export function StrategyPlanningWorkspace({
             <dd>{bundle.promptVersion}</dd>
           </div>
           <div>
-            <dt>模式</dt>
+            <dt>Mode</dt>
             <dd>Deterministic Mock</dd>
           </div>
         </dl>
@@ -563,9 +563,9 @@ export function StrategyPlanningWorkspace({
       <section className="planning-limits">
         <Icon name="shield" size={21} />
         <div>
-          <strong>数据与建议边界始终生效</strong>
+          <strong>Data and recommendation safeguards remain active</strong>
           <p>
-            聚合数据不能识别匿名访客或具体关注者；Proxy 不是转化率；相关性不代表因果；计划不会承诺固定增长。
+            Aggregate data cannot identify people. Proxy metrics are not conversions, correlation is not causation, and plans do not promise fixed growth.
           </p>
         </div>
       </section>
@@ -611,18 +611,18 @@ export function StrategyPlanningWorkspace({
         <div className="section-heading section-heading--large">
           <div>
             <span className="section-label">STEP 2 · STRATEGY INPUTS</span>
-            <h2>AI Marketing Strategy Recommendation</h2>
-            <p>团队和资源留空时使用清晰占位符，不虚构员工。</p>
+            <h2>Campaign Strategy</h2>
+            <p>Unspecified teams and resources use clear placeholders rather than invented details.</p>
           </div>
           {businessGoal && (
             <span className="approval-status approval-status--approved">
-              目标已确认
+              Goal confirmed
             </span>
           )}
         </div>
         <div className="planning-config-grid">
           <label className="planning-field planning-field--wide">
-            业务目标
+            Business goal
             <input
               value={goalText}
               maxLength={180}
@@ -632,7 +632,7 @@ export function StrategyPlanningWorkspace({
                 clearPlanForEvidenceChange();
               }}
             />
-            <small>不填写具体增长承诺；如需数值目标，应明确标记为用户设定。</small>
+            <small>Avoid fixed growth promises; identify numeric targets as reviewer-defined.</small>
           </label>
           <button
             className="secondary-button planning-confirm-goal"
@@ -648,10 +648,10 @@ export function StrategyPlanningWorkspace({
             }
           >
             <Icon name="check" size={15} />
-            {businessGoal ? "业务目标已确认" : "确认业务目标"}
+            {businessGoal ? "Business goal confirmed" : "Confirm business goal"}
           </button>
           <label className="planning-field">
-            计划开始日期
+            Plan start date
             <input
               type="date"
               min={localToday}
@@ -662,7 +662,7 @@ export function StrategyPlanningWorkspace({
             />
           </label>
           <label className="planning-field">
-            用户时区
+            Workspace time zone
             <select
               value={preferences.timeZone}
               onChange={(event) =>
@@ -688,7 +688,7 @@ export function StrategyPlanningWorkspace({
             </select>
           </label>
           <label className="planning-field">
-            每周发帖能力
+            Weekly publishing capacity
             <select
               value={preferences.postsPerWeek}
               onChange={(event) =>
@@ -699,19 +699,19 @@ export function StrategyPlanningWorkspace({
             >
               {[1, 2, 3, 4, 5].map((value) => (
                 <option key={value} value={value}>
-                  {value} 条 / 周
+                  {value} posts / week
                 </option>
               ))}
             </select>
           </label>
           <label className="planning-field">
-            团队规模（可选）
+            Team size (optional)
             <input
               type="number"
               min={1}
               max={99}
               value={preferences.teamSize ?? ""}
-              placeholder="未提供"
+              placeholder="Not provided"
               onChange={(event) =>
                 updatePreferences({
                   teamSize: event.target.value
@@ -722,7 +722,7 @@ export function StrategyPlanningWorkspace({
             />
           </label>
           <label className="planning-field">
-            重点受众
+            Focus audience
             <input
               value={preferences.focusAudience}
               onChange={(event) =>
@@ -731,10 +731,10 @@ export function StrategyPlanningWorkspace({
             />
           </label>
           <label className="planning-field">
-            目标市场（可选）
+            Target market (optional)
             <input
               value={preferences.targetMarket ?? ""}
-              placeholder="例如 APAC"
+              placeholder="For example, APAC"
               onChange={(event) =>
                 updatePreferences({
                   targetMarket: event.target.value || null,
@@ -743,16 +743,16 @@ export function StrategyPlanningWorkspace({
             />
           </label>
           <label className="planning-field planning-field--wide">
-            内容资源（可选，逗号分隔）
+            Content resources (optional, comma-separated)
             <input
               value={resourcesText}
-              placeholder="文案、设计、视频"
+              placeholder="Copywriting, design, video"
               onChange={(event) => {
                 const value = event.target.value;
                 setResourcesText(value);
                 updatePreferences({
                   contentResources: value
-                    .split(/[,，]/)
+                    .split(",")
                     .map((item) => item.trim())
                     .filter(Boolean),
                 });
@@ -764,8 +764,8 @@ export function StrategyPlanningWorkspace({
           <div className="planning-config__apply">
             <span>
               {preferencesDirty
-                ? "执行设置已修改，尚未应用到当前计划。"
-                : "当前计划已使用这些执行设置。"}
+                ? "Execution settings have changed but are not yet applied."
+                : "The current plan uses these execution settings."}
             </span>
             <button
               className="secondary-button"
@@ -773,7 +773,7 @@ export function StrategyPlanningWorkspace({
               disabled={!preferencesDirty}
               onClick={() => applyPreferenceRevision()}
             >
-              仅更新受影响排期
+              Update affected schedule
             </button>
           </div>
         )}
@@ -783,9 +783,9 @@ export function StrategyPlanningWorkspace({
         <div className="workflow-block__header">
           <span className="workflow-block__step">STEP 2</span>
           <div>
-            <span className="section-label">AI MARKETING STRATEGY RECOMMENDATION</span>
+            <span className="section-label">CAMPAIGN STRATEGY</span>
             <h2>Strategy recommendation package</h2>
-            <p>AI-generated recommendation · Human Approval Required</p>
+            <p>Prepared recommendation · Human approval required</p>
           </div>
           <span className={`workflow-state ${strategyApproved ? "workflow-state--complete" : "workflow-state--approval"}`}>
             <Icon name={strategyApproved ? "check" : "lock"} size={14} />
@@ -831,12 +831,12 @@ export function StrategyPlanningWorkspace({
           <div>
             <strong>
               {canGenerate
-                ? "审批输入已满足"
-                : "确认目标，并批准至少一条洞察和策略"}
+                ? "Approval inputs are complete"
+                : "Confirm the goal and approve at least one insight and strategy"}
             </strong>
             <p>
-              计划只会引用 {approvedInsights.length} 条已批准洞察与{" "}
-              {approvedStrategies.length} 条已批准策略。
+              The plan will use {approvedInsights.length} approved insights and{" "}
+              {approvedStrategies.length} approved strategies.
             </p>
           </div>
         </div>
@@ -847,7 +847,7 @@ export function StrategyPlanningWorkspace({
               type="button"
               onClick={cancelGeneration}
             >
-              取消生成
+              Cancel preparation
             </button>
           ) : (
             <button
@@ -856,12 +856,12 @@ export function StrategyPlanningWorkspace({
               disabled={!canGenerate}
               onClick={() => void generatePlan()}
             >
-              <Icon name="sparkles" size={16} />
+              <Icon name="content" size={16} />
               {generationStatus === "cancelled" || generationStatus === "error"
-                ? "重试生成"
+                ? "Retry preparation"
                 : planState.current
-                  ? "重新生成初稿"
-                  : "生成 30 天计划"}
+                  ? "Prepare revised draft"
+                  : "Prepare 30-day plan"}
             </button>
           )}
         </div>

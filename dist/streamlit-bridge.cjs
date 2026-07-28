@@ -201,19 +201,19 @@ var POST_TIMES = ["09:30", "14:00", "11:00", "16:30"];
 var FUTURE_KPI_DEFINITIONS = [
   {
     metricId: "future.content.itemImpressions",
-    label: "下一次导入的逐帖 Impressions",
+    label: "Post-level impressions in the next import",
     source: "future_collection",
     availability: "collect_next_import"
   },
   {
     metricId: "future.content.itemClicks",
-    label: "下一次导入的逐帖 Clicks",
+    label: "Post-level clicks in the next import",
     source: "future_collection",
     availability: "collect_next_import"
   },
   {
     metricId: "future.content.itemEngagementRate",
-    label: "下一次导入的逐帖 Engagement Rate",
+    label: "Post-level engagement rate in the next import",
     source: "future_collection",
     availability: "collect_next_import"
   }
@@ -252,14 +252,14 @@ function inputValidationIssues(input, now) {
     issues.push({
       code: "SNAPSHOT_BLOCKED",
       path: "snapshot.canEnterInsights",
-      message: "Snapshot 存在阻断质量问题，不能生成行动计划。"
+      message: "Blocking snapshot quality issues prevent plan preparation."
     });
   }
   if (!input.businessGoal.confirmed || !input.businessGoal.statement.trim()) {
     issues.push({
       code: "BUSINESS_GOAL_NOT_CONFIRMED",
       path: "businessGoal",
-      message: "必须先确认业务目标。"
+      message: "Confirm the business goal first."
     });
   }
   for (const insight2 of input.approvedInsights) {
@@ -267,14 +267,14 @@ function inputValidationIssues(input, now) {
       issues.push({
         code: "INSIGHT_NOT_APPROVED",
         path: `approvedInsights.${insight2.insightId}`,
-        message: `洞察 ${insight2.insightId} 尚未批准。`
+        message: `Insight ${insight2.insightId} is not approved.`
       });
     }
     if (insight2.snapshotId !== input.snapshot.snapshotId) {
       issues.push({
         code: "SNAPSHOT_REFERENCE_MISMATCH",
         path: `approvedInsights.${insight2.insightId}.snapshotId`,
-        message: `洞察 ${insight2.insightId} 不属于当前 Snapshot。`
+        message: `Insight ${insight2.insightId} does not belong to the current snapshot.`
       });
     }
     for (const reference of insight2.evidence) {
@@ -282,7 +282,7 @@ function inputValidationIssues(input, now) {
         issues.push({
           code: "INSIGHT_REFERENCE_INVALID",
           path: `approvedInsights.${insight2.insightId}.evidence`,
-          message: `洞察 ${insight2.insightId} 引用了未知 Metric ${reference.metricId}。`
+          message: `Insight ${insight2.insightId} references unknown metric ${reference.metricId}.`
         });
       }
     }
@@ -292,14 +292,14 @@ function inputValidationIssues(input, now) {
       issues.push({
         code: "STRATEGY_NOT_APPROVED",
         path: `approvedStrategies.${strategy2.strategyId}`,
-        message: `策略 ${strategy2.strategyId} 尚未批准。`
+        message: `Strategy ${strategy2.strategyId} is not approved.`
       });
     }
     if (strategy2.snapshotId !== input.snapshot.snapshotId) {
       issues.push({
         code: "SNAPSHOT_REFERENCE_MISMATCH",
         path: `approvedStrategies.${strategy2.strategyId}.snapshotId`,
-        message: `策略 ${strategy2.strategyId} 不属于当前 Snapshot。`
+        message: `Strategy ${strategy2.strategyId} does not belong to the current snapshot.`
       });
     }
     for (const insightId of strategy2.insightIds) {
@@ -307,7 +307,7 @@ function inputValidationIssues(input, now) {
         issues.push({
           code: "STRATEGY_INSIGHT_NOT_APPROVED",
           path: `approvedStrategies.${strategy2.strategyId}.insightIds`,
-          message: `策略 ${strategy2.strategyId} 引用了未批准洞察 ${insightId}。`
+          message: `Strategy ${strategy2.strategyId} references unapproved insight ${insightId}.`
         });
       }
     }
@@ -316,7 +316,7 @@ function inputValidationIssues(input, now) {
         issues.push({
           code: "STRATEGY_REFERENCE_INVALID",
           path: `approvedStrategies.${strategy2.strategyId}.metricIds`,
-          message: `策略 ${strategy2.strategyId} 引用了未知 Metric ${metricId}。`
+          message: `Strategy ${strategy2.strategyId} references unknown metric ${metricId}.`
         });
       }
     }
@@ -325,7 +325,7 @@ function inputValidationIssues(input, now) {
     issues.push({
       code: input.approvedInsights.length === 0 ? "INSIGHT_NOT_APPROVED" : "STRATEGY_NOT_APPROVED",
       path: input.approvedInsights.length === 0 ? "approvedInsights" : "approvedStrategies",
-      message: "至少需要一条已批准洞察和一条已批准策略。"
+      message: "At least one approved insight and strategy are required."
     });
   }
   const localToday = localDateInTimeZone(now, input.preferences.timeZone);
@@ -333,57 +333,57 @@ function inputValidationIssues(input, now) {
     issues.push({
       code: "INVALID_TIME_ZONE",
       path: "preferences.timeZone",
-      message: `不支持时区 ${input.preferences.timeZone}。`
+      message: `Time zone ${input.preferences.timeZone} is not supported.`
     });
   }
   if (!isValidIsoDate(input.preferences.startDate)) {
     issues.push({
       code: "INVALID_START_DATE",
       path: "preferences.startDate",
-      message: "计划开始日期必须是 YYYY-MM-DD。"
+      message: "The plan start date must use YYYY-MM-DD."
     });
   } else if (localToday && input.preferences.startDate < localToday) {
     issues.push({
       code: "START_DATE_IN_PAST",
       path: "preferences.startDate",
-      message: `计划开始日期不能早于用户时区中的今天 ${localToday}。`
+      message: `The plan start date cannot be before ${localToday} in the workspace time zone.`
     });
   }
   if (!Number.isInteger(input.preferences.postsPerWeek) || input.preferences.postsPerWeek < 1 || input.preferences.postsPerWeek > MAX_POSTS_PER_WEEK) {
     issues.push({
       code: "INVALID_POSTS_PER_WEEK",
       path: "preferences.postsPerWeek",
-      message: `每周发布数量必须是 1–${MAX_POSTS_PER_WEEK} 的整数。`
+      message: `Weekly publishing capacity must be an integer from 1–${MAX_POSTS_PER_WEEK}.`
     });
   }
   return issues;
 }
 function ownerPlaceholder(preferences) {
   if (preferences.teamSize === null) {
-    return "待指定：内容负责人";
+    return "To assign: content owner";
   }
-  return preferences.teamSize === 1 ? "团队负责人（待指定）" : "待指定：内容策划/发布负责人";
+  return preferences.teamSize === 1 ? "Team lead (to assign)" : "To assign: content planning and publishing owner";
 }
 function contentFormats(preferences) {
   const resources = preferences.contentResources.join(" ").toLowerCase();
-  const formats = ["文字短帖", "文档轮播"];
-  if (resources.includes("video") || resources.includes("视频")) {
-    formats.push("短视频");
+  const formats = ["Short text post", "Document carousel"];
+  if (resources.includes("video")) {
+    formats.push("Short video");
   }
-  if (resources.includes("design") || resources.includes("设计") || resources.includes("图片")) {
-    formats.push("图文");
+  if (resources.includes("design") || resources.includes("design") || resources.includes("image")) {
+    formats.push("Text with image");
   }
   return formats;
 }
 function mediaRequirement(contentFormat) {
-  if (contentFormat.includes("轮播")) {
-    return "准备可拆分为单图或在 Buffer 中手动创建的轮播素材。";
+  if (contentFormat.includes("carousel")) {
+    return "Prepare carousel assets that can be separated into individual images.";
   }
-  if (contentFormat.includes("视频")) {
-    return "准备视频文件，并在 Buffer Composer 中手动添加。";
+  if (contentFormat.includes("video")) {
+    return "Prepare the reviewed video file for manual publishing.";
   }
-  if (contentFormat.includes("图文")) {
-    return "准备一张与主题一致、具有公开直接链接的图片。";
+  if (contentFormat.includes("image")) {
+    return "Prepare one relevant image with a public direct link.";
   }
   return null;
 }
@@ -430,11 +430,11 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
   const owner = ownerPlaceholder(input.preferences);
   const offsets = POST_OFFSETS[input.preferences.postsPerWeek];
   const topicAngles = [
-    "临床工作流",
-    "临床证据",
-    "法规与 FDA/CE 状态",
-    "患者结局",
-    "医院采购与经济价值"
+    "Clinical workflow",
+    "Clinical evidence",
+    "Regulatory and FDA/CE status",
+    "Patient outcomes",
+    "Hospital procurement and economic value"
   ];
   for (let weekIndex = 0; weekIndex < 4; weekIndex += 1) {
     const weekNumber = weekIndex + 1;
@@ -450,13 +450,13 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
       const topic = `${strategy2.title}：${topicAngles[postIndex % topicAngles.length]}`;
       const contentFormat = formats[(sequence - 1) % formats.length];
       const coreMessage = strategy2.actions[postIndex % strategy2.actions.length];
-      const callToAction = "查看经批准的临床证据或法规资料，并记录医疗专业人员与医院采购相关的聚合互动。";
+      const callToAction = "Review approved clinical or regulatory materials and record aggregate engagement from healthcare and procurement audiences.";
       const experiment = isExperiment ? {
         experimentId: `${itemId}-experiment`,
-        hypothesis: `如果围绕“${strategy2.title}”只改变内容形式，则可用同口径逐帖指标判断该形式是否值得继续测试。`,
-        successCriteria: `在复盘时比较 ${experimentMetricIds.join(
-          "、"
-        )} 与当前 Snapshot 基线；仅记录相对改善，不承诺固定增长幅度。`,
+        hypothesis: `If only the format changes for "${strategy2.title}", comparable post-level metrics can indicate whether to continue testing it.`,
+        successCriteria: `At review, compare ${experimentMetricIds.join(
+          ", "
+        )} with the current snapshot baseline; record relative change without promising fixed growth.`,
         reviewDate: addDays(
           publishDate,
           Math.min(7, Math.max(0, Number(
@@ -504,7 +504,7 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
     const tasks = [
       {
         taskId: `week-${weekNumber}-prepare`,
-        title: "确认产品主题、临床证据、法规表述和单一 CTA",
+        title: "Confirm product topic, clinical evidence, regulatory wording, and one CTA",
         ownerPlaceholder: owner,
         dueDate: weekStart,
         status: "ai_draft",
@@ -512,7 +512,7 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
       },
       {
         taskId: `week-${weekNumber}-publish`,
-        title: "按内容日历发布并记录执行状态",
+        title: "Publish to the calendar and record execution status",
         ownerPlaceholder: owner,
         dueDate: lastPublishDate,
         status: "ai_draft",
@@ -520,7 +520,7 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
       },
       {
         taskId: `week-${weekNumber}-review`,
-        title: "按 KPI 复盘专业受众互动，不推断采购或患者层面结果",
+        title: "Review professional-audience engagement without inferring procurement or patient outcomes",
         ownerPlaceholder: owner,
         dueDate: weekEnd,
         status: "ai_draft",
@@ -536,9 +536,9 @@ function buildSchedule(input, planId, endDate, metricIds, generatedAt) {
       ownerPlaceholder: owner,
       publishDate: firstPublishDate,
       targetAudience: input.preferences.focusAudience,
-      callToAction: "使用单一专业 CTA 指向临床、法规或经济价值资料，并在下一次导入时复核聚合指标。",
+      callToAction: "Use one professional CTA to approved clinical, regulatory, or economic-value material and review aggregate metrics in the next import.",
       kpiMetricIds: metricIds,
-      reviewAction: "比较本周逐帖指标与 Snapshot 基线，记录方向和限制，不把时间相关性解释为因果。",
+      reviewAction: "Compare weekly post metrics with the snapshot baseline, recording direction and limitations without treating correlation as causation.",
       dependencies: previousReviewTask
     });
   }
@@ -687,7 +687,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan",
-      message: "计划输出不符合 ActionPlan 结构。"
+      message: "Plan output does not match the ActionPlan structure."
     });
     return { valid: false, issues };
   }
@@ -717,14 +717,14 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
     issues.push({
       code: "SNAPSHOT_REFERENCE_MISMATCH",
       path: "plan.snapshotId",
-      message: "计划未引用当前 Snapshot。"
+      message: "The plan does not reference the current snapshot."
     });
   }
   if (plan.startDate !== input.preferences.startDate || plan.preferences.startDate !== input.preferences.startDate || plan.preferences.timeZone !== input.preferences.timeZone || plan.preferences.postsPerWeek !== input.preferences.postsPerWeek || !isValidIsoDate(plan.startDate) || !isValidIsoDate(plan.endDate) || plan.endDate !== addDays(plan.startDate, PLAN_DURATION_DAYS - 1)) {
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan.preferences",
-      message: "计划输出未保持用户确认的日期、时区或发布能力。"
+      message: "The plan did not preserve the confirmed date, time zone, or publishing capacity."
     });
   }
   for (const insightId of plan.sourceInsightIds) {
@@ -732,7 +732,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "INSIGHT_NOT_APPROVED",
         path: "plan.sourceInsightIds",
-        message: `计划引用了未批准洞察 ${insightId}。`
+        message: `The plan references unapproved insight ${insightId}.`
       });
     }
   }
@@ -741,7 +741,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "STRATEGY_NOT_APPROVED",
         path: "plan.sourceStrategyIds",
-        message: `计划引用了未批准策略 ${strategyId}。`
+        message: `The plan references unapproved strategy ${strategyId}.`
       });
     }
   }
@@ -751,7 +751,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
     issues.push({
       code: "INSIGHT_REFERENCE_INVALID",
       path: "plan.sourceInsightIds",
-      message: "计划必须完整保留全部已批准洞察引用。"
+      message: "The plan must retain every approved insight reference."
     });
   }
   if (plan.sourceStrategyIds.length !== approvedStrategyIds.size || [...approvedStrategyIds].some(
@@ -760,14 +760,14 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
     issues.push({
       code: "STRATEGY_REFERENCE_INVALID",
       path: "plan.sourceStrategyIds",
-      message: "计划必须完整保留全部已批准策略引用。"
+      message: "The plan must retain every approved strategy reference."
     });
   }
   if (plan.fourWeekPlan.length !== 4) {
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan.fourWeekPlan",
-      message: "行动计划必须恰好包含四周。"
+      message: "The action plan must contain exactly four weeks."
     });
   }
   const localToday = localDateInTimeZone(now, plan.preferences.timeZone);
@@ -777,21 +777,21 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "INVALID_PLAN_STRUCTURE",
         path: `plan.contentCalendar.${item.itemId}.scheduledTime`,
-        message: `内容项 ${item.itemId} 的发布时间或时区无效。`
+        message: `Content item ${item.itemId} has an invalid publishing time or time zone.`
       });
     }
     if (!dateWithin(item.date, plan.startDate, plan.endDate) || localToday !== null && item.date < localToday) {
       issues.push({
         code: "DATE_OUTSIDE_PLAN",
         path: `plan.contentCalendar.${item.itemId}.date`,
-        message: `内容日期 ${item.date} 不在有效计划范围内。`
+        message: `Content date ${item.date} is outside the plan range.`
       });
     }
     if (seenDates.has(item.date)) {
       issues.push({
         code: "DATE_CONFLICT",
         path: `plan.contentCalendar.${item.itemId}.date`,
-        message: `日期 ${item.date} 存在无法解释的内容发布冲突。`
+        message: `Content on ${item.date} has an unexplained publishing conflict.`
       });
     }
     seenDates.add(item.date);
@@ -799,7 +799,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "STRATEGY_REFERENCE_INVALID",
         path: `plan.contentCalendar.${item.itemId}.strategyId`,
-        message: `内容项引用了未批准策略 ${item.strategyId}。`
+        message: `The content item references unapproved strategy ${item.strategyId}.`
       });
     }
     for (const insightId of item.sourceInsightIds) {
@@ -807,7 +807,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
         issues.push({
           code: "INSIGHT_REFERENCE_INVALID",
           path: `plan.contentCalendar.${item.itemId}.sourceInsightIds`,
-          message: `内容项引用了未批准洞察 ${insightId}。`
+          message: `The content item references unapproved insight ${insightId}.`
         });
       }
     }
@@ -821,7 +821,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "EXPERIMENT_INCOMPLETE",
         path: `plan.contentCalendar.${item.itemId}.experiment`,
-        message: "实验必须包含假设、成功标准、复盘日期和 KPI。"
+        message: "Experiments require a hypothesis, success criteria, review date, and KPI."
       });
     }
     (_a = item.experiment) == null ? void 0 : _a.metricIds.forEach(
@@ -835,14 +835,14 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
     issues.push({
       code: "EXPERIMENT_INCOMPLETE",
       path: "plan.contentCalendar",
-      message: "计划至少需要一个明确标记的实验内容。"
+      message: "The plan requires at least one clearly marked experiment."
     });
   }
   if (contentItemIds.size !== plan.contentCalendar.length || plan.contentCalendar.length !== plan.preferences.postsPerWeek * 4) {
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan.contentCalendar",
-      message: "内容日历必须为四周生成唯一且符合发布能力的内容项。"
+      message: "The calendar must contain unique items within weekly capacity for all four weeks."
     });
   }
   const referencedContentItems = plan.fourWeekPlan.flatMap(
@@ -857,14 +857,14 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "INVALID_PLAN_STRUCTURE",
         path: `plan.fourWeekPlan.${week.weekNumber}`,
-        message: `第 ${week.weekNumber} 周的日期或内容数量不符合用户设置。`
+        message: `Week ${week.weekNumber} dates or item count do not match the settings.`
       });
     }
     if (week.contentItems.some((itemId) => !contentItemIds.has(itemId)) || week.dependencies.some((taskId) => !taskIds.has(taskId))) {
       issues.push({
         code: "INVALID_PLAN_STRUCTURE",
         path: `plan.fourWeekPlan.${week.weekNumber}`,
-        message: `第 ${week.weekNumber} 周存在无效内容或任务依赖引用。`
+        message: `Week ${week.weekNumber} has an invalid content or task dependency reference.`
       });
     }
     for (const task of week.tasks) {
@@ -872,7 +872,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
         issues.push({
           code: "INVALID_PLAN_STRUCTURE",
           path: `plan.fourWeekPlan.${week.weekNumber}.tasks.${task.taskId}`,
-          message: `任务 ${task.taskId} 的日期或依赖无效。`
+          message: `Task ${task.taskId} has an invalid date or dependency.`
         });
       }
     }
@@ -887,7 +887,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan.fourWeekPlan.contentItems",
-      message: "四周计划中的内容引用必须唯一且完整。"
+      message: "Content references in the four-week plan must be unique and complete."
     });
   }
   for (const review of plan.kpiReviewPlan) {
@@ -895,7 +895,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "DATE_OUTSIDE_PLAN",
         path: `plan.kpiReviewPlan.${review.reviewId}.reviewDate`,
-        message: `KPI 复盘日期 ${review.reviewDate} 不在计划范围内。`
+        message: `KPI review date ${review.reviewDate} is outside the plan range.`
       });
     }
     review.metricIds.forEach(
@@ -910,7 +910,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "KPI_REFERENCE_INVALID",
         path: `plan.kpiDefinitions.${metricId}`,
-        message: `KPI ${metricId} 在当前 Snapshot 中不可计算。`
+        message: `KPI ${metricId} is unavailable in the current snapshot.`
       });
     }
     if (definition.source === "future_collection" && !FUTURE_KPI_DEFINITIONS.some(
@@ -919,7 +919,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "KPI_REFERENCE_INVALID",
         path: `plan.kpiDefinitions.${metricId}`,
-        message: `未来 KPI ${metricId} 不在允许采集的指标目录中。`
+        message: `Future KPI ${metricId} is not in the approved measurement catalog.`
       });
     }
   }
@@ -927,7 +927,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
     issues.push({
       code: "KPI_REFERENCE_INVALID",
       path: "plan.kpiDefinitions",
-      message: "KPI 定义中存在重复 metricId。"
+      message: "KPI definitions contain duplicate metric IDs."
     });
   }
   for (const reference of allKpiReferences) {
@@ -935,7 +935,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "KPI_REFERENCE_INVALID",
         path: reference.path,
-        message: `KPI 引用 ${reference.metricId} 没有有效定义。`
+        message: `KPI reference ${reference.metricId} has no valid definition.`
       });
     }
   }
@@ -950,7 +950,7 @@ function validateActionPlan(plan, input, now = /* @__PURE__ */ new Date()) {
       issues.push({
         code: "INVALID_POSTS_PER_WEEK",
         path: `plan.contentCalendar.week${week}`,
-        message: `第 ${week} 周内容数量超过设置上限。`
+        message: `Week ${week} exceeds the configured content limit.`
       });
     }
   }
@@ -1056,13 +1056,13 @@ function generateActionPlan(input, now = /* @__PURE__ */ new Date()) {
       reviewDate: week.dateRange.end,
       metricIds: week.kpiMetricIds,
       action: week.reviewAction,
-      comparisonRule: "仅与当前 Snapshot 基线和同口径后续数据比较；不把相关性表述为因果关系。"
+      comparisonRule: "Compare only with the current snapshot baseline and equivalent future data; do not describe correlation as causation."
     })),
     nextImportQuestions: [
-      "下一次导入是否覆盖完整的计划日期范围？",
-      "逐帖 Impressions、Clicks 与 Engagement Rate 是否可按相同口径获得？",
-      "哪些实验内容按计划发布，哪些被修改或取消？",
-      "是否有合规记录的医疗专业人员互动、KOL 反馈或医院采购里程碑可补充验证业务结果？"
+      "Does the next import cover the complete plan date range?",
+      "Are post-level impressions, clicks, and engagement rates available under consistent definitions?",
+      "Which experiments were published as planned, changed, or cancelled?",
+      "Are compliant records of professional engagement, expert feedback, or procurement milestones available to validate outcomes?"
     ],
     revisionHistory: []
   };
@@ -1111,7 +1111,7 @@ function reviseCalendarItem(plan, itemId, patch, now = /* @__PURE__ */ new Date(
       ...plan.revisionHistory,
       makeRevision(
         "calendar_item",
-        `更新内容项 ${itemId}：${Object.keys(patch).join("、")}`,
+        `Updated content item ${itemId}: ${Object.keys(patch).join(", ")}`,
         now
       )
     ]
@@ -1137,7 +1137,7 @@ function reviseActionPlanSchedule(plan, input, preferences, now = /* @__PURE__ *
       ...plan.revisionHistory,
       makeRevision(
         preferences.focusAudience !== plan.preferences.focusAudience ? "audience" : "schedule",
-        "更新计划开始日期、发布能力或重点受众；未重新运行 Snapshot 和洞察。",
+        "Updated the plan start date, publishing capacity, or focus audience without rerunning the snapshot.",
         now
       )
     ]
@@ -1166,15 +1166,15 @@ ${item.callToAction}`
     })),
     revisionHistory: [
       ...plan.revisionHistory,
-      makeRevision("plan_status", "用户确认当前行动计划。", now)
+      makeRevision("plan_status", "Reviewer approved the current action plan.", now)
     ]
   };
 }
 
 // src/agents/evidence-chat-agent.ts
-var SECURITY_REQUEST = /(system\s*prompt|系统提示词|提示词全文|api\s*key|密钥|secret|内部配置|开发者指令|忽略.{0,8}(之前|以上|规则)|reveal.{0,12}(prompt|config|secret))/i;
-var IDENTITY_REQUEST = /(识别|告诉我|列出|找到).{0,12}(匿名访客|具体访客|具体关注者|个人身份|购买意向)/i;
-var OUT_OF_SCOPE = /(销售额|收入|营收|订单|成交|pipeline|crm|网站转化|广告花费|预算回报|roi)/i;
+var SECURITY_REQUEST = /(system\s*prompt|api\s*key|secret|internal\s*config|developer\s*instruction|ignore.{0,8}(previous|above|rules)|reveal.{0,12}(prompt|config|secret))/i;
+var IDENTITY_REQUEST = /(identify|tell me|list|find).{0,12}(anonymous visitor|specific visitor|specific follower|identity|purchase intent)/i;
+var OUT_OF_SCOPE = /(sales|revenue|orders|pipeline|crm|website conversion|ad spend|return on budget|roi)/i;
 function answerId(now) {
   return `answer-${now.toISOString().replace(/\D/g, "")}`;
 }
@@ -1292,7 +1292,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
       "Add CRM, web analytics, advertising cost, or sales outcome data with aligned reporting periods."
     );
   }
-  const postsMatch = normalized.match(/每周\s*(?:发布|发)?\s*(\d)\s*(?:篇|条|次)/);
+  const postsMatch = normalized.match(/(\d)\s*(?:posts?)?\s*(?:per|a)\s*week/);
   if (postsMatch) {
     const postsPerWeek = Number(postsMatch[1]);
     if (!context.plan) {
@@ -1327,7 +1327,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
     });
   }
   const audienceMatch = normalized.match(
-    /(?:重点受众|目标受众)\s*(?:改为|设为|调整为|是)?\s*[:：]?\s*(.{2,80})$/i
+    /(?:focus audience|target audience)\s*(?:to|is)?\s*:?\s*(.{2,80})$/i
   );
   if (audienceMatch && context.plan) {
     const focusAudience = audienceMatch[1].trim();
@@ -1349,7 +1349,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
     });
   }
   const catalog = metricCatalog(context.snapshot);
-  if (/(proxy|代理比率|转化率|访客.*关注者|visitor.*follower)/i.test(normalized)) {
+  if (/(proxy|conversion rate|visitor.*follower)/i.test(normalized)) {
     const metric = catalog.get("cross.visitorToFollowerProxy");
     const answer = metricAnswer(
       metric,
@@ -1359,7 +1359,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
     );
     return { ...answer, intent: "trend_explanation" };
   }
-  if (/(ctr|点击率|click.?through)/i.test(normalized)) {
+  if (/(ctr|click.?through)/i.test(normalized)) {
     return metricAnswer(
       catalog.get("content.ctr"),
       now,
@@ -1367,7 +1367,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
       "Run single-variable tests by content format and topic, then review the next comparable import."
     );
   }
-  if (/(互动率|engagement)/i.test(normalized)) {
+  if (/engagement/i.test(normalized)) {
     return metricAnswer(
       catalog.get("content.engagementRate"),
       now,
@@ -1375,7 +1375,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
       "Review median engagement and post-level rankings alongside the average."
     );
   }
-  if (/(关注者|followers?).*(增长|变化|趋势|growth|change|trend)|增长.*关注者/i.test(
+  if (/followers?.*(growth|change|trend)|growth.*followers?/i.test(
     normalized
   )) {
     const answer = metricAnswer(
@@ -1386,7 +1386,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
     );
     return { ...answer, intent: "trend_explanation" };
   }
-  if (/(访客|visitors?|page\s*views?|浏览量)/i.test(normalized)) {
+  if (/(visitors?|page\s*views?)/i.test(normalized)) {
     const answer = metricAnswer(
       catalog.get("visitors.pageViewsTotal"),
       now,
@@ -1395,10 +1395,10 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
     );
     return {
       ...answer,
-      intent: /(趋势|变化|怎么样)/.test(normalized) ? "trend_explanation" : "metric_query"
+      intent: /(trend|change|how)/.test(normalized) ? "trend_explanation" : "metric_query"
     };
   }
-  if (/(发布|内容数量|发了多少)/i.test(normalized) && !/(建议|应该|计划)/i.test(normalized)) {
+  if (/(publish|content count|how many posts)/i.test(normalized) && !/(recommend|should|plan)/i.test(normalized)) {
     return metricAnswer(
       catalog.get("content.publishedCount"),
       now,
@@ -1406,7 +1406,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
       "Set future volume against the team's weekly publishing capacity."
     );
   }
-  if (/(数据质量|质量问题|为什么.*不可用|可靠性|data quality|quality issue|reliability)/i.test(
+  if (/(data quality|quality issue|why.*unavailable|reliability)/i.test(
     normalized
   )) {
     const blocking = context.snapshot.quality.issues.find(
@@ -1441,13 +1441,13 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
       suggestedPlanChange: null
     });
   }
-  if (/(洞察.*证据|为什么.*洞察|证据是什么)/i.test(normalized)) {
+  if (/(insight.*evidence|why.*insight|what.*evidence)/i.test(normalized)) {
     const insight2 = (_a = context.insights.find((item) => item.approvalStatus === "approved")) != null ? _a : context.insights[0];
     if (!insight2) {
       return unavailable(
         now,
         "The project contains no reportable findings.",
-        "Generate findings with valid metric references."
+        "Prepare findings with valid metric references."
       );
     }
     const metrics = referencedMetrics(
@@ -1472,7 +1472,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
       suggestedPlanChange: null
     });
   }
-  if (/(建议|应该发布什么|内容方向|下个月.*发布|what.*publish|next month)/i.test(
+  if (/(recommend|what.*publish|content direction|next month)/i.test(
     normalized
   )) {
     const strategy2 = context.strategies.find(
@@ -1490,7 +1490,7 @@ function answerProjectQuestion(context, question, now = /* @__PURE__ */ new Date
     return baseAnswer(now, {
       intent: "content_recommendation",
       status: "answered",
-      dataStatement: planItems.length > 0 ? `已批准策略“${strategy2.title}”对应的近期安排包括：${planItems.join(
+      dataStatement: planItems.length > 0 ? `The near-term schedule for approved strategy "${strategy2.title}" includes: ${planItems.join(
         "；"
       )}。` : `Approved strategy — ${strategy2.title}: ${strategy2.objective}`,
       possibleMeaning: strategy2.rationale,
@@ -1863,17 +1863,17 @@ function formatMetricValue(value, unit) {
     return value;
   }
   if (unit === "percentage") {
-    return new Intl.NumberFormat("zh-CN", {
+    return new Intl.NumberFormat("en-US", {
       style: "percent",
       maximumFractionDigits: 1
     }).format(value);
   }
   if (unit === "ratio") {
-    return new Intl.NumberFormat("zh-CN", {
+    return new Intl.NumberFormat("en-US", {
       maximumFractionDigits: 2
     }).format(value);
   }
-  return new Intl.NumberFormat("zh-CN", {
+  return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 2
   }).format(value);
 }
@@ -1882,7 +1882,7 @@ function reliabilityForCoverage(availableCount, totalCount, options = {}) {
   const reasons = [...(_a = options.extraReasons) != null ? _a : []];
   if (options.blocked || totalCount === 0 || availableCount === 0) {
     reasons.push(
-      totalCount === 0 ? "没有可用记录。" : "计算所需字段没有有效值。"
+      totalCount === 0 ? "No records are available." : "Required fields have no valid values."
     );
     return { reliability: "unavailable", reasons };
   }
@@ -1890,14 +1890,14 @@ function reliabilityForCoverage(availableCount, totalCount, options = {}) {
   const minReliableSample = (_b = options.minReliableSample) != null ? _b : 3;
   if (coverage < 0.8 || availableCount < minReliableSample) {
     if (coverage < 0.8) {
-      reasons.push(`字段完整率为 ${(coverage * 100).toFixed(0)}%。`);
+      reasons.push(`Field completeness is ${(coverage * 100).toFixed(0)}%.`);
     }
     if (availableCount < minReliableSample) {
-      reasons.push(`有效样本仅 ${availableCount} 条。`);
+      reasons.push(`Only ${availableCount} valid samples are available.`);
     }
     return { reliability: "directional", reasons };
   }
-  reasons.push("字段完整率与样本量满足当前规则。");
+  reasons.push("Field completeness and sample size meet the current rule.");
   return { reliability: "reliable", reasons };
 }
 function createMetric(input) {
@@ -1974,10 +1974,10 @@ function selectedContentRecords(records) {
   );
   return itemRecords.length > 0 ? {
     records: itemRecords,
-    reason: "优先使用具有内容标识的逐帖记录，未混入日级汇总。"
+    reason: "Post-level records with content identifiers are preferred over daily summaries."
   } : {
     records: unique,
-    reason: "没有逐帖记录，使用唯一可用的时间序列记录。"
+    reason: "No post-level records exist, so the available time-series records are used."
   };
 }
 function metricFromValues(input) {
@@ -2014,7 +2014,7 @@ function sumMetric(input) {
     values,
     value: sumAvailable(values),
     unit: "count",
-    formula: `SUM(${input.field})，排除已标记重复记录；null 不参与，0 保留`,
+    formula: `SUM(${input.field}), excluding flagged duplicates; null is omitted and zero retained`,
     period: input.period,
     records: input.records,
     fields: [input.field],
@@ -2044,7 +2044,7 @@ function buildSeries(records, field, seriesId, label, module2) {
       label,
       unit: "count",
       sourceModules: [module2],
-      reasons: [`缺少 ${field} 的带日期有效值。`]
+      reasons: [`No valid dated values are available for ${field}.`]
     });
   }
   const period = periodForRecords(available);
@@ -2113,12 +2113,12 @@ function demographicTopN(module2, records, period, topN = 5) {
     return {
       metricId: `${module2}.demographic.${dimension}`,
       label: `${dimension} Top ${topN}`,
-      formula: "按 demographicDimension / demographicValue 分组，对可用 count 求和；无 count 时使用 percentage",
+      formula: "Group by demographicDimension / demographicValue and sum available counts; use percentage when counts are absent",
       period,
       sourceModules: [module2],
       items,
       reliability: items.length === 0 ? "unavailable" : dimensionRecords.length < MIN_GROUP_SAMPLE ? "directional" : "reliable",
-      reliabilityReasons: dimensionRecords.length < MIN_GROUP_SAMPLE ? [`${dimension} 仅 ${dimensionRecords.length} 条画像记录。`] : ["画像分组样本量满足当前规则。"]
+      reliabilityReasons: dimensionRecords.length < MIN_GROUP_SAMPLE ? [`${dimension} has only ${dimensionRecords.length} audience records.`] : ["Audience segment sample size meets the current rule."]
     };
   });
 }
@@ -2141,7 +2141,7 @@ function rankItems(entries, unit, fields) {
       value: entry.value,
       formattedValue: formatMetricValue(entry.value, unit),
       reliability: entry.records.length < MIN_GROUP_SAMPLE ? "directional" : "reliable",
-      reliabilityReasons: entry.records.length < MIN_GROUP_SAMPLE ? [`分组样本仅 ${entry.records.length} 条。`] : ["分组样本量满足当前规则。"],
+      reliabilityReasons: entry.records.length < MIN_GROUP_SAMPLE ? [`The group has only ${entry.records.length} samples.`] : ["Group sample size meets the current rule."],
       sourceReferences: referencesForRecords(entry.records, fields)
     };
   });
@@ -2159,14 +2159,14 @@ function calculateFollowersMetrics(records) {
   const end = (_b = last == null ? void 0 : last.totalFollowers) != null ? _b : null;
   const net = start !== null && end !== null ? end - start : null;
   const growthRate = safeDivide(net, start);
-  const totalReasons = totals.length < 2 ? ["需要至少两个带 totalFollowers 的可比较周期。"] : [];
+  const totalReasons = totals.length < 2 ? ["At least two comparable periods with totalFollowers are required."] : [];
   const startMetric = metricFromValues({
     metricId: "followers.start",
-    label: "起始关注者数",
+    label: "Starting followers",
     values: temporal.map((record) => record.totalFollowers),
     value: start,
     unit: "count",
-    formula: "按日期升序后的首个非 null totalFollowers",
+    formula: "First non-null totalFollowers value in ascending date order",
     period,
     records: first ? [first] : [],
     fields: ["date", "totalFollowers"],
@@ -2176,11 +2176,11 @@ function calculateFollowersMetrics(records) {
   });
   const endMetric = metricFromValues({
     metricId: "followers.end",
-    label: "结束关注者数",
+    label: "Ending followers",
     values: temporal.map((record) => record.totalFollowers),
     value: end,
     unit: "count",
-    formula: "按日期升序后的最后一个非 null totalFollowers",
+    formula: "Last non-null totalFollowers value in ascending date order",
     period,
     records: last ? [last] : [],
     fields: ["date", "totalFollowers"],
@@ -2190,11 +2190,11 @@ function calculateFollowersMetrics(records) {
   });
   const netMetric = metricFromValues({
     metricId: "followers.netGrowth",
-    label: "净增长",
+    label: "Net growth",
     values: totals.map((record) => record.totalFollowers),
     value: net,
     unit: "count",
-    formula: "结束 totalFollowers − 起始 totalFollowers",
+    formula: "Ending totalFollowers − starting totalFollowers",
     period,
     records: first && last ? [first, last] : [],
     fields: ["date", "totalFollowers"],
@@ -2204,17 +2204,17 @@ function calculateFollowersMetrics(records) {
   });
   const growthMetric = metricFromValues({
     metricId: "followers.growthRate",
-    label: "关注者增长率",
+    label: "Follower growth rate",
     values: totals.map((record) => record.totalFollowers),
     value: growthRate,
     unit: "percentage",
-    formula: "(结束 totalFollowers − 起始 totalFollowers) ÷ 起始 totalFollowers；起始为 0 时 unavailable",
+    formula: "(ending totalFollowers − starting totalFollowers) ÷ starting totalFollowers; unavailable when starting value is zero",
     period,
     records: first && last ? [first, last] : [],
     fields: ["date", "totalFollowers"],
     sourceModules: ["followers"],
     minReliableSample: 2,
-    extraReasons: start === 0 ? ["起始关注者为 0，不能计算增长率。"] : totalReasons
+    extraReasons: start === 0 ? ["Growth rate cannot be calculated because starting followers are zero."] : totalReasons
   });
   const mixRecords = temporal.filter(
     (record) => record.organicFollowers !== null && record.sponsoredFollowers !== null
@@ -2226,7 +2226,7 @@ function calculateFollowersMetrics(records) {
   const mixTotal = organic !== null && sponsored !== null ? organic + sponsored : null;
   const mixPeriod = periodForRecords(mixRecords);
   const mixCoverageReasons = mixRecords.length < temporal.length ? [
-    `仅 ${mixRecords.length}/${temporal.length} 个周期同时具备 Organic 与 Sponsored。`
+    `Only ${mixRecords.length}/${temporal.length} periods contain both organic and sponsored values.`
   ] : [];
   return {
     startFollowers: startMetric,
@@ -2235,7 +2235,7 @@ function calculateFollowersMetrics(records) {
     growthRate: growthMetric,
     newFollowersTotal: sumMetric({
       metricId: "followers.newTotal",
-      label: "新增关注者总量",
+      label: "Total new followers",
       records: temporal,
       field: "newFollowers",
       sourceModule: "followers",
@@ -2243,45 +2243,45 @@ function calculateFollowersMetrics(records) {
     }),
     organicShare: metricFromValues({
       metricId: "followers.organicShare",
-      label: "Organic 占比",
+      label: "Organic share",
       values: temporal.map(
         (record) => record.organicFollowers !== null && record.sponsoredFollowers !== null ? record.organicFollowers : null
       ),
       value: safeDivide(organic, mixTotal),
       unit: "percentage",
-      formula: "在 Organic 与 Sponsored 均非 null 的相同周期中，SUM(organicFollowers) ÷ (SUM(organicFollowers) + SUM(sponsoredFollowers))",
+      formula: "For periods with both values: SUM(organicFollowers) ÷ (SUM(organicFollowers) + SUM(sponsoredFollowers))",
       period: mixPeriod,
       records: mixRecords,
       fields: ["organicFollowers", "sponsoredFollowers"],
       sourceModules: ["followers"],
       extraReasons: [
         ...mixCoverageReasons,
-        ...mixTotal === 0 ? ["Organic 与 Sponsored 合计为 0。"] : []
+        ...mixTotal === 0 ? ["Organic and sponsored values total zero."] : []
       ]
     }),
     sponsoredShare: metricFromValues({
       metricId: "followers.sponsoredShare",
-      label: "Sponsored 占比",
+      label: "Sponsored share",
       values: temporal.map(
         (record) => record.organicFollowers !== null && record.sponsoredFollowers !== null ? record.sponsoredFollowers : null
       ),
       value: safeDivide(sponsored, mixTotal),
       unit: "percentage",
-      formula: "在 Organic 与 Sponsored 均非 null 的相同周期中，SUM(sponsoredFollowers) ÷ (SUM(organicFollowers) + SUM(sponsoredFollowers))",
+      formula: "For periods with both values: SUM(sponsoredFollowers) ÷ (SUM(organicFollowers) + SUM(sponsoredFollowers))",
       period: mixPeriod,
       records: mixRecords,
       fields: ["organicFollowers", "sponsoredFollowers"],
       sourceModules: ["followers"],
       extraReasons: [
         ...mixCoverageReasons,
-        ...mixTotal === 0 ? ["Organic 与 Sponsored 合计为 0。"] : []
+        ...mixTotal === 0 ? ["Organic and sponsored values total zero."] : []
       ]
     }),
     newFollowersTrend: buildSeries(
       temporal,
       "newFollowers",
       "followers.newTrend",
-      "每期新增关注者",
+      "New followers per period",
       "followers"
     ),
     demographicTopN: demographicTopN(
@@ -2291,12 +2291,12 @@ function calculateFollowersMetrics(records) {
     ),
     demographicTrend: unavailableMetric({
       metricId: "followers.demographicTrend",
-      label: "画像变化趋势",
+      label: "Audience segment trend",
       unit: "text",
-      formula: "同一 demographicDimension / demographicValue 在至少两个日期快照间比较",
+      formula: "Compare the same demographicDimension / demographicValue across at least two dated snapshots",
       sourceModules: ["followers"],
       reliabilityReasons: [
-        "当前标准模型中的画像记录没有可比较的日期快照。"
+        "Audience records in the current model have no comparable dated snapshots."
       ]
     })
   };
@@ -2315,7 +2315,7 @@ function calculateVisitorsMetrics(records) {
   );
   const pairPeriod = periodForRecords(completePairs);
   const pairCoverageReasons = completePairs.length < temporal.length ? [
-    `仅 ${completePairs.length}/${temporal.length} 个周期同时具备 Page Views 与 Unique Visitors。`
+    `Only ${completePairs.length}/${temporal.length} periods contain both page views and unique visitors.`
   ] : [];
   const comparable = temporal.filter(
     (record) => record.pageViews !== null
@@ -2334,7 +2334,7 @@ function calculateVisitorsMetrics(records) {
   return {
     pageViewsTotal: sumMetric({
       metricId: "visitors.pageViewsTotal",
-      label: "Page Views 总量",
+      label: "Total page views",
       records: temporal,
       field: "pageViews",
       sourceModule: "visitors",
@@ -2342,7 +2342,7 @@ function calculateVisitorsMetrics(records) {
     }),
     uniqueVisitorsTotal: sumMetric({
       metricId: "visitors.uniqueVisitorsTotal",
-      label: "Unique Visitors 总量",
+      label: "Total unique visitors",
       records: temporal,
       field: "uniqueVisitors",
       sourceModule: "visitors",
@@ -2350,20 +2350,20 @@ function calculateVisitorsMetrics(records) {
     }),
     pageViewsPerVisitor: metricFromValues({
       metricId: "visitors.pageViewsPerVisitor",
-      label: "平均 Page Views per Visitor",
+      label: "Average page views per visitor",
       values: temporal.map(
         (record) => record.pageViews !== null && record.uniqueVisitors !== null ? record.uniqueVisitors : null
       ),
       value: safeDivide(pairedPageViewsTotal, pairedUniqueVisitorsTotal),
       unit: "ratio",
-      formula: "在 pageViews 与 uniqueVisitors 均非 null 的相同记录中，SUM(pageViews) ÷ SUM(uniqueVisitors)",
+      formula: "For records with both values: SUM(pageViews) ÷ SUM(uniqueVisitors)",
       period: pairPeriod,
       records: completePairs,
       fields: ["pageViews", "uniqueVisitors"],
       sourceModules: ["visitors"],
       extraReasons: [
         ...pairCoverageReasons,
-        ...pairedUniqueVisitorsTotal === 0 ? ["成对完整记录的 Unique Visitors 合计为 0。"] : []
+        ...pairedUniqueVisitorsTotal === 0 ? ["Unique visitors total zero across complete pairs."] : []
       ]
     }),
     customButtonClicksTotal: sumMetric({
@@ -2378,29 +2378,29 @@ function calculateVisitorsMetrics(records) {
       temporal,
       "pageViews",
       "visitors.pageViewsTrend",
-      "Page Views 趋势",
+      "Page views trend",
       "visitors"
     ),
     uniqueVisitorsTrend: buildSeries(
       temporal,
       "uniqueVisitors",
       "visitors.uniqueVisitorsTrend",
-      "Unique Visitors 趋势",
+      "Unique visitors trend",
       "visitors"
     ),
     periodOverPeriodChange: metricFromValues({
       metricId: "visitors.periodChange",
-      label: "Page Views 环比变化",
+      label: "Page views period-over-period change",
       values: lastTwo.map((record) => record.pageViews),
       value: periodChange,
       unit: "percentage",
-      formula: "(最新一期 pageViews − 前一期 pageViews) ÷ 前一期 pageViews",
+      formula: "(latest pageViews − prior pageViews) ÷ prior pageViews",
       period: periodChangePeriod,
       records: lastTwo,
       fields: ["date", "pageViews"],
       sourceModules: ["visitors"],
       minReliableSample: 2,
-      extraReasons: lastTwo.length < 2 ? ["至少需要两个可比较周期。"] : !periodChangeComparable ? ["最新两个有效周期的间隔不符合日、周或月可比粒度。"] : lastTwo[0].pageViews === 0 ? ["前一期 Page Views 为 0。"] : []
+      extraReasons: lastTwo.length < 2 ? ["At least two comparable periods are required."] : !periodChangeComparable ? ["The latest two valid periods are not comparably spaced by day, week, or month."] : lastTwo[0].pageViews === 0 ? ["Prior-period page views are zero."] : []
     }),
     demographicTopN: demographicTopN(
       "visitors",
@@ -2417,7 +2417,7 @@ function contentPerformance(record) {
 }
 function contentLabel(record) {
   var _a, _b;
-  return (_b = (_a = record.title) != null ? _a : record.contentId) != null ? _b : `${record.source.sheetName} 第 ${record.source.rowNumber} 行`;
+  return (_b = (_a = record.title) != null ? _a : record.contentId) != null ? _b : `${record.source.sheetName} row ${record.source.rowNumber}`;
 }
 function contentGroupMetrics(records, groupBy, prefix, period) {
   var _a;
@@ -2442,7 +2442,7 @@ function contentGroupMetrics(records, groupBy, prefix, period) {
     );
     const engagementValues = group.map(contentPerformance).filter((value) => value !== null);
     const groupReliability = group.length < MIN_GROUP_SAMPLE ? "directional" : "reliable";
-    const reasons = group.length < MIN_GROUP_SAMPLE ? [`分组仅 ${group.length} 条内容，低于 ${MIN_GROUP_SAMPLE} 条规则。`] : ["分组样本量满足当前规则。"];
+    const reasons = group.length < MIN_GROUP_SAMPLE ? [`The group has only ${group.length} items, below the ${MIN_GROUP_SAMPLE}-item rule.`] : ["Group sample size meets the current rule."];
     return {
       key,
       label: key,
@@ -2456,7 +2456,7 @@ function contentGroupMetrics(records, groupBy, prefix, period) {
           values: impressions,
           value: sumAvailable(impressions),
           unit: "count",
-          formula: "组内 SUM(impressions)",
+          formula: "SUM(impressions) within the group",
           period,
           records: group,
           fields: ["impressions"],
@@ -2472,7 +2472,7 @@ function contentGroupMetrics(records, groupBy, prefix, period) {
           ),
           value: safeDivide(pairedClicks, pairedImpressions),
           unit: "percentage",
-          formula: "组内仅在 clicks 与 impressions 均非 null 的相同记录中，SUM(clicks) ÷ SUM(impressions)",
+          formula: "Within the group, for records with both values: SUM(clicks) ÷ SUM(impressions)",
           period: periodForRecords(clickThroughPairs),
           records: clickThroughPairs,
           fields: ["clicks", "impressions"],
@@ -2481,18 +2481,18 @@ function contentGroupMetrics(records, groupBy, prefix, period) {
           extraReasons: [
             ...reasons,
             ...clickThroughPairs.length < group.length ? [
-              `仅 ${clickThroughPairs.length}/${group.length} 条组内内容同时具备 clicks 与 impressions。`
+              `Only ${clickThroughPairs.length}/${group.length} group items contain both clicks and impressions.`
             ] : [],
-            ...pairedImpressions === 0 ? ["成对完整记录的 Impressions 合计为 0。"] : []
+            ...pairedImpressions === 0 ? ["Impressions total zero across complete pairs."] : []
           ]
         }),
         metricFromValues({
           metricId: `${prefix}.${key}.medianEngagement`,
-          label: "中位互动率",
+          label: "Median engagement rate",
           values: group.map(contentPerformance),
           value: median(engagementValues),
           unit: "percentage",
-          formula: "MEDIAN(逐条内容互动率)",
+          formula: "MEDIAN(per-item engagement rate)",
           period,
           records: group,
           fields: [
@@ -2531,10 +2531,10 @@ function calculateContentMetrics(inputRecords) {
     engagementPairs.map((record) => record.impressions)
   );
   const engagementCoverageReasons = engagementPairs.length < records.length ? [
-    `仅 ${engagementPairs.length}/${records.length} 条内容同时具备 impressions、clicks、reactions、comments 与 reposts。`
+    `Only ${engagementPairs.length}/${records.length} items contain impressions, clicks, reactions, comments, and reposts.`
   ] : [];
   const clickThroughCoverageReasons = clickThroughPairs.length < records.length ? [
-    `仅 ${clickThroughPairs.length}/${records.length} 条内容同时具备 clicks 与 impressions。`
+    `Only ${clickThroughPairs.length}/${records.length} items contain both clicks and impressions.`
   ] : [];
   const rankingEntries = records.flatMap((record) => {
     const value = contentPerformance(record);
@@ -2565,24 +2565,24 @@ function calculateContentMetrics(inputRecords) {
     { extraReasons: [selection.reason] }
   );
   const weekdays = [
-    "星期日",
-    "星期一",
-    "星期二",
-    "星期三",
-    "星期四",
-    "星期五",
-    "星期六"
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday"
   ];
   return {
     publishedCount: metricFromValues({
       metricId: "content.publishedCount",
-      label: "发布内容数量",
+      label: "Published content count",
       values: records.map(
         (record) => record.publishedAt === null ? null : 1
       ),
       value: records.filter((record) => record.publishedAt !== null).length || null,
       unit: "count",
-      formula: "COUNT(具有 publishedAt 的唯一逐帖记录)",
+      formula: "COUNT(unique post-level records with publishedAt)",
       period,
       records,
       fields: ["publishedAt", "contentId", "title"],
@@ -2591,7 +2591,7 @@ function calculateContentMetrics(inputRecords) {
     }),
     impressionsTotal: sumMetric({
       metricId: "content.impressions",
-      label: "Impressions 总量",
+      label: "Total impressions",
       records,
       field: "impressions",
       sourceModule: "content",
@@ -2600,7 +2600,7 @@ function calculateContentMetrics(inputRecords) {
     }),
     clicksTotal: sumMetric({
       metricId: "content.clicks",
-      label: "Clicks 总量",
+      label: "Total clicks",
       records,
       field: "clicks",
       sourceModule: "content",
@@ -2609,7 +2609,7 @@ function calculateContentMetrics(inputRecords) {
     }),
     reactionsTotal: sumMetric({
       metricId: "content.reactions",
-      label: "Reactions 总量",
+      label: "Total reactions",
       records,
       field: "reactions",
       sourceModule: "content",
@@ -2618,7 +2618,7 @@ function calculateContentMetrics(inputRecords) {
     }),
     commentsTotal: sumMetric({
       metricId: "content.comments",
-      label: "Comments 总量",
+      label: "Total comments",
       records,
       field: "comments",
       sourceModule: "content",
@@ -2627,7 +2627,7 @@ function calculateContentMetrics(inputRecords) {
     }),
     repostsTotal: sumMetric({
       metricId: "content.reposts",
-      label: "Reposts 总量",
+      label: "Total reposts",
       records,
       field: "reposts",
       sourceModule: "content",
@@ -2642,7 +2642,7 @@ function calculateContentMetrics(inputRecords) {
       ),
       value: safeDivide(pairedClicks, pairedClickImpressions),
       unit: "percentage",
-      formula: "在 clicks 与 impressions 均非 null 的相同记录中，SUM(clicks) ÷ SUM(impressions)",
+      formula: "For records with both values: SUM(clicks) ÷ SUM(impressions)",
       period: periodForRecords(clickThroughPairs),
       records: clickThroughPairs,
       fields: ["clicks", "impressions"],
@@ -2650,7 +2650,7 @@ function calculateContentMetrics(inputRecords) {
       extraReasons: [
         selection.reason,
         ...clickThroughCoverageReasons,
-        ...pairedClickImpressions === 0 ? ["成对完整记录的 Impressions 合计为 0。"] : []
+        ...pairedClickImpressions === 0 ? ["Impressions total zero across complete pairs."] : []
       ]
     }),
     engagementRate: metricFromValues({
@@ -2661,7 +2661,7 @@ function calculateContentMetrics(inputRecords) {
       ),
       value: safeDivide(totalEngagements, engagementImpressions),
       unit: "percentage",
-      formula: "仅在五个字段均非 null 的相同记录中，SUM(clicks + reactions + comments + reposts) ÷ SUM(impressions)",
+      formula: "For records with all five fields: SUM(clicks + reactions + comments + reposts) ÷ SUM(impressions)",
       period: periodForRecords(engagementPairs),
       records: engagementPairs,
       fields: [
@@ -2675,16 +2675,16 @@ function calculateContentMetrics(inputRecords) {
       extraReasons: [
         selection.reason,
         ...engagementCoverageReasons,
-        ...engagementImpressions === 0 ? ["成对完整记录的 Impressions 合计为 0。"] : []
+        ...engagementImpressions === 0 ? ["Impressions total zero across complete pairs."] : []
       ]
     }),
     medianEngagementRate: metricFromValues({
       metricId: "content.medianEngagementRate",
-      label: "内容互动率中位数",
+      label: "Median content engagement rate",
       values: records.map(contentPerformance),
       value: median(engagementValues),
       unit: "percentage",
-      formula: "MEDIAN(逐条内容互动率)",
+      formula: "MEDIAN(per-item engagement rate)",
       period,
       records,
       fields: [
@@ -2700,8 +2700,8 @@ function calculateContentMetrics(inputRecords) {
     }),
     contentRanking: {
       metricId: "content.ranking",
-      label: "内容表现排名",
-      formula: "优先按 (clicks + reactions + comments + reposts) ÷ impressions 排名；缺少组成项时使用导出 engagementRate",
+      label: "Content performance ranking",
+      formula: "Rank by (clicks + reactions + comments + reposts) ÷ impressions; use exported engagementRate when components are missing",
       period,
       sourceModules: ["content"],
       items: rankingItems,
@@ -2828,11 +2828,11 @@ function calculateCrossModuleMetrics(input) {
   return {
     visitorFollowerTrendComparison: metricFromValues({
       metricId: "cross.visitorFollowerTrend",
-      label: "Visitors 与 Followers 同期趋势相关性",
+      label: "Concurrent visitor and follower trend correlation",
       values: pairCoverageValues,
       value: trendCorrelation,
       unit: "score",
-      formula: "Pearson correlation(同期 uniqueVisitors, 同期 newFollowers)，至少 3 个同粒度共同周期",
+      formula: "Pearson correlation(concurrent uniqueVisitors, concurrent newFollowers) across at least three shared periods",
       period: commonPeriod,
       records: trendPairs.flatMap(({ follower, visitor }) => [
         follower,
@@ -2842,11 +2842,11 @@ function calculateCrossModuleMetrics(input) {
       sourceModules: ["visitors", "followers"],
       minReliableSample: 3,
       extraReasons: [
-        "相关性只描述时间上的共同变化，不表示因果关系。",
-        ...!sameGranularity ? ["Followers 与 Visitors 粒度不一致或不规则。"] : [],
-        ...trendPairs.length < 3 ? [`共同周期仅 ${trendPairs.length} 个。`] : []
+        "Correlation describes concurrent movement, not causation.",
+        ...!sameGranularity ? ["Follower and visitor granularity differs or is irregular."] : [],
+        ...trendPairs.length < 3 ? [`Only ${trendPairs.length} shared periods are available.`] : []
       ],
-      caveat: "相关性不代表 Visitors 导致 Followers 增长，反之亦然。"
+      caveat: "Correlation does not mean visitors cause follower growth or vice versa."
     }),
     visitorToFollowerProxyRatio: metricFromValues({
       metricId: "cross.visitorToFollowerProxy",
@@ -2859,26 +2859,26 @@ function calculateCrossModuleMetrics(input) {
       ),
       value: proxyRatio,
       unit: "percentage",
-      formula: "在 newFollowers 与 uniqueVisitors 均存在的同日期周期中，SUM(newFollowers) ÷ SUM(uniqueVisitors)",
+      formula: "For same-date periods with both values: SUM(newFollowers) ÷ SUM(uniqueVisitors)",
       period: commonPeriod,
       records: pairedAudienceRecords,
       fields: ["date", "newFollowers", "uniqueVisitors"],
       sourceModules: ["followers", "visitors"],
       extraReasons: [
-        "这是聚合数据代理比率，不是用户级真实转化率。",
-        ...!sameGranularity ? ["Followers 与 Visitors 粒度不一致或不规则。"] : [],
-        ...trendPairs.length === 0 ? ["没有 newFollowers 与 uniqueVisitors 均存在的同日期周期。"] : [],
-        ...pairedUniqueVisitors === 0 ? ["同日期成对周期内 Unique Visitors 合计为 0。"] : []
+        "This aggregate proxy ratio is not a user-level conversion rate.",
+        ...!sameGranularity ? ["Follower and visitor granularity differs or is irregular."] : [],
+        ...trendPairs.length === 0 ? ["No same-date periods contain both newFollowers and uniqueVisitors."] : [],
+        ...pairedUniqueVisitors === 0 ? ["Unique visitors total zero across same-date pairs."] : []
       ],
-      caveat: "该指标不能识别某位访客是否成为关注者，也不能当作真实转化率。"
+      caveat: "This metric cannot identify whether a visitor became a follower and is not a conversion rate."
     }),
     publishingWindowCorrelation: metricFromValues({
       metricId: "cross.publishingWindowCorrelation",
-      label: "发布窗口与受众变化的时间相关性",
+      label: "Publishing window and audience change correlation",
       values: pairCoverageValues,
       value: publishingCorrelation,
       unit: "score",
-      formula: "Pearson correlation(同期发布数量, 同期 newFollowers + uniqueVisitors)，至少 3 个同粒度共同周期",
+      formula: "Pearson correlation(concurrent publishing count, concurrent newFollowers + uniqueVisitors) across at least three shared periods",
       period: commonPeriod,
       records: [
         ...content.filter(
@@ -2894,11 +2894,11 @@ function calculateCrossModuleMetrics(input) {
       sourceModules: ["content", "followers", "visitors"],
       minReliableSample: 3,
       extraReasons: [
-        "只衡量同期相关性，不表示内容发布导致受众变化。",
-        ...!sameGranularity ? ["模块粒度不一致或不规则。"] : [],
-        ...publishingPairs.length < 3 ? [`可比较发布周期仅 ${publishingPairs.length} 个。`] : []
+        "This measures concurrent correlation and does not show publishing caused audience change.",
+        ...!sameGranularity ? ["Module granularity differs or is irregular."] : [],
+        ...publishingPairs.length < 3 ? [`Only ${publishingPairs.length} comparable publishing periods are available.`] : []
       ],
-      caveat: "不得将该时间相关性表述为内容发布造成增长。"
+      caveat: "Do not describe this temporal correlation as publishing-driven growth."
     })
   };
 }
@@ -2978,9 +2978,9 @@ function checkMissingModules(input) {
         severity: "error",
         module: module2,
         field: null,
-        message: `缺少 ${module2} 标准化记录。`,
+        message: `Standardized ${module2} records are missing.`,
         affectedRows: [],
-        suggestedAction: `上传并确认 ${module2} 数据后重新生成 Snapshot。`,
+        suggestedAction: `Upload and confirm ${module2} data, then prepare a new snapshot.`,
         blocksAnalysis: true
       })
     ] : []
@@ -3002,9 +3002,9 @@ function checkOverlapAndGranularity(periods) {
         severity: "error",
         module: "cross-module",
         field: null,
-        message: "模块时间范围没有共同重叠区间，不能进行跨模块比较。",
+        message: "Module date ranges do not overlap, so cross-module comparison is unavailable.",
         affectedRows: [],
-        suggestedAction: "重新导出具有共同时间范围的数据。",
+        suggestedAction: "Export data with a common date range.",
         blocksAnalysis: true
       })
     );
@@ -3023,9 +3023,9 @@ function checkOverlapAndGranularity(periods) {
         severity: "warning",
         module: "cross-module",
         field: null,
-        message: `模块粒度不一致：${[...regularGranularities].join(" / ")}，不能直接逐期比较。`,
+        message: `Module granularity differs (${[...regularGranularities].join(" / ")}), preventing direct period comparison.`,
         affectedRows: [],
-        suggestedAction: "将各模块重新导出为相同的日、周或月粒度。",
+        suggestedAction: "Export each module at the same daily, weekly, or monthly granularity.",
         blocksAnalysis: true
       })
     );
@@ -3066,11 +3066,11 @@ function checkDateGaps(module2, records, period) {
       severity: "warning",
       module: module2,
       field: module2 === "content" ? "publishedAt" : "date",
-      message: `发现 ${gaps.length} 个超过预期 ${expected.expected} 天的日期缺口。`,
+      message: `${gaps.length} date gaps exceed the expected ${expected.expected} days.`,
       affectedRows: referencesForRecords(records, [
         module2 === "content" ? "publishedAt" : "date"
       ]),
-      suggestedAction: "检查导出范围、筛选条件和缺失周期。",
+      suggestedAction: "Check export ranges, filters, and missing periods.",
       blocksAnalysis: false
     })
   ];
@@ -3086,9 +3086,9 @@ function checkDuplicates(module2, records) {
       severity: "warning",
       module: module2,
       field: null,
-      message: `${duplicates.length} 条记录被标记为重复；指标引擎会排除这些记录。`,
+      message: `${duplicates.length} records are marked as duplicates and excluded from metrics.`,
       affectedRows: referencesForRecords(duplicates, []),
-      suggestedAction: "确认重复记录来源；如非重复，请回到字段映射修正。",
+      suggestedAction: "Confirm duplicate sources or correct the field mapping.",
       blocksAnalysis: false
     })
   ];
@@ -3111,9 +3111,9 @@ function checkNullRates(module2, records) {
         severity: "warning",
         module: module2,
         field,
-        message: `${field} 空值比例为 ${(rate * 100).toFixed(0)}%。`,
+        message: `${field} is empty in ${(rate * 100).toFixed(0)}% of records.`,
         affectedRows: referencesForRecords(missing, [field]),
-        suggestedAction: "确认该字段是否存在于原始导出，或缩小依赖该字段的分析范围。",
+        suggestedAction: "Confirm the source field or narrow analyses that depend on it.",
         blocksAnalysis: false
       })
     ];
@@ -3143,9 +3143,9 @@ function checkParserIssues(module2, records) {
         severity: "error",
         module: module2,
         field: null,
-        message: `${invalid.length} 条记录包含无效数字。`,
+        message: `${invalid.length} records contain invalid numbers.`,
         affectedRows: referencesForRecords(invalid, []),
-        suggestedAction: "回到识别结果检查原始值和字段映射。",
+        suggestedAction: "Review source values and field mappings.",
         blocksAnalysis: true
       })
     );
@@ -3157,9 +3157,9 @@ function checkParserIssues(module2, records) {
         severity: "warning",
         module: module2,
         field: null,
-        message: `${negatives.length} 条记录包含负数指标。`,
+        message: `${negatives.length} records contain negative metrics.`,
         affectedRows: referencesForRecords(negatives, []),
-        suggestedAction: "确认负数是否代表修正值；否则修复源数据。",
+        suggestedAction: "Confirm whether negatives are corrections; otherwise fix the source data.",
         blocksAnalysis: false
       })
     );
@@ -3171,9 +3171,9 @@ function checkParserIssues(module2, records) {
         severity: "warning",
         module: module2,
         field: null,
-        message: `${percentages.length} 条记录包含超出 0%–100% 的百分比。`,
+        message: `${percentages.length} records contain percentages outside 0%–100%.`,
         affectedRows: referencesForRecords(percentages, []),
-        suggestedAction: "确认百分比缩放和字段含义。",
+        suggestedAction: "Confirm percentage scaling and field meaning.",
         blocksAnalysis: false
       })
     );
@@ -3195,9 +3195,9 @@ function checkFollowerDecrease(records) {
       severity: "warning",
       module: "followers",
       field: "totalFollowers",
-      message: `${affected.length} 个周期的关注者总数低于前一期。`,
+      message: `${affected.length} periods have fewer total followers than the prior period.`,
       affectedRows: referencesForRecords(affected, ["totalFollowers"]),
-      suggestedAction: "确认是否为取消关注、口径变更或导出异常。",
+      suggestedAction: "Check for unfollows, definition changes, or export anomalies.",
       blocksAnalysis: false
     })
   ];
@@ -3212,12 +3212,12 @@ function checkVisitorConsistency(records) {
       severity: "error",
       module: "visitors",
       field: "uniqueVisitors",
-      message: `${affected.length} 条记录的独立访客大于页面浏览量。`,
+      message: `${affected.length} records have more unique visitors than page views.`,
       affectedRows: referencesForRecords(affected, [
         "uniqueVisitors",
         "pageViews"
       ]),
-      suggestedAction: "检查 Visitors 字段映射是否混用了不同页面或口径。",
+      suggestedAction: "Check whether visitor mappings mix pages or definitions.",
       blocksAnalysis: true
     })
   ];
@@ -3241,7 +3241,7 @@ function checkContentEngagement(records) {
       severity: "warning",
       module: "content",
       field: "engagementRate",
-      message: `${affected.length} 条内容的互动组成项与展示量关系异常。`,
+      message: `${affected.length} content records have engagement components inconsistent with impressions.`,
       affectedRows: referencesForRecords(affected, [
         "impressions",
         "clicks",
@@ -3249,7 +3249,7 @@ function checkContentEngagement(records) {
         "comments",
         "reposts"
       ]),
-      suggestedAction: "确认指标是否来自相同口径和时间窗口。",
+      suggestedAction: "Confirm metrics use the same definitions and time window.",
       blocksAnalysis: false
     })
   ];
@@ -3263,9 +3263,9 @@ function checkSmallSamples(input) {
         severity: "warning",
         module: module2,
         field: null,
-        message: `${module2} 仅有 ${records.length} 条记录，结果仅适合作方向观察。`,
+        message: `${module2} has only ${records.length} records, so results are directional.`,
         affectedRows: referencesForRecords(records, []),
-        suggestedAction: "扩大导出时间范围或增加样本量。",
+        suggestedAction: "Expand the export period or sample size.",
         blocksAnalysis: false
       })
     ] : [];
@@ -3285,9 +3285,9 @@ function checkContentDates(content, followerPeriod, visitorPeriod) {
       severity: "info",
       module: "content",
       field: "publishedAt",
-      message: `${affected.length} 条内容发布时间不在 Followers 与 Visitors 共同范围内。`,
+      message: `${affected.length} content records fall outside the shared Followers and Visitors period.`,
       affectedRows: referencesForRecords(affected, ["publishedAt"]),
-      suggestedAction: "跨模块分析时只使用共同时间范围内的内容。",
+      suggestedAction: "Use only content in the shared period for cross-module analysis.",
       blocksAnalysis: false
     })
   ];
@@ -3455,14 +3455,14 @@ function validateFileEnvelope(file) {
       ok: false,
       error: error(
         "UNSUPPORTED_FILE_TYPE",
-        "仅支持 XLSX、XLS 或 CSV 文件。"
+        "Only XLSX, XLS, and CSV files are supported."
       )
     };
   }
   if (file.size === 0) {
     return {
       ok: false,
-      error: error("EMPTY_FILE", "文件为空，请重新导出后再试。")
+      error: error("EMPTY_FILE", "The file is empty. Export it again and retry.")
     };
   }
   if (file.size > MAX_UPLOAD_SIZE_BYTES) {
@@ -3470,7 +3470,7 @@ function validateFileEnvelope(file) {
       ok: false,
       error: error(
         "REQUEST_TOO_LARGE",
-        `文件超过 ${formatFileSize(MAX_UPLOAD_SIZE_BYTES)} 限制。`
+        `The file exceeds the ${formatFileSize(MAX_UPLOAD_SIZE_BYTES)} limit.`
       )
     };
   }
@@ -3479,7 +3479,7 @@ function validateFileEnvelope(file) {
     return {
       ok: true,
       extensionFormat,
-      mimeWarning: "浏览器未提供可靠 MIME 类型，服务端将校验文件签名。"
+      mimeWarning: "The browser did not provide a reliable MIME type; the server will validate the file signature."
     };
   }
   if (!MIME_TYPES[extensionFormat].includes(normalizedMime)) {
@@ -3487,7 +3487,7 @@ function validateFileEnvelope(file) {
       ok: false,
       error: error(
         "INVALID_MIME_TYPE",
-        "文件 MIME 类型与扩展名不一致，请确认文件未被错误重命名。"
+        "The MIME type does not match the extension. Confirm the file was not renamed incorrectly."
       )
     };
   }
@@ -3565,7 +3565,7 @@ function validateServerFile(file, bytes) {
       ok: false,
       error: error(
         "ENCRYPTED_WORKBOOK",
-        "工作簿已加密或受密码保护，请先解除保护后重新上传。"
+        "The workbook is encrypted or password protected. Remove protection before uploading."
       )
     };
   }
@@ -3574,7 +3574,7 @@ function validateServerFile(file, bytes) {
       ok: false,
       error: error(
         "FILE_SIGNATURE_MISMATCH",
-        "文件内容与扩展名不一致，已停止解析。",
+        "File content does not match the extension, so parsing stopped.",
         false
       )
     };
@@ -3629,7 +3629,7 @@ var BUFFER_OFFICIAL_GUIDANCE = {
     uploadLimitPerChannel: 100
   },
   accountImportPreviewVerified: false,
-  note: "字段依据 Buffer 官方帮助页；仍应从目标渠道设置下载最新模板并在 Buffer 预览中复核。"
+  note: "Fields follow official Buffer guidance; download the latest template from channel settings and verify it in the Buffer preview."
 };
 
 // src/exports/csv-utils.ts
@@ -3734,8 +3734,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "info",
         item.itemId,
         "channel",
-        "该内容不属于本次选择的渠道。",
-        "如需导出，请在渠道筛选中选择该渠道。",
+        "This content does not belong to a selected channel.",
+        "Select the channel in the filter to include it.",
         false
       )
     );
@@ -3747,8 +3747,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "info",
         item.itemId,
         "date",
-        "该内容不在本次导出日期范围内，仍保留在 30 天计划中。",
-        "调整日期范围或保留到下一批交接。",
+        "This content is outside the export date range and remains in the 30-day plan.",
+        "Adjust the date range or retain it for a later handoff.",
         false
       )
     );
@@ -3760,8 +3760,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "status",
-        "只有用户已确认的内容可以交付 Buffer。",
-        "由 Lucy 审核后将内容状态设为已批准。"
+        "Only reviewer-approved content can be handed off to Buffer.",
+        "Complete review and set the content status to approved."
       )
     );
   }
@@ -3772,8 +3772,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "workflowStatus",
-        "该内容已被用户标记为 published，不应再次排期。",
-        "确认实际状态；如需新版本，请复制为新的计划项。"
+        "This content is marked as published and should not be scheduled again.",
+        "Confirm its status or duplicate it as a new plan item."
       )
     );
   } else if (item.workflowStatus === "failed") {
@@ -3783,8 +3783,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "warning",
         item.itemId,
         "workflowStatus",
-        "该内容曾标记为交接失败，本次将作为重试。",
-        "确认失败原因已修复后再继续。",
+        "This content previously failed handoff and will be retried.",
+        "Confirm the previous issue is resolved before continuing.",
         false
       )
     );
@@ -3796,8 +3796,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "warning",
         item.itemId,
         "workflowStatus",
-        "该内容已生成过 Buffer 交接文件，本次属于重复导出。",
-        "确认不会在 Buffer 中创建重复排期后再继续。",
+        "A Buffer handoff file already includes this content, making this a duplicate export.",
+        "Confirm this will not create a duplicate schedule in Buffer.",
         false
       )
     );
@@ -3809,8 +3809,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "postText",
-        "发布文案为空。",
-        "补充经审核的发布文案，不会由导出器自动生成或猜测。"
+        "Publishing copy is empty.",
+        "Add reviewed copy; the exporter does not create or infer it."
       )
     );
   }
@@ -3821,8 +3821,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "channel",
-        "当前 Buffer 适配器不支持该渠道。",
-        "选择当前系统支持的渠道，或等待新增渠道级适配器。"
+        "The current Buffer adapter does not support this channel.",
+        "Select a supported channel."
       )
     );
   }
@@ -3833,8 +3833,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "date",
-        "排期日期无效。",
-        "使用 YYYY-MM-DD 格式的有效日期。"
+        "The scheduled date is invalid.",
+        "Use a valid YYYY-MM-DD date."
       )
     );
   }
@@ -3845,8 +3845,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "scheduledTime",
-        "排期时间无效。",
-        "使用 24 小时 HH:mm 格式。"
+        "The scheduled time is invalid.",
+        "Use 24-hour HH:mm format."
       )
     );
   }
@@ -3857,8 +3857,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "timeZone",
-        "内容项时区不是有效的 IANA 时区。",
-        "选择受支持的 IANA 时区。"
+        "The content item time zone is not a valid IANA time zone.",
+        "Select a supported IANA time zone."
       )
     );
   } else if (item.timeZone !== options.timeZone) {
@@ -3868,8 +3868,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "timeZone",
-        `内容项时区 ${item.timeZone} 与本次交接时区 ${options.timeZone} 不一致。`,
-        "统一内容项和交接时区；CSV 本身不携带时区列。"
+        `Content time zone ${item.timeZone} differs from handoff time zone ${options.timeZone}.`,
+        "Align content and handoff time zones; CSV does not contain a time-zone column."
       )
     );
   }
@@ -3886,8 +3886,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
           "error",
           item.itemId,
           "scheduledTime",
-          "该本地时间不存在，可能落在夏令时跳转区间。",
-          "选择该时区中真实存在的本地时间。"
+          "This local time does not exist, possibly due to a daylight-saving transition.",
+          "Select a valid local time in this time zone."
         )
       );
     } else if (scheduledAt.valueOf() <= now.valueOf()) {
@@ -3897,8 +3897,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
           "error",
           item.itemId,
           "scheduledTime",
-          "转换到 UTC 后的排期时间已经过去。",
-          "调整日期或时间后重新校验。"
+          "The scheduled time is in the past after UTC conversion.",
+          "Adjust the date or time and revalidate."
         )
       );
     }
@@ -3910,8 +3910,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "linkUrl",
-        "链接必须是有效的公开 HTTP(S) URL，且不能包含嵌入凭据。",
-        "修正链接或清空可选链接字段。"
+        "The link must be a public HTTP(S) URL without embedded credentials.",
+        "Correct the link or clear the optional field."
       )
     );
   }
@@ -3922,8 +3922,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "mediaUrls",
-        "Buffer 官方批量上传当前仅支持每条内容一张图片。",
-        "只保留一个直接图片 URL，其他素材在 Buffer 中手动处理。"
+        "Buffer bulk upload supports one image per content item.",
+        "Retain one direct image URL and handle other assets manually in Buffer."
       )
     );
   }
@@ -3935,8 +3935,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
           "error",
           item.itemId,
           "mediaUrls",
-          "媒体链接必须是有效的公开 HTTP(S) URL，且不能包含嵌入凭据。",
-          "替换为公开的直接图片 URL。"
+          "The media link must be a public HTTP(S) URL without embedded credentials.",
+          "Replace it with a public direct image URL."
         )
       );
     } else if (!isDirectImageUrl(mediaUrl)) {
@@ -3946,21 +3946,21 @@ function itemIssues(item, options, now, previouslyExportedIds) {
           "error",
           item.itemId,
           "mediaUrls",
-          "媒体链接不像以图片扩展名结尾的直接图片 URL。",
-          "使用能单独打开图片并以 jpg、png、gif、webp 或 heic 结尾的 URL。"
+          "The media link does not appear to be a direct image URL.",
+          "Use a URL ending in jpg, png, gif, webp, or heic that opens the image directly."
         )
       );
     }
   }
-  if (item.contentFormat.includes("轮播") || item.contentFormat.includes("视频")) {
+  if (item.contentFormat.includes("carousel") || item.contentFormat.includes("video")) {
     issues.push(
       issue2(
         "UNSUPPORTED_BULK_POST_TYPE",
         "error",
         item.itemId,
         "contentFormat",
-        "Buffer 官方 CSV 批量上传当前不支持视频或轮播内容。",
-        "改为文字/单图版本，或在 Buffer Composer 中手动创建该内容。"
+        "Buffer CSV bulk upload does not support video or carousel content.",
+        "Use text or a single image, or create the content manually in Buffer."
       )
     );
   } else if (item.mediaRequirement && item.mediaUrls.length === 0) {
@@ -3970,8 +3970,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "warning",
         item.itemId,
         "mediaUrls",
-        "计划包含素材需求但尚未提供直接图片 URL；CSV 仍可交付文字。",
-        "导出前补充直接图片 URL，或由 Lucy 在 Buffer 中手动添加图片。",
+        "The plan requires media but has no direct image URL; CSV can still carry the text.",
+        "Add a direct image URL before export or add the image manually in Buffer.",
         false
       )
     );
@@ -3983,8 +3983,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "warning",
         item.itemId,
         "campaignTag",
-        "Buffer Tags 区分大小写，且必须已存在于 Lucy 的账户。",
-        "在 Buffer 中确认同名 Tag 已存在，否则该 Tag 会被忽略。",
+        "Buffer tags are case-sensitive and must already exist in the workspace.",
+        "Confirm the matching tag exists in Buffer or it will be ignored.",
         false
       )
     );
@@ -3996,8 +3996,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
         "error",
         item.itemId,
         "postText",
-        `文案和链接合计超过 ${channelDefinition.maxTextLength} 个字符。`,
-        "由 Lucy 编辑文案；导出器不会静默截断。"
+        `Copy and link exceed ${channelDefinition.maxTextLength} characters.`,
+        "Edit the copy; the exporter does not truncate it silently."
       )
     );
   }
@@ -4045,8 +4045,8 @@ function validateBufferHandoff(plan, options, now = /* @__PURE__ */ new Date()) 
         "error",
         null,
         "dateRange",
-        "导出日期范围无效，结束日期不能早于开始日期。",
-        "选择有效的开始和结束日期。"
+        "The export date range is invalid; the end cannot precede the start.",
+        "Select valid start and end dates."
       )
     );
   }
@@ -4057,8 +4057,8 @@ function validateBufferHandoff(plan, options, now = /* @__PURE__ */ new Date()) 
         "error",
         null,
         "channels",
-        "尚未选择目标渠道。",
-        "至少选择一个当前支持的渠道。"
+        "No target channel is selected.",
+        "Select at least one supported channel."
       )
     );
   }
@@ -4069,8 +4069,8 @@ function validateBufferHandoff(plan, options, now = /* @__PURE__ */ new Date()) 
         "error",
         null,
         "timeZone",
-        "本次交接时区无效。",
-        "选择有效的 IANA 时区。"
+        "The handoff time zone is invalid.",
+        "Select a valid IANA time zone."
       )
     );
   }
@@ -4080,8 +4080,8 @@ function validateBufferHandoff(plan, options, now = /* @__PURE__ */ new Date()) 
       "info",
       null,
       "timeZone",
-      "Buffer 官方通用 CSV 没有时区列；Posting Time 按目标渠道在 Buffer 中配置的时区解释。",
-      `导入前确认 Buffer 渠道时区为 ${options.timeZone}，并在预览中复核时间。`,
+      "Buffer CSV has no time-zone column; Posting Time uses the target channel time zone configured in Buffer.",
+      `Before import, confirm the Buffer channel time zone is ${options.timeZone} and verify times in preview.`,
       false
     )
   );
@@ -4114,16 +4114,16 @@ function validateBufferHandoff(plan, options, now = /* @__PURE__ */ new Date()) 
     "SCHEDULE_CONFLICT",
     (item) => `${item.channel}|${item.date}|${item.scheduledTime}`,
     "scheduledTime",
-    "同一渠道在同一时间存在多条待交接内容。",
-    "在 Buffer 中确认队列或调整其中一条内容的时间。"
+    "Multiple handoff items use the same channel and time.",
+    "Review the Buffer queue or adjust one item's time."
   );
   addPairWarnings(
     reviews,
     "DUPLICATE_CONTENT",
-    (item) => `${item.channel}|${composeBufferPostText(item).normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("zh-CN")}`,
+    (item) => `${item.channel}|${composeBufferPostText(item).normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US")}`,
     "postText",
-    "同一渠道存在重复文案。",
-    "确认这是有意重复发布，而不是误操作。"
+    "Duplicate copy exists for the same channel.",
+    "Confirm the repeated publication is intentional."
   );
   const channelCounts = {};
   for (const review of reviews.filter((candidate) => candidate.canExport)) {
@@ -4139,8 +4139,8 @@ function validateBufferHandoff(plan, options, now = /* @__PURE__ */ new Date()) 
         "warning",
         null,
         "channels",
-        `至少一个渠道的本次内容数超过当前官方资料所示 Free 队列容量 ${BUFFER_OFFICIAL_GUIDANCE.freePlan.queueCapacityPerChannel} 条。`,
-        "按日期分批导出，或由 Lucy 根据当前 Buffer 套餐确认后继续。",
+        `At least one channel exceeds the documented free queue capacity of ${BUFFER_OFFICIAL_GUIDANCE.freePlan.queueCapacityPerChannel} items.`,
+        "Export in date-based batches or confirm capacity for the current Buffer plan.",
         false
       )
     );
@@ -4234,7 +4234,7 @@ function createBufferHandoffExport(plan, projectId, options, now = /* @__PURE__ 
     ].filter((candidate) => candidate.severity === "warning");
     throw new BufferExportError(
       "WARNING_ACKNOWLEDGEMENT_REQUIRED",
-      "请先确认已审阅本次交接警告。",
+      "Acknowledge the handoff warnings before continuing.",
       warnings
     );
   }
@@ -4245,7 +4245,7 @@ function createBufferHandoffExport(plan, projectId, options, now = /* @__PURE__ 
     const errors = preview.reviews.filter((review) => review.selected).flatMap((review) => review.issues).filter((candidate) => candidate.blocksExport);
     throw new BufferExportError(
       "NO_EXPORTABLE_CONTENT",
-      "没有可生成 Buffer 交接文件的内容。",
+      "No content is eligible for a Buffer handoff file.",
       errors
     );
   }
@@ -4304,7 +4304,7 @@ function createBufferHandoffExport(plan, projectId, options, now = /* @__PURE__ 
         ),
         changedAt: generatedAt,
         changeType: "buffer_handoff",
-        summary: `生成 Buffer 交接文件：导出 ${exportedItemIds.length} 项，跳过 ${skippedItemIds.length} 项；未标记为 published。`
+        summary: `Prepared Buffer handoff files: exported ${exportedItemIds.length} items and skipped ${skippedItemIds.length}; no items were marked published.`
       }
     ]
   };
@@ -4369,19 +4369,19 @@ function exportFileName(projectId, type, extension, generatedAt) {
   return `${projectSlug(projectId)}-${type}-${generatedAt.toISOString().slice(0, 10)}.${extension}`;
 }
 function periodLabel(period) {
-  return period ? `${period.start} 至 ${period.end}（${period.granularity}，样本 ${period.sampleSize}）` : "unavailable";
+  return period ? `${period.start} to ${period.end} (${period.granularity}, sample ${period.sampleSize})` : "unavailable";
 }
 function modulesLabel(modules) {
   return modules.length > 0 ? modules.join("、") : "unavailable";
 }
 function metricLine(metric) {
-  const reasons = metric.reliabilityReasons.length > 0 ? metric.reliabilityReasons.join("；") : "无额外说明";
+  const reasons = metric.reliabilityReasons.length > 0 ? metric.reliabilityReasons.join("；") : "No additional details";
   return [
     `- **${metric.label}** (\`${metric.metricId}\`): ${metric.formattedValue}`,
-    `  - 可靠性：${metric.reliability}（${reasons}）`,
-    `  - 时间范围：${periodLabel(metric.period)}`,
-    `  - 公式：${metric.formula}`,
-    `  - 来源模块：${modulesLabel(metric.sourceModules)}`,
+    `  - Reliability: ${metric.reliability} (${reasons})`,
+    `  - Date range: ${periodLabel(metric.period)}`,
+    `  - Formula: ${metric.formula}`,
+    `  - Source modules: ${modulesLabel(metric.sourceModules)}`,
     `  - Evidence ID：\`${metric.metricId}\``
   ].join("\n");
 }
@@ -4393,10 +4393,10 @@ function generateMarkdownReport(input) {
   const insights = strategyBundle.insights;
   const strategies = strategyBundle.strategies;
   const limitations = /* @__PURE__ */ new Set([
-    "LinkedIn 导出主要为聚合数据，不能识别匿名访客、具体关注者或个人购买意向。",
-    "Visitor-to-Follower Proxy 不是用户级真实转化率。",
-    "发布窗口与指标变化的时间相关性不代表内容导致增长。",
-    "无法支持的指标显示 unavailable，不进行估算。",
+    "LinkedIn exports are primarily aggregate data and cannot identify visitors, followers, or individual purchase intent.",
+    "The visitor-to-follower proxy is not a user-level conversion rate.",
+    "Temporal correlation between publishing and metric changes does not show content caused growth.",
+    "Unsupported metrics display as unavailable and are not estimated.",
     ...(_a = plan == null ? void 0 : plan.risksAndLimitations) != null ? _a : []
   ]);
   const lines = [
@@ -4404,7 +4404,7 @@ function generateMarkdownReport(input) {
     "",
     `- Project: ${input.projectId}`,
     `- Snapshot ID：\`${snapshot.snapshotId}\``,
-    `- Generated: ${(_b = plan == null ? void 0 : plan.updatedAt) != null ? _b : strategyBundle.generatedAt}`,
+    `- Prepared: ${(_b = plan == null ? void 0 : plan.updatedAt) != null ? _b : strategyBundle.generatedAt}`,
     `- Analysis period: ${periodLabel(snapshot.analysisPeriod)}`,
     `- Data modules: ${modulesLabel(snapshot.sourceModules)}`,
     `- Prompt version: ${strategyBundle.promptVersion}${plan ? ` / ${plan.promptVersion}` : ""}`,
@@ -4440,7 +4440,7 @@ function generateMarkdownReport(input) {
     ...insights.length > 0 ? insights.flatMap((insight2) => [
       `### ${insight2.title}`,
       "",
-      `- 状态：${insight2.approvalStatus}`,
+      `- Status: ${insight2.approvalStatus}`,
       `- ${insight2.report.executiveSummary}`,
       `- Evidence IDs：${insight2.evidence.map((item) => `\`${item.metricId}\``).join("、")}`,
       ""
@@ -4456,9 +4456,9 @@ function generateMarkdownReport(input) {
     ...strategies.length > 0 ? strategies.flatMap((strategy2) => [
       `### ${strategy2.title}`,
       "",
-      `- 状态：${strategy2.approvalStatus}`,
+      `- Status: ${strategy2.approvalStatus}`,
       `- ${strategy2.report.executiveSummary}`,
-      `- 来源洞察：${strategy2.insightIds.map((id) => `\`${id}\``).join("、")}`,
+      `- Source insights: ${strategy2.insightIds.map((id) => `\`${id}\``).join("、")}`,
       `- Evidence IDs：${strategy2.metricIds.map((id) => `\`${id}\``).join("、")}`,
       ...strategy2.report.recommendations.map((action) => `- ${action}`),
       ""
@@ -4479,36 +4479,36 @@ function generateMarkdownReport(input) {
     "",
     ...plan ? [
       `- Plan ID：\`${plan.planId}\``,
-      `- 状态：${plan.status}`,
-      `- 计划范围：${plan.startDate} 至 ${plan.endDate}`,
-      "- 假设：",
+      `- Status: ${plan.status}`,
+      `- Plan range: ${plan.startDate} to ${plan.endDate}`,
+      "- Assumptions:",
       ...plan.assumptions.map((item) => `  - ${item}`),
       "",
       ...plan.fourWeekPlan.flatMap((week) => [
-        `### 第 ${week.weekNumber} 周 · ${week.dateRange.start} 至 ${week.dateRange.end}`,
+        `### Week ${week.weekNumber} · ${week.dateRange.start} to ${week.dateRange.end}`,
         "",
-        `- 目标：${week.objective}`,
-        `- 负责人：${week.ownerPlaceholder}`,
+        `- Objective: ${week.objective}`,
+        `- Owner: ${week.ownerPlaceholder}`,
         `- CTA：${week.callToAction}`,
         `- KPI Evidence IDs：${week.kpiMetricIds.map((id) => `\`${id}\``).join("、")}`,
         ...week.tasks.map(
-          (task) => `- 任务（${task.dueDate}）：${task.title} · ${task.status}`
+          (task) => `- Task (${task.dueDate}): ${task.title} · ${task.status}`
         ),
         ""
       ]),
-      "### 内容日历",
+      "### Content calendar",
       "",
       ...plan.contentCalendar.map(
-        (item) => `- ${item.date} ${item.scheduledTime} (${item.timeZone}) · ${item.topic} · ${item.channel} · ${item.contentFormat} · 审批 ${item.status} · 交接 ${item.workflowStatus}${item.isExperiment ? " · 实验" : ""} · Strategy \`${item.strategyId}\` · KPI ${item.measurementMetricIds.map((id) => `\`${id}\``).join("、")}`
+        (item) => `- ${item.date} ${item.scheduledTime} (${item.timeZone}) · ${item.topic} · ${item.channel} · ${item.contentFormat} · Approval ${item.status} · Handoff ${item.workflowStatus}${item.isExperiment ? " · Experiment" : ""} · Strategy \`${item.strategyId}\` · KPI ${item.measurementMetricIds.map((id) => `\`${id}\``).join("、")}`
       ),
       "",
-      "### KPI 复盘计划",
+      "### KPI review plan",
       "",
       ...plan.kpiReviewPlan.map(
         (review) => `- ${review.reviewDate} · ${review.action} · KPI ${review.metricIds.map((id) => `\`${id}\``).join("、")} · ${review.comparisonRule}`
       ),
       "",
-      "### 下一次导入问题",
+      "### Questions for the next import",
       "",
       ...plan.nextImportQuestions.map((question) => `- ${question}`),
       ""
@@ -4523,27 +4523,27 @@ function generateMarkdownReport(input) {
 function generateContentCalendarCsv(plan) {
   const rows = [
     [
-      "日期",
-      "时间",
-      "时区",
-      "渠道",
-      "主题",
-      "内容形式",
-      "目标受众",
-      "发布文案",
-      "核心信息",
+      "Date",
+      "Time",
+      "Time zone",
+      "Channel",
+      "Topic",
+      "Content format",
+      "Target audience",
+      "Publishing copy",
+      "Core message",
       "CTA",
-      "链接",
-      "媒体链接",
-      "策略 ID",
-      "衡量指标",
-      "审批状态",
-      "Buffer 工作流",
-      "是否实验",
-      "实验假设",
-      "成功标准",
-      "复盘日期",
-      "负责人"
+      "Link",
+      "Media link",
+      "Strategy ID",
+      "Measurement metrics",
+      "Approval status",
+      "Buffer workflow",
+      "Experiment",
+      "Experiment hypothesis",
+      "Success criteria",
+      "Review date",
+      "Owner"
     ],
     ...plan.contentCalendar.map((item) => {
       var _a, _b, _c, _d, _e, _f;
@@ -4564,7 +4564,7 @@ function generateContentCalendarCsv(plan) {
         item.measurementMetricIds,
         item.status,
         item.workflowStatus,
-        item.isExperiment ? "是" : "否",
+        item.isExperiment ? "Yes" : "No",
         (_b = (_a = item.experiment) == null ? void 0 : _a.hypothesis) != null ? _b : "",
         (_d = (_c = item.experiment) == null ? void 0 : _c.successCriteria) != null ? _d : "",
         (_f = (_e = item.experiment) == null ? void 0 : _e.reviewDate) != null ? _f : "",
@@ -31516,30 +31516,30 @@ var version = XLSX.version;
 
 // src/data-processing/field-aliases.ts
 var FIELD_LABELS = {
-  date: "日期",
-  totalFollowers: "关注者总数",
-  newFollowers: "新增关注者",
-  organicFollowers: "自然关注者",
-  sponsoredFollowers: "付费关注者",
-  demographicDimension: "画像维度",
-  demographicValue: "画像值",
-  demographicCount: "画像数量",
-  demographicPercentage: "画像占比",
-  pageViews: "页面浏览量",
-  uniqueVisitors: "独立访客",
-  customButtonClicks: "自定义按钮点击",
-  contentId: "内容 ID",
-  title: "内容标题",
-  publishedAt: "发布时间",
-  contentType: "内容类型",
-  impressions: "展示次数",
-  uniqueImpressions: "独立展示次数",
-  clicks: "点击次数",
-  reactions: "互动反应",
-  comments: "评论数",
-  reposts: "转发数",
-  engagementRate: "互动率",
-  clickThroughRate: "点击率"
+  date: "Date",
+  totalFollowers: "Total followers",
+  newFollowers: "New followers",
+  organicFollowers: "Organic followers",
+  sponsoredFollowers: "Sponsored followers",
+  demographicDimension: "Audience dimension",
+  demographicValue: "Audience value",
+  demographicCount: "Audience count",
+  demographicPercentage: "Audience percentage",
+  pageViews: "Page views",
+  uniqueVisitors: "Unique visitors",
+  customButtonClicks: "Custom button clicks",
+  contentId: "Content ID",
+  title: "Content title",
+  publishedAt: "Published at",
+  contentType: "Content type",
+  impressions: "Impressions",
+  uniqueImpressions: "Unique impressions",
+  clicks: "Clicks",
+  reactions: "Reactions",
+  comments: "Comments",
+  reposts: "Reposts",
+  engagementRate: "Engagement rate",
+  clickThroughRate: "Click-through rate"
 };
 var SHARED_DEMOGRAPHIC_VALUE_ALIASES = [
   "top demographics",
@@ -31553,7 +31553,7 @@ var SHARED_DEMOGRAPHIC_VALUE_ALIASES = [
   "company size"
 ];
 var FOLLOWERS_ALIASES = [
-  { field: "date", aliases: ["date", "day", "日期"] },
+  { field: "date", aliases: ["date", "day"] },
   {
     field: "totalFollowers",
     aliases: ["total followers", "lifetime followers", "follower count"]
@@ -31598,7 +31598,7 @@ var FOLLOWERS_ALIASES = [
   }
 ];
 var VISITORS_ALIASES = [
-  { field: "date", aliases: ["date", "day", "日期"] },
+  { field: "date", aliases: ["date", "day"] },
   {
     field: "pageViews",
     aliases: [
@@ -31841,11 +31841,11 @@ function keywordScore(module2, sheetName, fileName) {
   let score = 0;
   if (sheetMatch) {
     score += 14;
-    reasons.push(`Sheet 名包含“${sheetMatch}”`);
+    reasons.push(`Sheet name contains "${sheetMatch}"`);
   }
   if (fileMatch) {
     score += 6;
-    reasons.push(`文件名提供 ${module2} 弱提示`);
+    reasons.push(`File name provides a weak ${module2} signal`);
   }
   return { score, reasons };
 }
@@ -31865,7 +31865,7 @@ function moduleCandidate(module2, headers, sheetName, fileName) {
     matchedFields.size * 12 + distinctiveCount * 8 + keyword.score
   );
   const reasons = [
-    `表头命中 ${matchedFields.size} 个标准字段`,
+    `Header matches ${matchedFields.size} standard fields`,
     ...keyword.reasons
   ];
   return {
@@ -31885,7 +31885,7 @@ function detectModule(headers, sheetName, fileName, moduleOverride) {
       confidence: "high",
       requiresConfirmation: false,
       candidates,
-      reasons: ["用户已手动确认模块；字段仍按映射规则逐项校验。"]
+      reasons: ["The reviewer confirmed the module; fields remain validated against mapping rules."]
     };
   }
   const top = candidates[0];
@@ -31897,7 +31897,7 @@ function detectModule(headers, sheetName, fileName, moduleOverride) {
       confidence: "low",
       requiresConfirmation: true,
       candidates,
-      reasons: ["表头、Sheet 名与文件名提供的证据不足，需手动选择模块。"]
+      reasons: ["Headers, sheet name, and file name do not provide enough evidence; select a module."]
     };
   }
   const confidence2 = confidenceFromScore(top.score, margin);
@@ -31908,8 +31908,8 @@ function detectModule(headers, sheetName, fileName, moduleOverride) {
     candidates,
     reasons: [
       ...top.reasons,
-      `领先下一候选 ${margin} 分`,
-      ...confidence2 === "low" || margin < 7 ? ["识别差异较小，需要用户确认。"] : []
+      `${margin} points ahead of the next candidate`,
+      ...confidence2 === "low" || margin < 7 ? ["The recognition margin is small and requires confirmation."] : []
     ]
   };
 }
@@ -31983,7 +31983,7 @@ function initialMapping(module2, sheetName, rawHeader, columnIndex, overrides) {
           standardField: null,
           status: "unmapped",
           confidence: "high",
-          reason: "用户明确选择忽略该字段。",
+          reason: "The reviewer chose to ignore this field.",
           alternatives: []
         }
       };
@@ -31997,7 +31997,7 @@ function initialMapping(module2, sheetName, rawHeader, columnIndex, overrides) {
           standardField: override,
           status: "mapped",
           confidence: "high",
-          reason: "用户手动确认字段映射。",
+          reason: "The reviewer confirmed the field mapping.",
           alternatives: []
         }
       };
@@ -32018,7 +32018,7 @@ function initialMapping(module2, sheetName, rawHeader, columnIndex, overrides) {
         standardField: null,
         status: "unmapped",
         confidence: "low",
-        reason: "未在当前模块的集中式别名表中找到匹配。",
+        reason: "No match was found in the module alias registry.",
         alternatives: []
       }
     };
@@ -32036,7 +32036,7 @@ function initialMapping(module2, sheetName, rawHeader, columnIndex, overrides) {
         standardField: null,
         status: "conflict",
         confidence: "low",
-        reason: "一个原始字段同等匹配多个标准字段，需要用户选择。",
+        reason: "One source field matches multiple standard fields and requires selection.",
         alternatives: tied.map(({ field }) => field)
       }
     };
@@ -32050,7 +32050,7 @@ function initialMapping(module2, sheetName, rawHeader, columnIndex, overrides) {
       standardField: first.field,
       status: "mapped",
       confidence: usedContextRule || first.priority >= 100 ? "high" : "medium",
-      reason: usedContextRule ? "根据 Sheet 语义和字段组合应用了可解释的上下文规则。" : "与集中式字段别名精确匹配。",
+      reason: usedContextRule ? "An explainable contextual rule was applied from sheet semantics and field combinations." : "Exact match in the centralized field alias registry.",
       alternatives: candidates.slice(1).map(({ field }) => field)
     }
   };
@@ -32088,7 +32088,7 @@ function buildFieldMappings(module2, sheetName, headers, overrides = {}) {
           standardField: null,
           status: "conflict",
           confidence: "low",
-          reason: tiedWinners.length > 1 ? `多个原始字段同等匹配 ${field}，未自动选择。` : `优先使用更明确的字段“${winner.mapping.rawHeader}”；该字段需人工确认。`,
+          reason: tiedWinners.length > 1 ? `Multiple source fields match ${field} equally; none was selected automatically.` : `The more specific field "${winner.mapping.rawHeader}" was preferred and requires confirmation.`,
           alternatives: [field]
         };
       }
@@ -32238,7 +32238,7 @@ function normalizeText(raw) {
         {
           code: "FORMULA_LIKE_TEXT",
           severity: "warning",
-          message: "检测到类似公式的文本；已按普通文本保留，未执行。"
+          message: "Formula-like text was retained as plain text and not executed."
         }
       ]
     };
@@ -32269,7 +32269,7 @@ function normalizeNumber(raw) {
         {
           code: "INVALID_NUMBER",
           severity: "error",
-          message: "布尔值不能作为数值使用。"
+          message: "Boolean values cannot be used as numbers."
         }
       ]
     };
@@ -32286,7 +32286,7 @@ function normalizeNumber(raw) {
           {
             code: "FORMULA_LIKE_TEXT",
             severity: "error",
-            message: "类似公式的文本不会被当作数值计算。"
+            message: "Formula-like text is not calculated as a number."
           }
         ]
       };
@@ -32300,7 +32300,7 @@ function normalizeNumber(raw) {
         {
           code: "INVALID_NUMBER",
           severity: "error",
-          message: "无法将该值识别为有效数字。"
+          message: "The value could not be recognized as a valid number."
         }
       ]
     };
@@ -32310,7 +32310,7 @@ function normalizeNumber(raw) {
     problems.push({
       code: "NEGATIVE_VALUE",
       severity: "warning",
-      message: "检测到负数，请确认导出数据含义。"
+      message: "A negative number was detected. Confirm its meaning in the export."
     });
   }
   return { value: normalized, problems };
@@ -32337,14 +32337,14 @@ function normalizePercentage(raw, cellFormat) {
     problems.push({
       code: "PERCENTAGE_SCALE_INFERRED",
       severity: "warning",
-      message: "数值缺少百分号，已按百分数缩放并标记供确认。"
+      message: "A percent sign was missing; the value was scaled and flagged for confirmation."
     });
   }
   if (value < 0 || value > 1) {
     problems.push({
       code: "PERCENTAGE_OUT_OF_RANGE",
       severity: "warning",
-      message: "百分比超出 0%–100% 范围，请确认数据。"
+      message: "The percentage is outside 0%–100%. Confirm the source data."
     });
   }
   return { value, problems };
@@ -32457,7 +32457,7 @@ function normalizeDate(raw, field) {
         {
           code: "INVALID_DATE",
           severity: "error",
-          message: "无法识别日期格式，已保留原始值供确认。"
+          message: "The date format was not recognized; the source value was retained."
         }
       ]
     };
@@ -32468,14 +32468,14 @@ function normalizeDate(raw, field) {
     problems.push({
       code: "AMBIGUOUS_DATE",
       severity: "warning",
-      message: "日期的月/日顺序存在歧义，当前按月/日/年解释。"
+      message: "The month/day order is ambiguous and was interpreted as month/day/year."
     });
   }
   if (parsed.getUTCFullYear() < 2003 || parsed.getUTCFullYear() > currentYear + 1) {
     problems.push({
       code: "UNREASONABLE_DATE",
       severity: "warning",
-      message: "日期超出合理范围，请确认导出内容。"
+      message: "The date is outside a reasonable range. Confirm the export."
     });
   }
   return {
@@ -32507,7 +32507,7 @@ function getSafeParseError(reason) {
   if (/encrypt|password|cryptoapi|password-protected/.test(technicalMessage)) {
     return {
       code: "ENCRYPTED_WORKBOOK",
-      message: "工作簿已加密或受密码保护，请先解除保护后重新上传。",
+      message: "The workbook is encrypted or password protected. Remove protection before uploading.",
       retryable: true
     };
   }
@@ -32516,13 +32516,13 @@ function getSafeParseError(reason) {
   )) {
     return {
       code: "CORRUPT_FILE",
-      message: "文件已损坏或不是有效的电子表格，请重新导出后再试。",
+      message: "The file is damaged or is not a valid spreadsheet. Export it again and retry.",
       retryable: true
     };
   }
   return {
     code: "PARSE_FAILED",
-    message: "文件解析失败。原始内容未保存，请检查文件后重试。",
+    message: "Parsing failed and source content was not retained. Check the file and retry.",
     retryable: true
   };
 }
@@ -32781,7 +32781,7 @@ function parseRow(module2, fileName, sheetName, sheet, row, absoluteRowIndex, ma
         code: "FORMULA_CELL_IGNORED",
         severity: "warning",
         scope: "field",
-        message: "公式单元格已忽略；解析器不会执行工作簿公式。",
+        message: "Formula cells were ignored; the parser does not execute workbook formulas.",
         sheetName,
         rowNumber: source.rowNumber,
         field
@@ -32878,7 +32878,7 @@ function markDuplicates(rows, sheetName) {
       code: "DUPLICATE_ROW",
       severity: "warning",
       scope: "row",
-      message: `与第 ${rows[firstIndex].record.source.rowNumber} 行内容重复，记录已保留。`,
+      message: `Duplicates row ${rows[firstIndex].record.source.rowNumber}; the record was retained.`,
       sheetName,
       rowNumber: record.source.rowNumber
     };
@@ -32911,7 +32911,7 @@ function hasMoreRowsThanLimit(sheet) {
 function parseSheet(sheetName, sheet, input) {
   const { rows, startRow } = worksheetRows(sheet);
   if (rows.length === 0) {
-    return emptySheetResult(sheetName, "EMPTY_SHEET", "Sheet 中没有可解析数据。");
+    return emptySheetResult(sheetName, "EMPTY_SHEET", "The sheet contains no parseable data.");
   }
   const located = locateHeaderRow(
     rows,
@@ -32924,7 +32924,7 @@ function parseSheet(sheetName, sheet, input) {
     return emptySheetResult(
       sheetName,
       "NO_HEADER_FOUND",
-      "未找到可信表头，请手动选择模块或检查导出格式。"
+      "No reliable header was found. Select a module or check the export format."
     );
   }
   const detection = located.detection;
@@ -32936,7 +32936,7 @@ function parseSheet(sheetName, sheet, input) {
       severity: "error",
       scope: "sheet",
       sheetName,
-      message: "无法确定该 Sheet 属于 Followers、Visitors 还是 Content。"
+      message: "The sheet could not be classified as Followers, Visitors, or Content."
     });
   } else if (input.expectedModule && !input.moduleOverride && detectedModule !== input.expectedModule) {
     issues.push({
@@ -32944,7 +32944,7 @@ function parseSheet(sheetName, sheet, input) {
       severity: "error",
       scope: "sheet",
       sheetName,
-      message: `识别为 ${detectedModule}，与上传槽位 ${input.expectedModule} 不一致，请确认。`
+      message: `Recognized as ${detectedModule}, which differs from upload slot ${input.expectedModule}. Confirm the assignment.`
     });
   } else if (detection.requiresConfirmation) {
     issues.push({
@@ -32952,7 +32952,7 @@ function parseSheet(sheetName, sheet, input) {
       severity: "warning",
       scope: "sheet",
       sheetName,
-      message: "模块识别置信度较低，需要用户确认。"
+      message: "Module recognition confidence is low and requires confirmation."
     });
   }
   if (!detectedModule) {
@@ -32995,7 +32995,7 @@ function parseSheet(sheetName, sheet, input) {
         severity: "warning",
         scope: "field",
         sheetName,
-        message: `字段“${mapping.rawHeader}”存在映射冲突，需要确认。`
+        message: `Field "${mapping.rawHeader}" has a mapping conflict that requires confirmation.`
       })
     )
   );
@@ -33005,7 +33005,7 @@ function parseSheet(sheetName, sheet, input) {
       severity: "info",
       scope: "sheet",
       sheetName,
-      message: `${unmapped.length} 个字段未映射，将保留在识别摘要中但不进入标准模型。`
+      message: `${unmapped.length} fields are unmapped and retained in the recognition summary only.`
     });
   }
   issues.push(
@@ -33016,7 +33016,7 @@ function parseSheet(sheetName, sheet, input) {
         scope: "field",
         sheetName,
         field,
-        message: `缺少关键字段：${FIELD_LABELS[field]}。`
+        message: `Required field is missing: ${FIELD_LABELS[field]}.`
       })
     )
   );
@@ -33026,7 +33026,7 @@ function parseSheet(sheetName, sheet, input) {
       severity: "warning",
       scope: "sheet",
       sheetName,
-      message: `仅解析前 ${MAX_ROWS_PER_SHEET.toLocaleString("zh-CN")} 条数据行。`
+      message: `Only the first ${MAX_ROWS_PER_SHEET.toLocaleString("en-US")} data rows were parsed.`
     });
   }
   const parsedRows = [];
@@ -33080,7 +33080,7 @@ function parseSheet(sheetName, sheet, input) {
 }
 function parseSpreadsheetBytes(input) {
   if (input.bytes.byteLength === 0) {
-    throw parseError("EMPTY_FILE", "文件为空，请重新导出后再试。");
+    throw parseError("EMPTY_FILE", "The file is empty. Export it again and retry.");
   }
   let workbook;
   try {
@@ -33106,7 +33106,7 @@ function parseSpreadsheetBytes(input) {
   if (workbook.SheetNames.length > MAX_SHEETS_PER_WORKBOOK) {
     throw parseError(
       "TOO_MANY_SHEETS",
-      `工作簿包含超过 ${MAX_SHEETS_PER_WORKBOOK} 个 Sheet，已停止解析。`,
+      `The workbook exceeds ${MAX_SHEETS_PER_WORKBOOK} sheets, so parsing stopped.`,
       false
     );
   }
@@ -33120,7 +33120,7 @@ function parseSpreadsheetBytes(input) {
     }) : emptySheetResult(
       sheetName,
       "EMPTY_SHEET",
-      "无法读取该 Sheet 的内容。"
+      "The sheet content could not be read."
     );
   });
   const detectedModules = [
@@ -33195,7 +33195,7 @@ function operationError(code, message, options = {}) {
     message,
     retryable: (_a = options.retryable) != null ? _a : true,
     preserveProjectData: (_b = options.preserveProjectData) != null ? _b : true,
-    nextAction: (_c = options.nextAction) != null ? _c : "请修正输入后重试当前阶段。"
+    nextAction: (_c = options.nextAction) != null ? _c : "Correct the input and retry this stage."
   });
 }
 function isRecord2(value) {
@@ -33203,7 +33203,7 @@ function isRecord2(value) {
 }
 function requiredRecord(value, fieldName) {
   if (!isRecord2(value)) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 缺失或格式无效。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} is missing or invalid.`, {
       retryable: false
     });
   }
@@ -33211,7 +33211,7 @@ function requiredRecord(value, fieldName) {
 }
 function requiredString(value, fieldName, maxLength = 2e3) {
   if (typeof value !== "string" || !value.trim() || value.length > maxLength) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 缺失或长度无效。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} is missing or has an invalid length.`, {
       retryable: false
     });
   }
@@ -33240,7 +33240,7 @@ function parseRequest(value) {
   if (!allowed.includes(operation)) {
     throw operationError(
       "UNSUPPORTED_OPERATION",
-      "Bridge 不支持该操作。",
+      "The bridge does not support this operation.",
       { retryable: false }
     );
   }
@@ -33253,13 +33253,13 @@ function parseRequest(value) {
 function parseUploadedFile(value) {
   const file = requiredRecord(value, "files[]");
   if (!isLinkedInModule(file.slot)) {
-    throw operationError("INVALID_REQUEST", "上传文件的模块槽位无效。", {
+    throw operationError("INVALID_REQUEST", "The upload module slot is invalid.", {
       retryable: false
     });
   }
   const size = file.size;
   if (!Number.isInteger(size) || size < 0) {
-    throw operationError("INVALID_REQUEST", "上传文件大小无效。", {
+    throw operationError("INVALID_REQUEST", "The upload size is invalid.", {
       retryable: false
     });
   }
@@ -33274,7 +33274,7 @@ function parseUploadedFile(value) {
 function decodeBase64(value, declaredSize) {
   const compact = value.replace(/\s/g, "");
   if (compact.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(compact)) {
-    throw operationError("INVALID_REQUEST", "上传文件编码无效。", {
+    throw operationError("INVALID_REQUEST", "The upload encoding is invalid.", {
       retryable: false
     });
   }
@@ -33283,7 +33283,7 @@ function decodeBase64(value, declaredSize) {
     bytes.fill(0);
     throw operationError(
       "INVALID_REQUEST",
-      "上传文件大小与内容不一致，已停止处理。",
+      "The upload size does not match its content, so processing stopped.",
       { retryable: false }
     );
   }
@@ -33376,12 +33376,12 @@ function buildAnalysisProject(results, inputMode, now) {
 }
 function parseUploadedResults(filesValue) {
   if (!Array.isArray(filesValue) || filesValue.length === 0) {
-    throw operationError("MISSING_FILE", "没有可分析的上传文件。", {
-      nextAction: "请至少选择一个 Followers、Visitors 或 Content 文件。"
+    throw operationError("MISSING_FILE", "No uploaded files are available for analysis.", {
+      nextAction: "Select at least one Followers, Visitors, or Content file."
     });
   }
   if (filesValue.length > LINKEDIN_MODULES.length) {
-    throw operationError("INVALID_REQUEST", "一次最多上传三个模块文件。", {
+    throw operationError("INVALID_REQUEST", "A maximum of three module files can be uploaded.", {
       retryable: false
     });
   }
@@ -33389,8 +33389,8 @@ function parseUploadedResults(filesValue) {
   if (new Set(files.map((file) => file.slot)).size !== files.length) {
     throw operationError(
       "DUPLICATE_MODULE",
-      "同一模块被重复上传，请保留一个文件后重试。",
-      { nextAction: "移除重复模块文件，再重试数据接入。" }
+      "The same module was uploaded more than once. Retain one file and retry.",
+      { nextAction: "Remove duplicate module files, then retry intake." }
     );
   }
   const results = {};
@@ -33438,8 +33438,8 @@ function parseUploadedResults(filesValue) {
         if (existingSlot && existingSlot !== file.slot) {
           throw operationError(
             "DUPLICATE_MODULE",
-            `${detectedModule} 模块在多个上传文件中重复出现。`,
-            { nextAction: "检查文件内容和模块选择，移除重复数据后重试。" }
+            `${detectedModule} appears in multiple uploaded files.`,
+            { nextAction: "Check file content and module selection, remove duplicates, and retry." }
           );
         }
         detectedOwners.set(detectedModule, file.slot);
@@ -33464,7 +33464,7 @@ function dateFromPayload(value) {
   }
   const date = new Date(value);
   if (Number.isNaN(date.valueOf())) {
-    throw operationError("INVALID_REQUEST", "now 不是有效时间。", {
+    throw operationError("INVALID_REQUEST", "now is not a valid time.", {
       retryable: false
     });
   }
@@ -33474,7 +33474,7 @@ function snapshotFromPayload(value) {
   const snapshot = requiredRecord(value, "snapshot");
   requiredString(snapshot.snapshotId, "snapshot.snapshotId", 200);
   if (snapshot.snapshotVersion !== "1.0" || !isRecord2(snapshot.metrics)) {
-    throw operationError("INVALID_REQUEST", "Snapshot 结构无效。", {
+    throw operationError("INVALID_REQUEST", "The snapshot structure is invalid.", {
       retryable: false
     });
   }
@@ -33483,7 +33483,7 @@ function snapshotFromPayload(value) {
 function bundleFromPayload(value, snapshot) {
   const bundle = requiredRecord(value, "strategyBundle");
   if (bundle.snapshotId !== snapshot.snapshotId || !Array.isArray(bundle.insights) || !Array.isArray(bundle.strategies)) {
-    throw operationError("INVALID_REQUEST", "洞察与 Snapshot 引用不一致。", {
+    throw operationError("INVALID_REQUEST", "Insight and snapshot references are inconsistent.", {
       retryable: false
     });
   }
@@ -33495,7 +33495,7 @@ function planFromPayload(value, allowNull = false) {
   }
   const plan = normalizeActionPlan(value);
   if (!plan) {
-    throw operationError("INVALID_REQUEST", "行动计划结构无效。", {
+    throw operationError("INVALID_REQUEST", "The action plan structure is invalid.", {
       retryable: false
     });
   }
@@ -33503,7 +33503,7 @@ function planFromPayload(value, allowNull = false) {
 }
 function boundedString(value, fieldName, maxLength, allowEmpty = false) {
   if (typeof value !== "string" || value.length > maxLength || !allowEmpty && !value.trim()) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 格式或长度无效。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} has an invalid format or length.`, {
       retryable: false
     });
   }
@@ -33519,7 +33519,7 @@ function stringArray(value, fieldName, maxItems, maxItemLength) {
   if (!Array.isArray(value) || value.length > maxItems || !value.every(
     (item) => typeof item === "string" && item.length <= maxItemLength
   )) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 格式或数量无效。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} has an invalid format or count.`, {
       retryable: false
     });
   }
@@ -33536,7 +33536,7 @@ function channelArray(value, fieldName) {
     100
   );
   if (!channels.every(isBufferChannel)) {
-    throw operationError("INVALID_REQUEST", `${fieldName} 包含不支持的渠道。`, {
+    throw operationError("INVALID_REQUEST", `${fieldName} contains an unsupported channel.`, {
       retryable: false
     });
   }
@@ -33552,7 +33552,7 @@ function dateRangeFromPayload(value, fieldName) {
 function bufferExportRecordFromPayload(value) {
   const record = requiredRecord(value, "previousExports[]");
   if (record.status !== "completed" && record.status !== "partial" && record.status !== "failed") {
-    throw operationError("INVALID_REQUEST", "导出记录状态无效。", {
+    throw operationError("INVALID_REQUEST", "The export record status is invalid.", {
       retryable: false
     });
   }
@@ -33581,7 +33581,7 @@ function bufferExportRecordFromPayload(value) {
 function bufferOptionsFromPayload(value) {
   const options = requiredRecord(value, "handoff");
   if (!Array.isArray(options.previousExports) || options.previousExports.length > 100) {
-    throw operationError("INVALID_REQUEST", "previousExports 格式或数量无效。", {
+    throw operationError("INVALID_REQUEST", "previousExports has an invalid format or count.", {
       retryable: false
     });
   }
@@ -33610,8 +33610,8 @@ function goalFromPayload(value) {
   if (goal.confirmed !== true) {
     throw operationError(
       "PLAN_VALIDATION_FAILED",
-      "请先确认业务目标。",
-      { nextAction: "确认业务目标后重试计划生成。" }
+      "Confirm the business goal first.",
+      { nextAction: "Confirm the business goal, then retry plan preparation." }
     );
   }
   return goal;
@@ -33619,8 +33619,8 @@ function goalFromPayload(value) {
 function actionPlanError(reason) {
   var _a, _b;
   if (reason.code === "GENERATION_CANCELLED") {
-    return operationError("GENERATION_CANCELLED", "计划生成已取消。", {
-      nextAction: "当前上传和 Snapshot 仍保留，可以直接重试计划生成。"
+    return operationError("GENERATION_CANCELLED", "Plan preparation was cancelled.", {
+      nextAction: "Current uploads and the snapshot are retained; retry plan preparation."
     });
   }
   const approvalIssue = reason.issues.some(
@@ -33632,9 +33632,9 @@ function actionPlanError(reason) {
   );
   return operationError(
     approvalIssue ? "STRATEGY_APPROVAL_REQUIRED" : "PLAN_VALIDATION_FAILED",
-    (_b = (_a = reason.issues[0]) == null ? void 0 : _a.message) != null ? _b : "行动计划结构校验失败。",
+    (_b = (_a = reason.issues[0]) == null ? void 0 : _a.message) != null ? _b : "Action plan structure validation failed.",
     {
-      nextAction: approvalIssue ? "批准至少一条有证据的洞察及其关联策略后重试。" : "修正计划设置后重试；无需重新上传文件。"
+      nextAction: approvalIssue ? "Approve at least one evidence-backed insight and related strategy, then retry." : "Correct plan settings and retry without uploading files again."
     }
   );
 }
@@ -33654,53 +33654,53 @@ function bridgeErrorFromUnknown(reason) {
   if (reason instanceof BufferExportError) {
     const code2 = reason.code === "WARNING_ACKNOWLEDGEMENT_REQUIRED" ? "BUFFER_WARNING_CONFIRMATION_REQUIRED" : reason.code === "NO_EXPORTABLE_CONTENT" ? "BUFFER_NO_EXPORTABLE_CONTENT" : "BUFFER_EXPORT_VALIDATION_FAILED";
     return operationError(code2, reason.message, {
-      nextAction: reason.code === "WARNING_ACKNOWLEDGEMENT_REQUIRED" ? "审阅警告并明确确认后重试；当前计划仍保留。" : "修正对应内容或范围后重试；无需重新分析或上传。"
+      nextAction: reason.code === "WARNING_ACKNOWLEDGEMENT_REQUIRED" ? "Review and acknowledge warnings, then retry; the current plan is retained." : "Correct the relevant content or range and retry without reanalysis or upload."
     }).details;
   }
   const code = codeFromUnknown(reason);
   if (code === "REQUEST_TOO_LARGE") {
     return operationError(
       "REQUEST_TOO_LARGE",
-      "Bridge 请求超过大小限制，已停止处理。",
-      { nextAction: "请减少文件数量或选择更小的文件后重试。" }
+      "The bridge request exceeds the size limit, so processing stopped.",
+      { nextAction: "Reduce the file count or select smaller files, then retry." }
     ).details;
   }
   if (code === "INVALID_REQUEST") {
-    return operationError("INVALID_REQUEST", "Bridge 请求格式无效。", {
+    return operationError("INVALID_REQUEST", "The bridge request format is invalid.", {
       retryable: false,
-      nextAction: "请刷新页面后重试；已有上传不会写入磁盘。"
+      nextAction: "Refresh and retry; existing uploads are not written to disk."
     }).details;
   }
   if (code === 429 || code === "RATE_LIMITED") {
     return operationError(
       "AI_RATE_LIMIT",
-      "AI 服务暂时达到请求限制。",
-      { nextAction: "当前数据仍保留，请稍后从本阶段重试。" }
+      "The recommendation service is temporarily rate limited.",
+      { nextAction: "Current data is retained; retry this stage later." }
     ).details;
   }
   if (code === "ETIMEDOUT" || code === "TIMEOUT" || reason instanceof Error && reason.name === "TimeoutError") {
-    return operationError("AI_TIMEOUT", "AI 服务响应超时。", {
-      nextAction: "当前数据仍保留，可以直接重试，不需要重新上传。"
+    return operationError("AI_TIMEOUT", "The recommendation service timed out.", {
+      nextAction: "Current data is retained; retry without uploading again."
     }).details;
   }
   if (code === "INVALID_MODEL_OUTPUT") {
     return operationError(
       "INVALID_MODEL_OUTPUT",
-      "模型输出未通过结构与引用校验。",
-      { nextAction: "保留当前 Snapshot，重试本阶段或切换 Mock 模式。" }
+      "The prepared output failed structure and reference validation.",
+      { nextAction: "Retain the current snapshot and retry this stage or use demo mode." }
     ).details;
   }
   if (code === "ECONNRESET" || code === "ENETUNREACH" || code === "NETWORK_ERROR") {
-    return operationError("NETWORK_ERROR", "网络连接中断。", {
-      nextAction: "检查网络后重试当前阶段；已有数据不会被清除。"
+    return operationError("NETWORK_ERROR", "The network connection was interrupted.", {
+      nextAction: "Check the network and retry; existing data will not be cleared."
     }).details;
   }
   return {
     code: "INTERNAL_ERROR",
-    message: "本地演示处理失败，未记录原始文件内容。",
+    message: "Local demo processing failed; source file content was not recorded.",
     retryable: true,
     preserveProjectData: true,
-    nextAction: "请重试当前阶段；如仍失败，请检查本地服务状态。"
+    nextAction: "Retry this stage; if it still fails, check the local service."
   };
 }
 function success(requestId, data) {
@@ -33753,8 +33753,8 @@ async function runOperation(request) {
     if (!snapshot.canEnterInsights) {
       throw operationError(
         "BLOCKING_DATA_QUALITY",
-        "当前 Snapshot 存在阻断质量问题，不能生成计划。",
-        { nextAction: "返回数据质量页，修复阻断问题后重新分析。" }
+        "Blocking snapshot quality issues prevent plan preparation.",
+        { nextAction: "Return to data quality, resolve blocking issues, and analyze again." }
       );
     }
     const businessGoal = goalFromPayload(request.payload.businessGoal);
@@ -33816,7 +33816,7 @@ async function runOperation(request) {
     if ("channel" in patchValue) {
       const channel = boundedString(patchValue.channel, "patch.channel", 100);
       if (!isBufferChannel(channel)) {
-        throw operationError("INVALID_REQUEST", "内容渠道无效。", {
+        throw operationError("INVALID_REQUEST", "The content channel is invalid.", {
           retryable: false
         });
       }
@@ -33842,7 +33842,7 @@ async function runOperation(request) {
     }
     if ("status" in patchValue) {
       if (patchValue.status !== "ai_draft" && patchValue.status !== "confirmed" && patchValue.status !== "rejected") {
-        throw operationError("INVALID_REQUEST", "内容项状态无效。", {
+        throw operationError("INVALID_REQUEST", "The content item status is invalid.", {
           retryable: false
         });
       }
@@ -33899,7 +33899,7 @@ async function runOperation(request) {
   }
   throw operationError(
     "UNSUPPORTED_OPERATION",
-    "Bridge 不支持该操作。",
+    "The bridge does not support this operation.",
     { retryable: false }
   );
 }

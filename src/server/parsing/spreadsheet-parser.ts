@@ -101,7 +101,7 @@ export function getSafeParseError(reason: unknown): ParseError {
   ) {
     return {
       code: "ENCRYPTED_WORKBOOK",
-      message: "工作簿已加密或受密码保护，请先解除保护后重新上传。",
+      message: "The workbook is encrypted or password protected. Remove protection before uploading.",
       retryable: true,
     };
   }
@@ -113,14 +113,14 @@ export function getSafeParseError(reason: unknown): ParseError {
   ) {
     return {
       code: "CORRUPT_FILE",
-      message: "文件已损坏或不是有效的电子表格，请重新导出后再试。",
+      message: "The file is damaged or is not a valid spreadsheet. Export it again and retry.",
       retryable: true,
     };
   }
 
   return {
     code: "PARSE_FAILED",
-    message: "文件解析失败。原始内容未保存，请检查文件后重试。",
+    message: "Parsing failed and source content was not retained. Check the file and retry.",
     retryable: true,
   };
 }
@@ -476,7 +476,7 @@ function parseRow(
         code: "FORMULA_CELL_IGNORED",
         severity: "warning",
         scope: "field",
-        message: "公式单元格已忽略；解析器不会执行工作簿公式。",
+        message: "Formula cells were ignored; the parser does not execute workbook formulas.",
         sheetName,
         rowNumber: source.rowNumber,
         field,
@@ -587,7 +587,7 @@ function markDuplicates(
       code: "DUPLICATE_ROW",
       severity: "warning",
       scope: "row",
-      message: `与第 ${rows[firstIndex].record.source.rowNumber} 行内容重复，记录已保留。`,
+      message: `Duplicates row ${rows[firstIndex].record.source.rowNumber}; the record was retained.`,
       sheetName,
       rowNumber: record.source.rowNumber,
     };
@@ -638,7 +638,7 @@ function parseSheet(
   const { rows, startRow } = worksheetRows(sheet);
 
   if (rows.length === 0) {
-    return emptySheetResult(sheetName, "EMPTY_SHEET", "Sheet 中没有可解析数据。");
+    return emptySheetResult(sheetName, "EMPTY_SHEET", "The sheet contains no parseable data.");
   }
 
   const located = locateHeaderRow(
@@ -653,7 +653,7 @@ function parseSheet(
     return emptySheetResult(
       sheetName,
       "NO_HEADER_FOUND",
-      "未找到可信表头，请手动选择模块或检查导出格式。",
+      "No reliable header was found. Select a module or check the export format.",
     );
   }
 
@@ -667,7 +667,7 @@ function parseSheet(
       severity: "error",
       scope: "sheet",
       sheetName,
-      message: "无法确定该 Sheet 属于 Followers、Visitors 还是 Content。",
+      message: "The sheet could not be classified as Followers, Visitors, or Content.",
     });
   } else if (
     input.expectedModule &&
@@ -679,7 +679,7 @@ function parseSheet(
       severity: "error",
       scope: "sheet",
       sheetName,
-      message: `识别为 ${detectedModule}，与上传槽位 ${input.expectedModule} 不一致，请确认。`,
+      message: `Recognized as ${detectedModule}, which differs from upload slot ${input.expectedModule}. Confirm the assignment.`,
     });
   } else if (detection.requiresConfirmation) {
     issues.push({
@@ -687,7 +687,7 @@ function parseSheet(
       severity: "warning",
       scope: "sheet",
       sheetName,
-      message: "模块识别置信度较低，需要用户确认。",
+      message: "Module recognition confidence is low and requires confirmation.",
     });
   }
 
@@ -735,7 +735,7 @@ function parseSheet(
         severity: "warning",
         scope: "field",
         sheetName,
-        message: `字段“${mapping.rawHeader}”存在映射冲突，需要确认。`,
+        message: `Field "${mapping.rawHeader}" has a mapping conflict that requires confirmation.`,
       }),
     ),
   );
@@ -746,7 +746,7 @@ function parseSheet(
       severity: "info",
       scope: "sheet",
       sheetName,
-      message: `${unmapped.length} 个字段未映射，将保留在识别摘要中但不进入标准模型。`,
+      message: `${unmapped.length} fields are unmapped and retained in the recognition summary only.`,
     });
   }
 
@@ -758,7 +758,7 @@ function parseSheet(
         scope: "field",
         sheetName,
         field,
-        message: `缺少关键字段：${FIELD_LABELS[field]}。`,
+        message: `Required field is missing: ${FIELD_LABELS[field]}.`,
       }),
     ),
   );
@@ -769,7 +769,7 @@ function parseSheet(
       severity: "warning",
       scope: "sheet",
       sheetName,
-      message: `仅解析前 ${MAX_ROWS_PER_SHEET.toLocaleString("zh-CN")} 条数据行。`,
+      message: `Only the first ${MAX_ROWS_PER_SHEET.toLocaleString("en-US")} data rows were parsed.`,
     });
   }
 
@@ -841,7 +841,7 @@ export function parseSpreadsheetBytes(
   input: ParseSpreadsheetInput,
 ): FileParseResult {
   if (input.bytes.byteLength === 0) {
-    throw parseError("EMPTY_FILE", "文件为空，请重新导出后再试。");
+    throw parseError("EMPTY_FILE", "The file is empty. Export it again and retry.");
   }
 
   let workbook: XLSX.WorkBook;
@@ -870,7 +870,7 @@ export function parseSpreadsheetBytes(
   if (workbook.SheetNames.length > MAX_SHEETS_PER_WORKBOOK) {
     throw parseError(
       "TOO_MANY_SHEETS",
-      `工作簿包含超过 ${MAX_SHEETS_PER_WORKBOOK} 个 Sheet，已停止解析。`,
+      `The workbook exceeds ${MAX_SHEETS_PER_WORKBOOK} sheets, so parsing stopped.`,
       false,
     );
   }
@@ -887,7 +887,7 @@ export function parseSpreadsheetBytes(
       : emptySheetResult(
           sheetName,
           "EMPTY_SHEET",
-          "无法读取该 Sheet 的内容。",
+          "The sheet content could not be read.",
         );
   });
   const detectedModules = [

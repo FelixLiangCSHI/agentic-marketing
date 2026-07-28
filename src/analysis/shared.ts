@@ -221,17 +221,17 @@ export function formatMetricValue(
     return value;
   }
   if (unit === "percentage") {
-    return new Intl.NumberFormat("zh-CN", {
+    return new Intl.NumberFormat("en-US", {
       style: "percent",
       maximumFractionDigits: 1,
     }).format(value);
   }
   if (unit === "ratio") {
-    return new Intl.NumberFormat("zh-CN", {
+    return new Intl.NumberFormat("en-US", {
       maximumFractionDigits: 2,
     }).format(value);
   }
-  return new Intl.NumberFormat("zh-CN", {
+  return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 2,
   }).format(value);
 }
@@ -248,7 +248,7 @@ export function reliabilityForCoverage(
   const reasons = [...(options.extraReasons ?? [])];
   if (options.blocked || totalCount === 0 || availableCount === 0) {
     reasons.push(
-      totalCount === 0 ? "没有可用记录。" : "计算所需字段没有有效值。",
+      totalCount === 0 ? "No records are available." : "Required fields have no valid values.",
     );
     return { reliability: "unavailable", reasons };
   }
@@ -257,15 +257,15 @@ export function reliabilityForCoverage(
   const minReliableSample = options.minReliableSample ?? 3;
   if (coverage < 0.8 || availableCount < minReliableSample) {
     if (coverage < 0.8) {
-      reasons.push(`字段完整率为 ${(coverage * 100).toFixed(0)}%。`);
+      reasons.push(`Field completeness is ${(coverage * 100).toFixed(0)}%.`);
     }
     if (availableCount < minReliableSample) {
-      reasons.push(`有效样本仅 ${availableCount} 条。`);
+      reasons.push(`Only ${availableCount} valid samples are available.`);
     }
     return { reliability: "directional", reasons };
   }
 
-  reasons.push("字段完整率与样本量满足当前规则。");
+  reasons.push("Field completeness and sample size meet the current rule.");
   return { reliability: "reliable", reasons };
 }
 
