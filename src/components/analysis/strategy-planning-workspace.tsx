@@ -280,7 +280,7 @@ export function StrategyPlanningWorkspace({
   const [insights, setInsights] = useState(bundle.insights);
   const [strategies, setStrategies] = useState(bundle.strategies);
   const [goalText, setGoalText] = useState(
-    "建立可持续、可复盘的 LinkedIn 内容与受众运营节奏",
+    "以临床证据、法规进展和经济价值支持医疗器械专业受众与医院采购沟通",
   );
   const [businessGoal, setBusinessGoal] = useState<BusinessGoal | null>(null);
   const initialTimeZone =
@@ -292,7 +292,7 @@ export function StrategyPlanningWorkspace({
     teamSize: null,
     contentResources: [],
     targetMarket: null,
-    focusAudience: "LinkedIn 聚合受众（待用户确认）",
+    focusAudience: "医疗专业人员、KOL、临床科室负责人和医院采购团队",
   });
   const [resourcesText, setResourcesText] = useState("");
   const [planState, dispatchPlan] = useReducer(

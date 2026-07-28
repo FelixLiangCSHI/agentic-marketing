@@ -125,15 +125,15 @@ export function generateEvidenceStrategyBundle(
       insight(snapshot, {
         insightId: "insight-audience-followers",
         category: "audience",
-        title: "Follower Change Baseline",
+        title: "Healthcare Professional Reach Baseline",
         statement: `${primary.label} is ${primary.formattedValue} for the available analysis period.`,
         possibleMeaning:
-          "The aggregate result establishes a direction for follower acquisition; it does not identify individual followers or intent.",
+          "The aggregate result establishes a direction for healthcare professional and KOL reach; it does not verify stakeholder role or procurement intent.",
         suggestedValidation:
-          "Repeat the analysis with the same definitions and evaluate publishing windows separately.",
+          "Repeat the analysis with the same definitions and compare clinical-evidence, regulatory, and economic-value publishing windows.",
         metrics: followerMetrics,
         limitations: [
-          "Aggregate data cannot identify individual followers.",
+          "Aggregate data cannot verify individual healthcare professional or KOL identities.",
           "Follower changes cannot be attributed directly to a single content item.",
         ],
       }),
@@ -153,12 +153,12 @@ export function generateEvidenceStrategyBundle(
       insight(snapshot, {
         insightId: "insight-audience-visitors",
         category: "audience",
-        title: "Page Visit Baseline",
+        title: "Hospital Stakeholder Page Visit Baseline",
         statement: `${primary.label} is ${primary.formattedValue} for the available analysis period.`,
         possibleMeaning:
-          "The result quantifies aggregate page traffic without identifying anonymous visitors or purchase intent.",
+          "The result quantifies aggregate page traffic without identifying healthcare professionals, hospital procurement teams, or evaluation intent.",
         suggestedValidation:
-          "Track Page Views, Unique Visitors, and CTA clicks over equivalent periods.",
+          "Track Page Views, Unique Visitors, and clinical-evidence CTA clicks over equivalent periods.",
         metrics: visitorMetrics,
         limitations: [
           "Visitor data is anonymous and aggregated.",
@@ -182,12 +182,12 @@ export function generateEvidenceStrategyBundle(
       insight(snapshot, {
         insightId: "insight-content-performance",
         category: "content",
-        title: "Content Performance Baseline",
+        title: "Clinical Evidence Content Baseline",
         statement: `${primary.label} is ${primary.formattedValue} for the available analysis period.`,
         possibleMeaning:
           "Current content performance provides an experiment baseline, not a forecast of future results.",
         suggestedValidation:
-          "Run single-variable tests across format, topic, and CTA, then review the next comparable import.",
+          "Run single-variable tests across product area, evidence type, and healthcare-professional CTA, then review the next comparable import.",
         metrics: contentMetrics,
         limitations: [
           "Historical performance does not guarantee future results.",
@@ -205,14 +205,14 @@ export function generateEvidenceStrategyBundle(
     strategies.push(
       strategy(snapshot, {
         strategyId: "strategy-content-experiment",
-        title: "Establish a Measurable Content Experiment Cadence",
-        objective: "Use a consistent publishing cadence to compare format, topic, and CTA performance.",
+        title: "Establish a Clinical Evidence Publishing Cadence",
+        objective: "Use a consistent publishing cadence to compare clinical evidence, regulatory, patient-outcome, and economic-value topics.",
         rationale:
-          "The strategy uses the calculated content baseline to design experiments without forecasting a specific growth rate.",
+          "The strategy uses the calculated content baseline to evaluate evidence themes without forecasting adoption or patient outcomes.",
         actions: [
-          "Maintain an operationally sustainable weekly publishing volume.",
-          "Change one primary variable in each experiment.",
-          "Review the same metrics after the next import.",
+          "Maintain a reviewable cadence across ultrasound, patient monitoring, endoscopy, IVD, MRI, CT, digital health, and surgical robotics.",
+          "Validate clinical and regulatory statements, including FDA or CE status, before publication.",
+          "Compare engagement with clinical workflow, patient outcomes, and economic value evidence after the next import.",
         ],
         insightIds: [contentInsight.insightId],
         metricIds: contentInsight.evidence.map((item) => item.metricId),
@@ -227,14 +227,14 @@ export function generateEvidenceStrategyBundle(
     strategies.push(
       strategy(snapshot, {
         strategyId: "strategy-audience-path",
-        title: "Align Audience Messaging and the Page CTA Path",
-        objective: "Create an observable path from content to the page CTA for the priority audience.",
+        title: "Align Medical Device Evidence with the Procurement Pathway",
+        objective: "Create an observable path from product evidence to resources for healthcare professionals and hospital procurement stakeholders.",
         rationale:
-          "Follower and visitor data is aggregated; measurement should focus on observable metrics rather than individual conversion attribution.",
+          "Follower and visitor data is aggregated; measurement should focus on evidence engagement rather than individual procurement attribution.",
         actions: [
-          "Use one clear CTA in each content item.",
-          "Record publishing windows alongside aggregate page metrics.",
-          "Classify proxy ratios separately from verified conversion rates.",
+          "Use one clear CTA to an approved clinical evidence, regulatory, or health-economic resource.",
+          "Record product area and intended clinical workflow alongside aggregate page metrics.",
+          "Separate engagement proxies from verified KOL activity or hospital procurement milestones.",
         ],
         insightIds: audienceInsights.map((item) => item.insightId),
         metricIds: audienceInsights.flatMap((item) =>

@@ -347,7 +347,13 @@ function buildSchedule(
   const formats = contentFormats(input.preferences);
   const owner = ownerPlaceholder(input.preferences);
   const offsets = POST_OFFSETS[input.preferences.postsPerWeek];
-  const topicAngles = ["核心问题", "方法拆解", "案例观察", "常见误区", "复盘提示"];
+  const topicAngles = [
+    "临床工作流",
+    "临床证据",
+    "法规与 FDA/CE 状态",
+    "患者结局",
+    "医院采购与经济价值",
+  ];
 
   for (let weekIndex = 0; weekIndex < 4; weekIndex += 1) {
     const weekNumber = (weekIndex + 1) as 1 | 2 | 3 | 4;
@@ -364,7 +370,8 @@ function buildSchedule(
       const topic = `${strategy.title}：${topicAngles[postIndex % topicAngles.length]}`;
       const contentFormat = formats[(sequence - 1) % formats.length];
       const coreMessage = strategy.actions[postIndex % strategy.actions.length];
-      const callToAction = "查看相关资源，并记录下一次可验证的聚合行为。";
+      const callToAction =
+        "查看经批准的临床证据或法规资料，并记录医疗专业人员与医院采购相关的聚合互动。";
       const experiment = isExperiment
         ? {
             experimentId: `${itemId}-experiment`,
@@ -426,7 +433,7 @@ function buildSchedule(
     const tasks: WeekTask[] = [
       {
         taskId: `week-${weekNumber}-prepare`,
-        title: "确认主题、素材和单一 CTA",
+        title: "确认产品主题、临床证据、法规表述和单一 CTA",
         ownerPlaceholder: owner,
         dueDate: weekStart,
         status: "ai_draft",
@@ -442,7 +449,7 @@ function buildSchedule(
       },
       {
         taskId: `week-${weekNumber}-review`,
-        title: "按 KPI 口径复盘，不做个人级归因",
+        title: "按 KPI 复盘专业受众互动，不推断采购或患者层面结果",
         ownerPlaceholder: owner,
         dueDate: weekEnd,
         status: "ai_draft",
@@ -458,7 +465,7 @@ function buildSchedule(
       ownerPlaceholder: owner,
       publishDate: firstPublishDate,
       targetAudience: input.preferences.focusAudience,
-      callToAction: "使用单一 CTA，并在下一次导入时复核聚合指标。",
+      callToAction: "使用单一专业 CTA 指向临床、法规或经济价值资料，并在下一次导入时复核聚合指标。",
       kpiMetricIds: metricIds,
       reviewAction:
         "比较本周逐帖指标与 Snapshot 基线，记录方向和限制，不把时间相关性解释为因果。",
@@ -1228,7 +1235,7 @@ export function generateActionPlan(
       `Maximum weekly publishing volume: ${input.preferences.postsPerWeek}; time zone: ${input.preferences.timeZone}.`,
     ],
     risksAndLimitations: [
-      "LinkedIn data is aggregated and cannot identify anonymous visitors, individual followers, or purchase intent.",
+      "LinkedIn data is aggregated and cannot verify healthcare professional roles, KOL identities, or hospital procurement intent.",
       "The Visitor-to-Follower Proxy is not a verified user-level conversion rate.",
       "Correlation between publishing windows and metric changes does not establish causation.",
       "Future KPI results require like-for-like collection in the next import and cannot be forecast from the current data.",
@@ -1247,7 +1254,7 @@ export function generateActionPlan(
       "下一次导入是否覆盖完整的计划日期范围？",
       "逐帖 Impressions、Clicks 与 Engagement Rate 是否可按相同口径获得？",
       "哪些实验内容按计划发布，哪些被修改或取消？",
-      "是否有 CRM、网站分析或线索数据可补充验证业务结果？",
+      "是否有合规记录的医疗专业人员互动、KOL 反馈或医院采购里程碑可补充验证业务结果？",
     ],
     revisionHistory: [],
   };

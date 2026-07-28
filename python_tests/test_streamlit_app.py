@@ -56,9 +56,9 @@ class StreamlitDemoTests(unittest.TestCase):
                     "Synthetic test fixture - no real company data\n"
                     "Post title,Created date,Content Type,Impressions,"
                     "Clicks,Likes,Comments,Reposts\n"
-                    "Synthetic A,2026-01-01,Document,100,5,3,1,1\n"
-                    "Synthetic B,2026-01-02,Document,100,10,5,3,2\n"
-                    "Synthetic C,2026-01-03,Video,100,20,8,4,3\n"
+                    "Ultrasound clinical workflow evidence,2026-01-01,Document,100,5,3,1,1\n"
+                    "Patient monitoring outcomes briefing,2026-01-02,Document,100,10,5,3,2\n"
+                    "Endoscopy KOL procedure review,2026-01-03,Video,100,20,8,4,3\n"
                 ).encode(),
             ),
         }

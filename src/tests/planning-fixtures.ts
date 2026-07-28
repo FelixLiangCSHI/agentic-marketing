@@ -21,7 +21,7 @@ export function approvedPlanningInput(
   }));
   const businessGoal: BusinessGoal = {
     goalId: "goal-synthetic",
-    statement: "建立可复盘的 LinkedIn 内容运营节奏",
+    statement: "以临床证据、法规进展和经济价值支持医院医疗器械评估",
     confirmed: true,
     confirmedAt: PLANNING_NOW.toISOString(),
   };
@@ -36,9 +36,9 @@ export function approvedPlanningInput(
       timeZone: "Asia/Shanghai",
       postsPerWeek: 3,
       teamSize: null,
-      contentResources: ["文案", "设计"],
-      targetMarket: "APAC",
-      focusAudience: "医疗影像行业决策者",
+      contentResources: ["临床证据", "法规资料", "健康经济学分析", "KOL 访谈"],
+      targetMarket: "北美与欧盟医院系统",
+      focusAudience: "医疗专业人员、临床 KOL、医院采购和法规事务负责人",
     },
     ...overrides,
   };

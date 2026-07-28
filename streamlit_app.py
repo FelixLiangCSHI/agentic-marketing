@@ -313,19 +313,20 @@ def initialize_state() -> None:
         "upload_generation": 0,
         "project_id": "linkedin-project",
         "business_goal": (
-            "Build a compliant, measurable LinkedIn campaign for medical device "
-            "marketing stakeholders"
+            "Support hospital evaluation of ultrasound, patient monitoring, and "
+            "digital health solutions with clinical evidence, regulatory status, "
+            "patient outcomes, and economic value"
         ),
         "business_goal_confirmed": False,
         "plan_timezone": "Asia/Shanghai",
         "plan_start_date": default_start_date(),
         "posts_per_week": 2,
         "team_size": 0,
-        "content_resources": ["Copywriting", "Design"],
+        "content_resources": ["Clinical Evidence", "Product Specialist"],
         "target_market": "North America",
         "focus_audience": (
-            "Healthcare professionals, hospital decision-makers, and "
-            "medical technology partners"
+            "Healthcare professionals, clinical KOLs, hospital procurement teams, "
+            "and regulatory stakeholders"
         ),
     }
     for key, value in defaults.items():
