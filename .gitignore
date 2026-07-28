@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+/.pytest_cache/
+/htmlcov/
+
+# private LinkedIn exports
+/Data/
+/data/
 
 # next.js
 /.next/
@@ -23,6 +29,10 @@
 # misc
 .DS_Store
 *.pem
+__pycache__/
+*.py[cod]
+/.venv/
+/.streamlit/secrets.toml
 
 # debug
 npm-debug.log*

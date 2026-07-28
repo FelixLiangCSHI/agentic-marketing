@@ -1,0 +1,14 @@
+import "@/tests/file-validation.test";
+import "@/tests/parser-formats.test";
+import "@/tests/normalization-quality.test";
+import "@/tests/state-and-api.test";
+import "@/tests/empty-state.test";
+import "@/tests/analysis-metrics.test";
+import "@/tests/analysis-quality-cross.test";
+import "@/tests/analysis-snapshot-view.test";
+import "@/tests/action-plan-agent.test";
+import "@/tests/evidence-chat-agent.test";
+import "@/tests/planning-ui.test";
+import "@/tests/report-exports.test";
+import "@/tests/buffer-export.test";
+import "@/tests/streamlit-bridge.test";

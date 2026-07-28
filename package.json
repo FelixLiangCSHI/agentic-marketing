@@ -1,14 +1,21 @@
 {
-  "name": "mkt-scaffold",
+  "name": "linkedin-marketing-ai-agent-demo",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "build:streamlit-bridge": "esbuild scripts/streamlit-bridge.ts --bundle --platform=node --target=node12 --format=cjs --charset=utf8 --legal-comments=eof --outfile=dist/streamlit-bridge.cjs",
+    "prebuild": "npm run build:streamlit-bridge",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "streamlit:bridge": "tsx scripts/streamlit-bridge.ts",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "pretest": "npm run build:streamlit-bridge",
+    "test": "tsx --test src/tests/run-tests.ts"
   },
   "dependencies": {
+    "@e965/xlsx": "0.20.3",
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -17,8 +24,20 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "0.28.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "tsx": "^4.23.1",
     "typescript": "^5"
+  },
+  "overrides": {
+    "minimatch@3.1.5": {
+      "brace-expansion": "1.1.16"
+    },
+    "minimatch@10.2.5": {
+      "brace-expansion": "5.0.8"
+    },
+    "postcss": "8.5.23",
+    "sharp": "0.35.3"
   }
 }
