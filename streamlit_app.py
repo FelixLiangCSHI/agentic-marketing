@@ -810,6 +810,7 @@ def render_parse_summaries() -> None:
     if not analysis:
         return
     with st.expander("文件识别结果与数据证据"):
+        st.markdown("### 文件识别结果")
         for summary in analysis["parseSummaries"]:
             slot = summary["slot"]
             detected = "、".join(summary["detectedModules"]) or "无法确定"
