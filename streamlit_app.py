@@ -14,13 +14,18 @@ from streamlit_demo.bridge_client import (
     encode_upload,
 )
 from streamlit_demo.approval_engine import ApprovalEngine
-from streamlit_demo.buffer_service import BufferService
+from streamlit_demo.buffer_service import (
+    BUFFER_API_URL,
+    BufferService,
+    resolve_buffer_api_key,
+)
 from streamlit_demo.configuration_ui import (
     configuration_dialog_required,
     initialize_configuration_state,
     render_configuration_dialog,
     render_settings,
 )
+from streamlit_demo.data_models import ServiceConfiguration
 from streamlit_demo.pdf_export import as_pdf_artifact
 from streamlit_demo.workflow import ConfigurationWorkflow
 
@@ -1729,7 +1734,12 @@ def buffer_handoff_payload() -> dict[str, Any]:
 
 def buffer_api_configuration() -> Any:
     configuration = st.session_state.get("configuration")
-    return getattr(configuration, "buffer", None)
+    configured = getattr(configuration, "buffer", None)
+    if configured is not None:
+        return configured
+    if resolve_buffer_api_key():
+        return ServiceConfiguration(BUFFER_API_URL, "")
+    return None
 
 
 def exportable_selected_posts(
@@ -1774,7 +1784,10 @@ def schedule_posts_via_buffer_api(preview: dict[str, Any]) -> None:
     if configuration is None:
         st.session_state["buffer_api_result"] = {
             "success": False,
-            "message": "Configure the Buffer API in Settings first.",
+            "message": (
+                "Configure the Buffer API in Settings or set "
+                "BUFFER_API_KEY in Streamlit secrets first."
+            ),
             "results": [],
         }
         return
@@ -2441,7 +2454,8 @@ def render_buffer_handoff() -> None:
         st.rerun()
     if buffer_configuration is None:
         st.caption(
-            "Configure the Buffer API in Settings to schedule posts directly."
+            "Configure the Buffer API in Settings or set BUFFER_API_KEY "
+            "in Streamlit secrets to schedule posts directly."
         )
 
     render_buffer_api_result(preview)

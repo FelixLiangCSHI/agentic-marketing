@@ -1,13 +1,61 @@
 from __future__ import annotations
 
 import json
+import os
 import urllib.error
 import urllib.request
 from datetime import date
 from typing import Any
+from urllib.parse import urlparse
 
 from streamlit_demo.data_models import ConnectionResult, ServiceConfiguration
 from streamlit_demo.mock_ai_service import valid_service_endpoint
+
+
+BUFFER_API_URL = "https://api.buffer.com"
+BUFFER_API_KEY_ENV = "BUFFER_API_KEY"
+
+
+def resolve_buffer_api_key(configured_credential: str = "") -> str:
+    """Return the Buffer API key, preferring Streamlit secrets, then the
+    environment, then the credential configured in the workspace wizard.
+
+    The returned key is normalized with ``str(...).strip()`` and must never
+    be logged, displayed, serialized, or echoed back to the caller UI.
+    """
+    key = ""
+    try:
+        import streamlit as st
+
+        try:
+            key = str(st.secrets.get(BUFFER_API_KEY_ENV, "") or "")
+        except Exception:
+            key = ""
+    except Exception:
+        key = ""
+    if not key.strip():
+        key = str(os.environ.get(BUFFER_API_KEY_ENV, "") or "")
+    if not key.strip():
+        key = str(configured_credential or "")
+    return key.strip()
+
+
+def resolve_buffer_endpoint(endpoint: str) -> str:
+    """Normalize the Buffer endpoint to the official GraphQL API.
+
+    Any Buffer-owned host (including the legacy ``api.bufferapp.com`` REST
+    host) is rewritten to ``https://api.buffer.com``. Mock and localhost
+    endpoints are preserved for testing.
+    """
+    cleaned = str(endpoint or "").strip()
+    if not cleaned:
+        return BUFFER_API_URL
+    host = (urlparse(cleaned).hostname or "").lower()
+    if host == "buffer.com" or host.endswith(".buffer.com") or (
+        host == "bufferapp.com" or host.endswith(".bufferapp.com")
+    ):
+        return BUFFER_API_URL
+    return cleaned
 
 
 class BufferService:
@@ -15,17 +63,20 @@ class BufferService:
         self,
         configuration: ServiceConfiguration,
     ) -> ConnectionResult:
-        if not valid_service_endpoint(configuration.endpoint):
+        endpoint = resolve_buffer_endpoint(configuration.endpoint)
+        if not valid_service_endpoint(endpoint):
             return ConnectionResult(
                 "buffer",
                 False,
                 "Use an HTTPS, localhost, or mock Buffer endpoint.",
             )
-        if not configuration.credential.strip():
+        if not resolve_buffer_api_key(configuration.credential):
             return ConnectionResult(
                 "buffer",
                 False,
-                "A Buffer access token is required.",
+                "A Buffer access token is required. Provide it here, in "
+                'st.secrets["BUFFER_API_KEY"], or in the BUFFER_API_KEY '
+                "environment variable.",
             )
         return ConnectionResult("buffer", True, "Connection validated.")
 
@@ -51,17 +102,22 @@ class BufferService:
         configuration: ServiceConfiguration,
         posts: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        endpoint = configuration.endpoint.strip()
+        endpoint = resolve_buffer_endpoint(configuration.endpoint)
         if not valid_service_endpoint(endpoint):
             return {
                 "success": False,
                 "message": "Use an HTTPS, localhost, or mock Buffer endpoint.",
                 "results": [],
             }
-        if not configuration.credential.strip():
+        api_key = resolve_buffer_api_key(configuration.credential)
+        if not api_key:
             return {
                 "success": False,
-                "message": "A Buffer access token is required.",
+                "message": (
+                    "A Buffer access token is required. Provide it in "
+                    'st.secrets["BUFFER_API_KEY"], the BUFFER_API_KEY '
+                    "environment variable, or the workspace configuration."
+                ),
                 "results": [],
             }
         if not posts:
@@ -85,7 +141,7 @@ class BufferService:
                 "message": f"Scheduled {len(results)} posts via the mock Buffer API.",
                 "results": results,
             }
-        return self._schedule_via_api(endpoint, configuration.credential, posts)
+        return self._schedule_via_api(endpoint, api_key, posts)
 
     def _schedule_via_api(
         self,
@@ -96,7 +152,7 @@ class BufferService:
         url = endpoint.rstrip("/")
         token = credential.strip()
         try:
-            channel_ids = self._load_channel_ids(url, token)
+            channel_ids = self._load_linkedin_channel_ids(url, token)
         except (urllib.error.URLError, OSError, ValueError) as error:
             return {
                 "success": False,
@@ -107,14 +163,18 @@ class BufferService:
             return {
                 "success": False,
                 "message": (
-                    "No Buffer channels are connected to the configured "
-                    "account. Connect a LinkedIn channel in Buffer first."
+                    "No Buffer channels are connected to the organizations "
+                    "this API key can access. Connect a LinkedIn channel in "
+                    "Buffer first."
                 ),
                 "results": [],
             }
+        selected_channel_id = channel_ids[0]
         results: list[dict[str, Any]] = []
         for post in posts:
-            results.append(self._create_post(url, token, post, channel_ids))
+            results.append(
+                self._create_post(url, token, post, selected_channel_id)
+            )
         scheduled = sum(1 for result in results if result["success"])
         return {
             "success": scheduled == len(results),
@@ -125,53 +185,88 @@ class BufferService:
             "results": results,
         }
 
-    def _load_channel_ids(self, url: str, token: str) -> list[str]:
+    def _load_linkedin_channel_ids(self, url: str, token: str) -> list[str]:
+        organizations = self._load_organizations(url, token)
+        channels: list[dict[str, Any]] = []
+        failures: list[str] = []
+        for organization in organizations:
+            organization_id = str(organization["id"])
+            label = str(organization.get("name") or organization_id)
+            try:
+                data = self._graphql_request(
+                    url,
+                    token,
+                    "query GetChannels($input: ChannelsInput!) { "
+                    "channels(input: $input) { id name service } }",
+                    {"input": {"organizationId": organization_id}},
+                )
+            except (urllib.error.URLError, OSError, ValueError) as error:
+                failures.append(f"organization {label}: {error}")
+                continue
+            channels.extend(
+                channel
+                for channel in (data.get("channels") or [])
+                if isinstance(channel, dict) and channel.get("id")
+            )
+        if not channels:
+            if failures:
+                raise ValueError(
+                    "Buffer denied channel access for every organization "
+                    "available to this API key ("
+                    + "; ".join(failures)
+                    + "). Generate a new API key from the Buffer account "
+                    "that owns the LinkedIn channel and update "
+                    "BUFFER_API_KEY."
+                )
+            return []
+        linkedin_channel_ids = [
+            str(channel["id"])
+            for channel in channels
+            if str(channel.get("service", "")).lower() == "linkedin"
+        ]
+        if not linkedin_channel_ids:
+            services = sorted(
+                {
+                    str(channel.get("service") or "unknown").lower()
+                    for channel in channels
+                }
+            )
+            raise ValueError(
+                "No LinkedIn channel is connected to the organizations this "
+                "API key can access (connected services: "
+                + ", ".join(services)
+                + "). Connect a LinkedIn channel in Buffer, then retry."
+            )
+        return linkedin_channel_ids
+
+    def _load_organizations(
+        self, url: str, token: str
+    ) -> list[dict[str, Any]]:
         account = self._graphql_request(
             url,
             token,
-            "query { account { currentOrganization { id } "
-            "organizations { id } } }",
+            "query GetOrganizations { account { organizations { id name } } }",
         )
         account_data = account.get("account") or {}
-        current = account_data.get("currentOrganization") or {}
-        organization_id = current.get("id")
-        if not organization_id:
-            organizations = account_data.get("organizations") or []
-            if organizations and isinstance(organizations[0], dict):
-                organization_id = organizations[0].get("id")
-        if not organization_id:
-            raise ValueError(
-                "No Buffer organization is available for this access token."
-            )
-        channels_data = self._graphql_request(
-            url,
-            token,
-            "query Channels($input: ChannelsInput!) { "
-            "channels(input: $input) { id name service } }",
-            {"input": {"organizationId": str(organization_id)}},
-        )
-        channels = channels_data.get("channels") or []
-        channel_ids = [
-            str(channel["id"])
-            for channel in channels
-            if isinstance(channel, dict)
-            and channel.get("id")
-            and str(channel.get("service", "")).lower() == "linkedin"
+        organizations = [
+            organization
+            for organization in (account_data.get("organizations") or [])
+            if isinstance(organization, dict) and organization.get("id")
         ]
-        if not channel_ids:
-            channel_ids = [
-                str(channel["id"])
-                for channel in channels
-                if isinstance(channel, dict) and channel.get("id")
-            ]
-        return channel_ids
+        if not organizations:
+            raise ValueError(
+                "Buffer accepted the API key but returned no organizations "
+                "for this account. Confirm the API key was generated in the "
+                "Buffer workspace that owns the LinkedIn channel."
+            )
+        return organizations
 
     def _create_post(
         self,
         url: str,
         token: str,
         post: dict[str, Any],
-        channel_ids: list[str],
+        channel_id: str,
     ) -> dict[str, Any]:
         text = str(post.get("text", ""))
         link_url = post.get("linkUrl")
@@ -185,50 +280,47 @@ class BufferService:
             "... on PostActionSuccess { post { id } } "
             "... on MutationError { message } } }"
         )
-        post_ids: list[str] = []
-        errors: list[str] = []
-        for channel_id in channel_ids:
-            post_input: dict[str, Any] = {
-                "channelId": channel_id,
-                "text": text,
-                "schedulingType": "automatic",
+        post_input: dict[str, Any] = {
+            "channelId": channel_id,
+            "text": text,
+            "schedulingType": "automatic",
+        }
+        if scheduled_at:
+            post_input["mode"] = "customScheduled"
+            post_input["dueAt"] = str(scheduled_at)
+        else:
+            post_input["mode"] = "shareNext"
+            post_input["saveToDraft"] = True
+        if media_urls:
+            post_input["assets"] = {
+                "images": [{"url": str(media_urls[0])}]
             }
-            if scheduled_at:
-                post_input["mode"] = "customScheduled"
-                post_input["dueAt"] = str(scheduled_at)
-            else:
-                post_input["mode"] = "shareNext"
-            if media_urls:
-                post_input["assets"] = {
-                    "images": [{"url": str(media_urls[0])}]
-                }
-            try:
-                data = self._graphql_request(
-                    url, token, mutation, {"input": post_input}
-                )
-            except (urllib.error.URLError, OSError, ValueError) as error:
-                errors.append(f"Buffer API request failed: {error}")
-                continue
-            result = data.get("createPost") or {}
-            created = result.get("post") if isinstance(result, dict) else None
-            if isinstance(created, dict) and created.get("id"):
-                post_ids.append(str(created["id"]))
-            else:
-                detail = (
-                    result.get("message")
-                    if isinstance(result, dict)
-                    else None
-                )
-                errors.append(str(detail or "Buffer rejected the post."))
-        success = bool(post_ids) and not errors
-        message = (
-            "Scheduled in the Buffer queue." if success else "; ".join(errors)
-        )
+        try:
+            data = self._graphql_request(
+                url, token, mutation, {"input": post_input}
+            )
+        except (urllib.error.URLError, OSError, ValueError) as error:
+            return {
+                "itemId": post["itemId"],
+                "success": False,
+                "message": f"Buffer API request failed: {error}",
+                "updateId": None,
+            }
+        result = data.get("createPost") or {}
+        created = result.get("post") if isinstance(result, dict) else None
+        if isinstance(created, dict) and created.get("id"):
+            return {
+                "itemId": post["itemId"],
+                "success": True,
+                "message": "Scheduled in the Buffer queue.",
+                "updateId": str(created["id"]),
+            }
+        detail = result.get("message") if isinstance(result, dict) else None
         return {
             "itemId": post["itemId"],
-            "success": success,
-            "message": message or "Buffer rejected the post.",
-            "updateId": post_ids[0] if post_ids else None,
+            "success": False,
+            "message": str(detail or "Buffer rejected the post."),
+            "updateId": None,
         }
 
     @staticmethod
@@ -255,6 +347,10 @@ class BufferService:
             with urllib.request.urlopen(request, timeout=20) as response:
                 body = response.read().decode("utf-8")
         except urllib.error.HTTPError as error:
+            if error.code in (401, 403):
+                raise ValueError(
+                    BufferService._authorization_hint(error.code)
+                ) from error
             body = error.read().decode("utf-8", errors="replace")
             try:
                 parsed = json.loads(body)
@@ -278,6 +374,20 @@ class BufferService:
         return data
 
     @staticmethod
+    def _authorization_hint(code: int | None = None) -> str:
+        prefix = (
+            f"Buffer rejected the request (HTTP {code})."
+            if code
+            else "Buffer reported the request is not authorized."
+        )
+        return (
+            f"{prefix} The API key is invalid, revoked, or belongs to a "
+            "different Buffer workspace. Generate a new API key in Buffer "
+            "(Account > Integrations > Buffer API) for the workspace that "
+            "owns the LinkedIn channel and update BUFFER_API_KEY."
+        )
+
+    @staticmethod
     def _graphql_error_message(parsed: Any) -> str | None:
         if not isinstance(parsed, dict):
             return None
@@ -288,7 +398,11 @@ class BufferService:
                 for error in errors
                 if isinstance(error, dict) and error.get("message")
             ]
-            if messages:
-                return "; ".join(messages)
-            return "Buffer returned a GraphQL error."
+            if not messages:
+                return "Buffer returned a GraphQL error."
+            combined = "; ".join(messages)
+            lowered = combined.lower()
+            if "not authorized" in lowered or "unauthenticated" in lowered:
+                return f"{combined}. {BufferService._authorization_hint()}"
+            return combined
         return None

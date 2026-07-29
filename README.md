@@ -107,9 +107,9 @@ npm start
 | --- | ---: | --- | --- |
 | AI / LLM | 2 | 首次配置向导 / Settings | 洞察、计划和聊天继续使用确定性 Mock，不执行外部模型请求 |
 | LinkedIn | 0 | 无 | 只读取用户上传的分析导出，不调用 LinkedIn API |
-| Buffer | 1 | 首次配置向导 / Settings | 验证 Mock 连接并生成 CSV 人工交接，不发布内容 |
+| Buffer | 1 | 首次配置向导 / Settings / `BUFFER_API_KEY` | 验证连接、生成 CSV 人工交接，并可经官方 GraphQL API（`https://api.buffer.com`）动态发现组织与 LinkedIn 渠道后创建草稿/排期帖 |
 | GitHub | 0 | 无 | 应用代码不调用 GitHub API；部署时的平台 GitHub 授权由 Streamlit 管理 |
-| Streamlit secrets | 0 | 无 | 代码没有读取 `st.secrets`；Cloud 的 Secrets 字段保持空白 |
+| Streamlit secrets | 1 | Cloud Secrets / 环境变量 | 代码读取 `st.secrets["BUFFER_API_KEY"]`（或 `BUFFER_API_KEY` 环境变量）作为 Buffer API Key；不缓存、不记录、不回显 |
 
 `.streamlit/secrets.toml` 不是当前启动条件。若以后接入真实 LLM 或 Buffer OAuth，
 必须改用服务端密钥存储、权限隔离和轮换，不能把 Key 提交到 Git。
