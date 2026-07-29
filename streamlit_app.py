@@ -49,6 +49,16 @@ PIPELINE_STAGES = (
     "30 天计划",
     "交付 Buffer",
 )
+EXECUTIVE_WORKFLOW = (
+    "历史数据",
+    "AI 洞察报告",
+    "营销策略",
+    "人工批准",
+    "30 天内容计划",
+    "人工批准",
+    "LinkedIn 草稿",
+    "Buffer 队列",
+)
 TIME_ZONES = (
     "Asia/Shanghai",
     "Asia/Singapore",
@@ -684,12 +694,12 @@ def render_header() -> None:
     context[1].metric("数据状态", data_status)
     context[2].metric("决策就绪度", decision_status)
     context[3].metric("下一项交付", delivery_status)
-    st.caption(f"建议下一步：{next_step}。每个阶段均保留人工审核和可追溯边界。")
-    st.info(
-        "隐私边界：上传文件仅传给本机短生命周期 Node Bridge，默认不写磁盘、数据库或分析日志。"
-        "本 Demo 不是 LinkedIn 官方产品；请确保你有权处理所上传数据。",
-        icon=":material/verified_user:",
+    st.caption(
+        "演示路径："
+        + " → ".join(EXECUTIVE_WORKFLOW)
+        + f"。建议下一步：{next_step}。"
     )
+    st.caption("AI 加速分析与规划；所有关键判断、内容与交付均由团队确认。")
     if st.session_state.get("_reset_notice"):
         st.success(st.session_state.pop("_reset_notice"))
 
@@ -783,80 +793,59 @@ def render_last_status() -> None:
         )
 
 
+def render_next_action(label: str, stage: str, *, disabled: bool = False) -> None:
+    if st.button(
+        label,
+        type="primary",
+        width="stretch",
+        disabled=disabled,
+        key=f"next-{stage}",
+    ):
+        st.session_state["active_stage"] = stage
+        st.rerun()
+
+
 def render_parse_summaries() -> None:
     analysis = analysis_data()
     if not analysis:
         return
-    st.markdown("### 文件识别结果")
-    for summary in analysis["parseSummaries"]:
-        slot = summary["slot"]
-        detected = "、".join(summary["detectedModules"]) or "无法确定"
-        title = (
-            f"{MODULE_LABELS[slot]} · {summary['file']['name']} · "
-            f"识别为 {detected}"
-        )
-        with st.expander(title):
-            cols = st.columns(4)
-            cols[0].metric("格式", summary["file"]["format"].upper())
-            cols[1].metric("总行数", summary["totalRows"])
-            cols[2].metric("有效行", summary["validRows"])
-            cols[3].metric(
-                "可继续",
-                "是" if summary["canProceed"] else "需处理",
+    with st.expander("文件识别结果与数据证据"):
+        for summary in analysis["parseSummaries"]:
+            slot = summary["slot"]
+            detected = "、".join(summary["detectedModules"]) or "无法确定"
+            title = (
+                f"{MODULE_LABELS[slot]} · {summary['file']['name']} · "
+                f"识别为 {detected}"
             )
-            for sheet in summary["sheets"]:
-                st.markdown(f"**Sheet：{sheet['sheetName']}**")
-                st.caption(
-                    f"表头行 {sheet['headerRow'] or '未识别'} · "
-                    f"推测模块 "
-                    f"{sheet['detection']['detectedModule'] or '无法确定'} · "
-                    f"置信度 {sheet['detection']['confidence']} · "
-                    f"日期范围 {sheet['dateRange'] or 'unavailable'}"
+            with st.expander(title):
+                cols = st.columns(4)
+                cols[0].metric("格式", summary["file"]["format"].upper())
+                cols[1].metric("总行数", summary["totalRows"])
+                cols[2].metric("有效行", summary["validRows"])
+                cols[3].metric(
+                    "可继续",
+                    "是" if summary["canProceed"] else "需处理",
                 )
-                mappings = [
-                    {
-                        "原字段": mapping["rawHeader"],
-                        "标准字段": mapping["standardField"] or "unmapped",
-                        "状态": mapping["status"],
-                        "置信度": mapping["confidence"],
-                    }
-                    for mapping in sheet["mappings"]
-                ]
-                if mappings:
-                    st.dataframe(
-                        mappings,
-                        hide_index=True,
-                        width="stretch",
-                    )
-                if sheet["missingCriticalFields"]:
-                    st.warning(
-                        "缺失关键字段："
-                        + "、".join(sheet["missingCriticalFields"])
-                    )
-                if sheet["standardizedPreview"]:
-                    st.caption("标准化预览（最多 5 行，不含原始单元格）")
-                    st.dataframe(
-                        sheet["standardizedPreview"],
-                        hide_index=True,
-                        width="stretch",
-                    )
-                if sheet["issues"]:
-                    st.caption(
-                        "质量提示："
-                        + "；".join(
-                            f"{item['code']}：{item['message']}"
-                            for item in sheet["issues"][:8]
-                        )
-                    )
+                for sheet in summary["sheets"]:
+                    st.markdown(f"**Sheet：{sheet['sheetName']}**")
+                    mappings = [
+                        {
+                            "原字段": mapping["rawHeader"],
+                            "标准字段": mapping["standardField"] or "unmapped",
+                            "状态": mapping["status"],
+                            "置信度": mapping["confidence"],
+                        }
+                        for mapping in sheet["mappings"]
+                    ]
+                    if mappings:
+                        st.dataframe(mappings, hide_index=True, width="stretch")
+                    if sheet["missingCriticalFields"]:
+                        st.warning("缺失关键字段：" + "、".join(sheet["missingCriticalFields"]))
 
 
 def render_ingestion() -> None:
-    st.markdown('<span class="section-kicker">Data intake</span>', unsafe_allow_html=True)
-    st.header("选择数据接入路径")
-    st.write(
-        "使用完全虚构的示例数据可在几分钟内完成演示；上传路径支持 "
-        "XLSX、XLS、CSV，每个文件最大 10 MB。"
-    )
+    st.header("1 · 历史数据")
+    st.write("从已验证的历史表现开始，让 AI 将分散数据转化为管理层可用的决策依据。")
     left, right = st.columns([1, 2], gap="large")
     with left:
         with st.container(border=True):
@@ -947,12 +936,13 @@ def render_ingestion() -> None:
                     st.rerun()
 
     render_parse_summaries()
+    if analysis_data():
+        render_next_action("查看数据健康度", "数据质量")
 
 
 def render_quality() -> None:
     snapshot = snapshot_data()
-    st.markdown('<span class="section-kicker">Data quality</span>', unsafe_allow_html=True)
-    st.header("数据质量摘要")
+    st.header("数据健康度")
     if not snapshot:
         st.info("请先在“数据接入”中载入 Synthetic 项目或上传文件。")
         return
@@ -1006,22 +996,31 @@ def render_quality() -> None:
     else:
         st.info("没有质量规则命中。")
 
-    st.markdown("### 模块覆盖")
-    module_rows = []
-    for module in MODULES:
-        summary = quality["moduleSummaries"][module]
-        module_rows.append(
-            {
-                "模块": MODULE_LABELS[module],
-                "是否存在": "是" if summary["present"] else "否",
-                "记录数": summary["totalRecords"],
-                "重复记录": summary["duplicateRecords"],
-                "时间范围": period_text(summary["period"]),
-                "Error": summary["issueCount"]["error"],
-                "Warning": summary["issueCount"]["warning"],
-            }
-        )
-    st.dataframe(module_rows, hide_index=True, width="stretch")
+    with st.expander("查看模块覆盖与质量细节"):
+        module_rows = []
+        for module in MODULES:
+            summary = quality["moduleSummaries"][module]
+            module_rows.append(
+                {
+                    "模块": MODULE_LABELS[module],
+                    "是否存在": "是" if summary["present"] else "否",
+                    "记录数": summary["totalRecords"],
+                    "重复记录": summary["duplicateRecords"],
+                    "时间范围": period_text(summary["period"]),
+                    "Error": summary["issueCount"]["error"],
+                    "Warning": summary["issueCount"]["warning"],
+                }
+            )
+        st.dataframe(module_rows, hide_index=True, width="stretch")
+    render_next_action(
+        "生成 AI 洞察报告",
+        "指标计算",
+        disabled=quality["hasBlockingIssues"]
+        or (
+            quality["requiresWarningAcknowledgement"]
+            and not st.session_state["quality_acknowledged"]
+        ),
+    )
 
 
 def render_metric_detail(metric: dict[str, Any]) -> None:
@@ -1083,8 +1082,8 @@ def render_series(
 
 def render_metrics() -> None:
     snapshot = snapshot_data()
-    st.markdown('<span class="section-kicker">Deterministic metrics</span>', unsafe_allow_html=True)
-    st.header("指标计算")
+    st.header("2 · AI 洞察报告")
+    st.write("系统先统一计算关键增长指标，再生成可追溯、可供管理层审阅的洞察。")
     if not snapshot:
         st.info("尚无 Analysis Snapshot。")
         return
@@ -1111,41 +1110,24 @@ def render_metrics() -> None:
                 )
                 render_metric_detail(metric)
 
-    follower_series = snapshot["metrics"]["followers"]["newFollowersTrend"]
-    visitor_series = snapshot["metrics"]["visitors"]["pageViewsTrend"]
-    left, right = st.columns(2)
-    with left:
-        render_series(
-            "Followers 新增趋势",
-            follower_series,
-            source_text="Followers",
-        )
-    with right:
-        render_series(
-            "Visitors Page Views 趋势",
-            visitor_series,
-            source_text="Visitors",
-        )
-
-    st.markdown("### Content 分组表现")
-    groups = snapshot["metrics"]["content"]["byContentType"]
-    if groups:
-        rows = []
-        for group in groups:
-            row = {
-                "内容类型": group["label"],
-                "样本量": group["sampleSize"],
-                "可靠性": group["reliability"],
-            }
-            for metric in group["metrics"]:
-                row[metric["label"]] = metric["formattedValue"]
-            rows.append(row)
-        st.dataframe(rows, hide_index=True, width="stretch")
-        st.caption(
-            "文本摘要：全部分组值来自 Snapshot；小样本分组标为 directional。"
-        )
-    else:
-        st.info("缺少 contentType 或逐帖指标，无法按内容类型聚合。")
+    with st.expander("查看趋势、内容表现与计算口径"):
+        follower_series = snapshot["metrics"]["followers"]["newFollowersTrend"]
+        visitor_series = snapshot["metrics"]["visitors"]["pageViewsTrend"]
+        left, right = st.columns(2)
+        with left:
+            render_series("Followers 新增趋势", follower_series, source_text="Followers")
+        with right:
+            render_series("Visitors Page Views 趋势", visitor_series, source_text="Visitors")
+        groups = snapshot["metrics"]["content"]["byContentType"]
+        if groups:
+            rows = []
+            for group in groups:
+                row = {"内容类型": group["label"], "样本量": group["sampleSize"], "可靠性": group["reliability"]}
+                for metric in group["metrics"]:
+                    row[metric["label"]] = metric["formattedValue"]
+                rows.append(row)
+            st.dataframe(rows, hide_index=True, width="stretch")
+    render_next_action("审阅 AI 洞察", "受众洞察")
 
 
 def update_insight_status(insight_id: str, status: str) -> None:
@@ -1202,8 +1184,9 @@ def approval_controls(
 
 
 def render_insights(category: str, title: str) -> None:
-    st.markdown('<span class="section-kicker">Evidence insights</span>', unsafe_allow_html=True)
-    st.header(title)
+    report_section = "受众机会" if category == "audience" else "内容机会"
+    st.header(f"2 · AI 洞察报告：{report_section}")
+    st.write("AI 将历史表现转化为可行动的判断；管理团队决定哪些判断进入策略。")
     snapshot = snapshot_data()
     bundle = strategy_bundle()
     if not snapshot or not bundle:
@@ -1261,6 +1244,9 @@ def render_insights(category: str, title: str) -> None:
                     "insightId"
                 ]: update_insight_status(insight_id, status),
             )
+    next_stage = "内容洞察" if category == "audience" else "策略建议"
+    next_label = "继续审阅内容洞察" if category == "audience" else "进入营销策略"
+    render_next_action(next_label, next_stage)
 
 
 def update_strategy_status(strategy_id: str, status: str) -> None:
@@ -1278,8 +1264,8 @@ def update_strategy_status(strategy_id: str, status: str) -> None:
 
 
 def render_strategies() -> None:
-    st.markdown('<span class="section-kicker">Approved strategy gate</span>', unsafe_allow_html=True)
-    st.header("策略建议")
+    st.header("3 · 营销策略与人工批准")
+    st.write("AI 将已批准的洞察转化为优先行动；策略必须由业务负责人批准后才会进入执行计划。")
     snapshot = snapshot_data()
     bundle = strategy_bundle()
     if not snapshot or not bundle:
@@ -1327,6 +1313,12 @@ def render_strategies() -> None:
                     "strategyId"
                 ]: update_strategy_status(strategy_id, status),
             )
+    _, strategy_count = approved_counts()
+    render_next_action(
+        "用已批准策略生成 30 天计划",
+        "30 天计划",
+        disabled=strategy_count == 0,
+    )
 
 
 def approved_counts() -> tuple[int, int]:
@@ -1476,8 +1468,8 @@ def render_plan_editor(plan: dict[str, Any]) -> None:
 
 def render_plan_report(plan: dict[str, Any]) -> None:
     st.divider()
-    st.markdown('<span class="section-kicker">Management report</span>', unsafe_allow_html=True)
-    st.header("30 天执行报告")
+    st.header("5 · 人工批准与 LinkedIn 草稿")
+    st.write("逐项审阅 AI 生成的 LinkedIn 草稿。只有批准内容才会进入 Buffer Queue。")
     metadata = (
         f"生成 {plan['generatedAt']} · 更新 {plan['updatedAt']} · "
         f"分析 {period_text(plan['analysisPeriod'])} · "
@@ -1485,34 +1477,13 @@ def render_plan_report(plan: dict[str, Any]) -> None:
         f"模块 {'、'.join(plan['sourceModules'])}"
     )
     st.caption(metadata)
-    st.subheader("风险与数据限制")
-    for risk in plan["risksAndLimitations"]:
-        st.warning(risk)
-    st.subheader("Executive Summary")
+    st.subheader("管理层摘要")
     st.write(plan["executiveSummary"])
-    with st.expander("计划假设", expanded=True):
+    with st.expander("查看风险、假设与证据"):
+        for risk in plan["risksAndLimitations"]:
+            st.warning(risk)
         for assumption in plan["assumptions"]:
             st.write(f"- {assumption}")
-
-    st.subheader("Audience、Content 与 Recommendations")
-    bundle = strategy_bundle() or {}
-    for insight in bundle.get("insights", []):
-        if insight["approvalStatus"] == "approved":
-            st.write(
-                f"- **{insight['category']} · {insight['title']}：** "
-                f"{insight['statement']} "
-                f"（Evidence: "
-                + "、".join(
-                    reference["metricId"] for reference in insight["evidence"]
-                )
-                + "）"
-            )
-    for strategy in bundle.get("strategies", []):
-        if strategy["approvalStatus"] == "approved":
-            st.write(
-                f"- **Recommendation · {strategy['title']}：** "
-                f"{strategy['objective']}（{strategy['strategyId']}）"
-            )
 
     view = st.radio(
         "计划视图",
@@ -1620,7 +1591,7 @@ def render_plan_report(plan: dict[str, Any]) -> None:
         st.rerun()
 
     if st.button(
-        "进入“交付 Buffer”工作区",
+        "批准完成，进入 Buffer Queue",
         type="primary",
         width="stretch",
         disabled=not any(
@@ -1673,8 +1644,8 @@ def render_plan_report(plan: dict[str, Any]) -> None:
 
 
 def render_plan() -> None:
-    st.markdown('<span class="section-kicker">Action Plan Agent</span>', unsafe_allow_html=True)
-    st.header("从已批准策略生成 30 天计划")
+    st.header("4 · 30 天内容计划")
+    st.write("AI 将批准策略编排为可执行的内容节奏，团队保留对目标、资源与每条内容的最终控制。")
     snapshot = snapshot_data()
     if not snapshot:
         st.info("请先完成分析。")
@@ -1683,11 +1654,7 @@ def render_plan() -> None:
         st.warning("当前质量门禁未通过，不能生成计划。")
         return
     insight_count, strategy_count = approved_counts()
-    render_agent_mode_notice()
-    st.caption(
-        f"已批准洞察 {insight_count} 条 · 已批准策略 {strategy_count} 条 · "
-        f"Snapshot {snapshot['snapshotId']}"
-    )
+    st.caption(f"已批准洞察 {insight_count} 条 · 已批准策略 {strategy_count} 条")
     if insight_count == 0 or strategy_count == 0:
         st.warning("至少批准一条洞察和一条引用该洞察的策略。")
 
@@ -1712,42 +1679,16 @@ def render_plan() -> None:
             key="business_goal_confirmed",
             disabled=bool(plan),
         )
-        cols = st.columns(3)
-        cols[0].selectbox("用户时区", TIME_ZONES, key="plan_timezone")
-        cols[1].date_input(
-            "计划开始日期",
-            key="plan_start_date",
-            min_value=date.today(),
-        )
-        cols[2].slider(
-            "每周内容数量",
-            min_value=1,
-            max_value=7,
-            key="posts_per_week",
-        )
-        cols = st.columns(2)
-        cols[0].number_input(
-            "团队规模（0 表示未提供）",
-            min_value=0,
-            max_value=100,
-            step=1,
-            key="team_size",
-        )
-        cols[1].text_input(
-            "目标市场（可选）",
-            key="target_market",
-            max_chars=120,
-        )
-        st.multiselect(
-            "可用内容资源",
-            ("文案", "设计", "视频", "客户案例", "产品专家"),
-            key="content_resources",
-        )
-        st.text_input(
-            "重点受众",
-            key="focus_audience",
-            max_chars=200,
-        )
+        with st.expander("调整计划参数（可选）"):
+            cols = st.columns(3)
+            cols[0].selectbox("用户时区", TIME_ZONES, key="plan_timezone")
+            cols[1].date_input("计划开始日期", key="plan_start_date", min_value=date.today())
+            cols[2].slider("每周内容数量", min_value=1, max_value=7, key="posts_per_week")
+            cols = st.columns(2)
+            cols[0].number_input("团队规模（0 表示未提供）", min_value=0, max_value=100, step=1, key="team_size")
+            cols[1].text_input("目标市场（可选）", key="target_market", max_chars=120)
+            st.multiselect("可用内容资源", ("文案", "设计", "视频", "客户案例", "产品专家"), key="content_resources")
+            st.text_input("重点受众", key="focus_audience", max_chars=200)
         submitted = st.form_submit_button(
             "应用局部调整" if plan else "生成 Mock 初稿",
             type="primary",
@@ -2288,16 +2229,9 @@ def render_buffer_result() -> None:
 
 
 def render_buffer_handoff() -> None:
-    st.markdown(
-        '<span class="section-kicker">Human-reviewed handoff</span>',
-        unsafe_allow_html=True,
-    )
-    st.header("交付 Buffer")
-    st.write("将已批准的内容计划导出，供 Lucy 在 Buffer 中审核和排期。")
-    st.warning(
-        "当前采用 CSV 人工交接，不使用 OAuth/API，也不声称已连接 Buffer。"
-        "文件基于 Buffer 官方帮助页的通用列生成，尚未在真实 Buffer 账户导入预览中验证。"
-    )
+    st.header("6 · Buffer Queue")
+    st.write("将已批准的 LinkedIn 草稿交接至 Buffer，供内容团队进行最终排期与发布。")
+    st.info("企业控制点：本系统只准备队列文件，不会自动发布。", icon=":material/verified_user:")
     plan = st.session_state.get("plan")
     if not plan:
         st.info("请先生成 30 天计划。")
