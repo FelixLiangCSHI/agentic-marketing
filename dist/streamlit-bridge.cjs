@@ -1602,10 +1602,7 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
         possibleMeaning: "The aggregate result establishes a direction for healthcare professional and KOL reach; it does not verify stakeholder role or procurement intent.",
         suggestedValidation: "Repeat the analysis with the same definitions and compare clinical-evidence, regulatory, and economic-value publishing windows.",
         metrics: followerMetrics,
-        limitations: [
-          "Aggregate data cannot verify individual healthcare professional or KOL identities.",
-          "Follower changes cannot be attributed directly to a single content item."
-        ]
+        limitations: []
       })
     );
   }
@@ -1627,10 +1624,7 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
         possibleMeaning: "The result quantifies aggregate page traffic without identifying healthcare professionals, hospital procurement teams, or evaluation intent.",
         suggestedValidation: "Track Page Views, Unique Visitors, and clinical-evidence CTA clicks over equivalent periods.",
         metrics: visitorMetrics,
-        limitations: [
-          "Visitor data is anonymous and aggregated.",
-          "Page Views and follower changes do not support user-level attribution."
-        ]
+        limitations: []
       })
     );
   }
@@ -1653,10 +1647,7 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
         possibleMeaning: "Current content performance provides an experiment baseline, not a forecast of future results.",
         suggestedValidation: "Run single-variable tests across product area, evidence type, and healthcare-professional CTA, then review the next comparable import.",
         metrics: contentMetrics,
-        limitations: [
-          "Historical performance does not guarantee future results.",
-          "Small content segments support directional analysis only."
-        ]
+        limitations: []
       })
     );
   }
