@@ -94,6 +94,45 @@ BUFFER_BULK_UPLOAD_URL = (
     "https://support.buffer.com/article/"
     "926-how-to-upload-posts-in-bulk-to-buffer"
 )
+NEXT_STEPS = {
+    "Data Intake": (
+        "Data Quality",
+        "Historical data ingested — AI verified it in seconds, "
+        "no manual spreadsheet review.",
+    ),
+    "Data Quality": (
+        "Performance Metrics",
+        "Evidence base verified. Next, see the AI insight report.",
+    ),
+    "Performance Metrics": (
+        "Audience Insights",
+        "KPIs computed automatically. Next, review AI-drafted audience "
+        "insights and approve the ones that stand.",
+    ),
+    "Audience Insights": (
+        "Content Insights",
+        "Your decisions are recorded. Next, review content insights.",
+    ),
+    "Content Insights": (
+        "Campaign Strategy",
+        "Insights reviewed. Next, AI proposes the marketing strategy — "
+        "your team approves it.",
+    ),
+    "Campaign Strategy": (
+        "30-Day Campaign Plan",
+        "Strategy approved by your team. Next, AI drafts a full 30-day "
+        "content plan in seconds.",
+    ),
+    "30-Day Campaign Plan": (
+        "Buffer Handoff",
+        "Plan approved. Next, queue LinkedIn-ready drafts for Buffer — "
+        "publishing stays under human control.",
+    ),
+    "Buffer Handoff": (
+        "Reports & Exports",
+        "Drafts queued for Buffer. Wrap up with the executive report.",
+    ),
+}
 APPROVAL_ENGINE = ApprovalEngine()
 BUFFER_SERVICE = BufferService()
 CONFIGURATION_WORKFLOW = ConfigurationWorkflow()
@@ -503,12 +542,7 @@ def can_use_insights() -> bool:
 
 
 def render_agent_mode_notice() -> None:
-    if st.session_state.get("mode") == "mock":
-        st.info(
-            "Demonstration mode uses fictional, structured sample data and "
-            "predefined business rules."
-        )
-    elif st.session_state.get("mode") == "uploaded":
+    if st.session_state.get("mode") == "uploaded":
         st.info(
             "Uploaded metrics are processed for this session. Recommendations "
             "and plans use predefined demonstration rules."
@@ -631,17 +665,17 @@ def stage_status(stage: str) -> tuple[str, str]:
 def render_header() -> None:
     masthead, briefing_date = st.columns([4, 1], vertical_alignment="bottom")
     with masthead:
-        st.caption("MEDICAL DEVICE MARKETING OPERATIONS · CONFIDENTIAL BRIEFING")
+        st.caption("AI MARKETING CO-PILOT · HUMAN-IN-THE-LOOP")
         st.title("LinkedIn Campaign Workspace")
     with briefing_date:
         st.caption(
             f"Prepared {local_today().strftime('%d %B %Y')}"
         )
-    st.write(
-        "An evidence-led advisory workspace for planning, reviewing, and preparing "
-        "LinkedIn campaigns for regulated medical device audiences."
+    st.caption(
+        "Historical Data → AI Insight Report → Marketing Strategy → "
+        "Human Approval → 30-Day Content Plan → Human Approval → "
+        "LinkedIn Drafts → Buffer Queue"
     )
-    st.divider()
     snapshot = snapshot_data()
     plan = st.session_state.get("plan")
     summary_columns = st.columns(3, gap="medium")
@@ -655,33 +689,27 @@ def render_header() -> None:
                     else "Action required" if snapshot else "Not assessed"
                 ),
             )
-            st.caption("Evidence base status")
+            st.caption("AI-verified evidence base")
     with summary_columns[1]:
         with st.container(border=True):
             insight_count, strategy_count = approved_counts()
             st.metric(
-                "Approved Decisions",
+                "Human Approvals",
                 insight_count + strategy_count,
-                help="Approved insights and strategies",
+                help="Insights and strategies approved by your team",
             )
-            st.caption("Insights and strategies signed off")
+            st.caption("Decisions stay with your team")
     with summary_columns[2]:
         with st.container(border=True):
             st.metric(
-                "Campaign Plan",
+                "30-Day Content Plan",
                 (
                     "Approved"
                     if plan and plan.get("status") == "user_confirmed"
                     else "Draft" if plan else "Not started"
                 ),
             )
-            st.caption("30-day engagement deliverable")
-    st.info(
-        "**Data handling:** Uploaded files are processed only in the current "
-        "session. Do not upload patient data, protected health information, or "
-        "non-public clinical data.",
-        icon=":material/shield:",
-    )
+            st.caption("AI-drafted, human-approved")
     if st.session_state.get("_reset_notice"):
         st.success(st.session_state.pop("_reset_notice"))
     if st.session_state.get("_configuration_notice"):
@@ -690,84 +718,59 @@ def render_header() -> None:
 
 def render_sidebar() -> None:
     with st.sidebar:
-        st.title("Campaign Advisory")
-        st.caption("EVIDENCE-TO-EXECUTION WORKSPACE")
-        st.text_input(
-            "Campaign ID",
-            key="project_id",
-            max_chars=100,
-            help="Used in report titles and export names. Do not enter credentials.",
-        )
-        mode = st.session_state.get("mode")
-        if mode == "mock":
-            st.warning(
-                "Sample data · Demonstration mode",
-                icon=":material/science:",
-            )
-        elif mode == "uploaded":
-            st.success(
-                "Uploaded dataset · Session-only",
-                icon=":material/check_circle:",
-            )
-            st.caption("Recommendations use structured demonstration rules.")
-        else:
-            st.info("Select a data intake path.", icon=":material/upload_file:")
+        st.title("Marketing Co-Pilot")
+        st.caption("AI ACCELERATES · HUMANS APPROVE")
 
-        st.divider()
-        st.subheader("Engagement Progress")
-        stage_rows = []
-        for stage in PIPELINE_STAGES:
-            status, text = stage_status(stage)
-            stage_rows.append(
-                {
-                    "Workstream": stage,
-                    "Status": text,
-                }
-            )
+        st.subheader("Campaign Journey")
+        stage_texts = {
+            stage: stage_status(stage)[1] for stage in PIPELINE_STAGES
+        }
         completed = sum(
-            row["Status"] in {"Complete", "Reviewed", "Approved"}
-            or row["Status"].endswith("handed off")
-            for row in stage_rows
+            text in {"Complete", "Reviewed", "Approved"}
+            or text.endswith("handed off")
+            for text in stage_texts.values()
         )
         st.progress(
             completed / len(PIPELINE_STAGES),
-            text=f"{completed} of {len(PIPELINE_STAGES)} workstreams complete",
+            text=f"{completed} of {len(PIPELINE_STAGES)} steps complete",
         )
-        st.dataframe(
-            stage_rows,
-            hide_index=True,
-            width="stretch",
-            height=318,
-        )
-
-        st.divider()
-        st.subheader("Workspace")
+        extra_captions = {
+            "Campaign Evidence": "Ask the co-pilot",
+            "Reports & Exports": "Executive deliverables",
+            "Settings": "",
+        }
         st.radio(
             "Navigate to",
             NAVIGATION,
             key="active_stage",
-            help="Use the arrow keys to move between workflow pages.",
+            label_visibility="collapsed",
+            captions=[
+                stage_texts.get(stage, extra_captions.get(stage, ""))
+                for stage in NAVIGATION
+            ],
         )
 
         st.divider()
-        if st.button(
-            "Restart Sample Campaign",
-            width="stretch",
-            disabled=st.session_state["operation_in_progress"],
-        ):
-            st.session_state["_restart_demo_requested"] = True
-            st.rerun()
-        if st.button(
-            "Clear Campaign Data",
-            width="stretch",
-            disabled=st.session_state["operation_in_progress"],
-        ):
-            st.session_state["_clear_requested"] = True
-            st.rerun()
-        st.caption(
-            "Clearing removes analysis, plans, evidence history, Buffer handoff "
-            "records, exports, and uploaded files from this session."
-        )
+        with st.expander("Demo Controls"):
+            st.text_input(
+                "Campaign ID",
+                key="project_id",
+                max_chars=100,
+            )
+            if st.button(
+                "Restart Sample Campaign",
+                width="stretch",
+                disabled=st.session_state["operation_in_progress"],
+            ):
+                st.session_state["_restart_demo_requested"] = True
+                st.rerun()
+            if st.button(
+                "Clear Campaign Data",
+                width="stretch",
+                disabled=st.session_state["operation_in_progress"],
+            ):
+                st.session_state["_clear_requested"] = True
+                st.rerun()
 
 
 def render_last_status() -> None:
@@ -859,10 +862,10 @@ def render_parse_summaries() -> None:
 
 def render_ingestion() -> None:
     render_page_intro(
-        "Data intake",
-        "Select a Data Intake Path",
-        "Use fictional sample data for a guided campaign workflow, or upload "
-        "LinkedIn XLSX, XLS, or CSV exports up to 10 MB per file.",
+        "Step 1 · Historical data",
+        "Start with Your Historical Data",
+        "One click loads the sample campaign — or bring your own LinkedIn "
+        "exports. The co-pilot handles the rest.",
     )
     left, right = st.columns([1, 2], gap="large")
     with left:
@@ -963,10 +966,10 @@ def render_ingestion() -> None:
 def render_quality() -> None:
     snapshot = snapshot_data()
     render_page_intro(
-        "Data quality",
+        "Step 2 · Automated quality gate",
         "Data Quality Review",
-        "Assess evidence coverage, material limitations, and readiness before "
-        "moving into strategic interpretation.",
+        "The co-pilot checks the evidence base automatically, so every "
+        "recommendation rests on reliable data.",
     )
     if not snapshot:
         st.info("Start with sample data or upload files in Data Intake.")
@@ -1099,10 +1102,10 @@ def render_series(
 def render_metrics() -> None:
     snapshot = snapshot_data()
     render_page_intro(
-        "Deterministic metrics",
+        "Step 3 · AI insight report",
         "Performance Metrics",
-        "Review the core commercial indicators, reporting periods, and reliability "
-        "levels calculated from the current analysis snapshot.",
+        "Core commercial indicators, computed automatically — hours of "
+        "reporting work delivered in seconds.",
     )
     if not snapshot:
         st.info("No analysis snapshot is available.")
@@ -1219,10 +1222,10 @@ def approval_controls(
 
 def render_insights(category: str, title: str) -> None:
     render_page_intro(
-        "Evidence insights",
+        "Step 4 · Human approval",
         title,
-        "Evaluate each evidence-backed interpretation and record a clear management "
-        "decision before strategy development.",
+        "AI drafts the insights; your team makes the call. Approve or reject "
+        "each one — nothing moves forward without you.",
     )
     snapshot = snapshot_data()
     bundle = strategy_bundle()
@@ -1298,10 +1301,10 @@ def update_strategy_status(strategy_id: str, status: str) -> None:
 
 def render_strategies() -> None:
     render_page_intro(
-        "Approved strategy gate",
+        "Step 5 · Marketing strategy",
         "Campaign Strategy Review",
-        "Translate approved insights into prioritized campaign choices, actions, "
-        "and measurable objectives.",
+        "AI turns your approved insights into prioritized strategies. "
+        "Approve to unlock campaign planning.",
     )
     snapshot = snapshot_data()
     bundle = strategy_bundle()
@@ -1704,10 +1707,10 @@ def render_plan_report(plan: dict[str, Any]) -> None:
 
 def render_plan() -> None:
     render_page_intro(
-        "Campaign planning",
+        "Step 6 · 30-day content plan",
         "Build a 30-Day Campaign from Approved Strategy",
-        "Convert management-approved recommendations into an accountable four-week "
-        "execution plan.",
+        "AI drafts a month of LinkedIn-ready content from your approved "
+        "strategy. Edit anything, then approve the plan.",
     )
     snapshot = snapshot_data()
     if not snapshot:
@@ -2312,15 +2315,10 @@ def render_buffer_result() -> None:
 
 def render_buffer_handoff() -> None:
     render_page_intro(
-        "Human-reviewed handoff",
-        "Buffer Connection",
-        "Prepare approved campaign content for controlled review and manual "
-        "scheduling in Buffer.",
-    )
-    st.caption("Mock / Demo · Local simulation only · No network or API calls")
-    st.warning(
-        "The workflow creates CSV files for manual import and does not connect "
-        "directly to Buffer. Validate the latest template before use."
+        "Step 7 · Buffer queue",
+        "Buffer Queue",
+        "Approved drafts move into a Buffer-ready queue. Publishing stays "
+        "under human control — nothing goes live automatically.",
     )
     plan = st.session_state.get("plan")
     if not plan:
@@ -2532,10 +2530,10 @@ def submit_question(question: str) -> None:
 
 def render_chat() -> None:
     render_page_intro(
-        "Campaign evidence",
+        "Ask the co-pilot",
         "Campaign Evidence Review",
-        "Interrogate current metrics, limitations, and recommendations while "
-        "maintaining a traceable evidence base.",
+        "Every answer is grounded in your campaign data and cites its "
+        "evidence — a co-pilot, not a chatbot.",
     )
     if not snapshot_data():
         st.info("Complete the data analysis first.")
@@ -2570,10 +2568,10 @@ def render_chat() -> None:
 
 def render_exports() -> None:
     render_page_intro(
-        "Safe exports",
+        "Executive deliverables",
         "Reports and Exports",
-        "Package the approved analysis and campaign plan into decision-ready "
-        "artifacts without exposing source files or raw cells.",
+        "Download the full campaign story — analysis, approved decisions, and "
+        "the 30-day content calendar — in decision-ready formats.",
     )
     snapshot = snapshot_data()
     bundle = strategy_bundle()
@@ -2581,10 +2579,6 @@ def render_exports() -> None:
         st.info("Complete the analysis first.")
         return
     plan = st.session_state.get("plan")
-    st.write(
-        "Exports include the analysis snapshot, approved evidence references, "
-        "and campaign plan. Source files and raw cells are excluded."
-    )
     if not plan:
         st.warning(
             "No campaign plan is available. Analysis reports can be exported, "
@@ -2651,6 +2645,24 @@ def render_exports() -> None:
             )
 
 
+def render_next_step(stage: str) -> None:
+    if stage not in NEXT_STEPS or not analysis_data():
+        return
+    next_stage, message = NEXT_STEPS[stage]
+    st.divider()
+    with st.container(border=True):
+        guidance, action = st.columns([3, 1], vertical_alignment="center")
+        guidance.write(message)
+        if action.button(
+            f"Next: {next_stage} →",
+            type="primary",
+            key=f"next-step-{stage}",
+            width="stretch",
+        ):
+            st.session_state["_pending_active_stage"] = next_stage
+            st.rerun()
+
+
 def render_current_stage() -> None:
     stage = st.session_state["active_stage"]
     if stage == "Data Intake":
@@ -2675,6 +2687,7 @@ def render_current_stage() -> None:
         render_exports()
     elif stage == "Settings":
         render_settings()
+    render_next_step(stage)
 
 
 initialize_state()
@@ -2686,10 +2699,3 @@ render_last_status()
 render_current_stage()
 if configuration_dialog_required():
     render_configuration_dialog(CONFIGURATION_WORKFLOW)
-
-st.divider()
-st.caption(
-    "Demonstration scope: LinkedIn company-page aggregate analytics only. "
-    "The workflow does not identify individual visitors or infer purchase intent. "
-    "Correlation does not establish causation."
-)
