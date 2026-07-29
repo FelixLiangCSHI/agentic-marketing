@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import urllib.error
-import urllib.parse
 import urllib.request
 from datetime import date
 from typing import Any
@@ -94,130 +93,28 @@ class BufferService:
         credential: str,
         posts: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        base = endpoint.rstrip("/")
+        url = endpoint.rstrip("/")
         token = credential.strip()
         try:
-            profiles = self._request_json(
-                f"{base}/1/profiles.json", token, data=None
-            )
+            channel_ids = self._load_channel_ids(url, token)
         except (urllib.error.URLError, OSError, ValueError) as error:
             return {
                 "success": False,
-                "message": f"Could not load Buffer profiles: {error}",
+                "message": f"Could not load Buffer channels: {error}",
                 "results": [],
             }
-        if isinstance(profiles, dict):
-            for key in ("profiles", "data", "channels"):
-                nested = profiles.get(key)
-                if isinstance(nested, list):
-                    profiles = nested
-                    break
-        if not isinstance(profiles, list):
-            detail = None
-            if isinstance(profiles, dict):
-                detail = (
-                    profiles.get("error")
-                    or profiles.get("error_description")
-                    or profiles.get("message")
-                )
-            message = (
-                f"Buffer rejected the profiles request: {detail}"
-                if detail
-                else (
-                    "Unexpected Buffer profiles response. Check that the "
-                    "endpoint and access token are valid Buffer API "
-                    "credentials."
-                )
-            )
-            return {
-                "success": False,
-                "message": message,
-                "results": [],
-            }
-        profile_ids = [
-            str(profile["id"])
-            for profile in profiles
-            if isinstance(profile, dict)
-            and profile.get("id")
-            and str(profile.get("service", "")).lower() == "linkedin"
-        ]
-        if not profile_ids:
-            profile_ids = [
-                str(profile["id"])
-                for profile in profiles
-                if isinstance(profile, dict) and profile.get("id")
-            ]
-        if not profile_ids:
+        if not channel_ids:
             return {
                 "success": False,
                 "message": (
-                    "No Buffer profiles are connected to the configured "
+                    "No Buffer channels are connected to the configured "
                     "account. Connect a LinkedIn channel in Buffer first."
                 ),
                 "results": [],
             }
         results: list[dict[str, Any]] = []
         for post in posts:
-            fields: list[tuple[str, str]] = [
-                ("profile_ids[]", profile_id) for profile_id in profile_ids
-            ]
-            fields.append(("text", str(post.get("text", ""))))
-            fields.append(("shorten", "false"))
-            scheduled_at = post.get("scheduledAt")
-            if scheduled_at:
-                fields.append(("scheduled_at", str(scheduled_at)))
-            else:
-                fields.append(("now", "false"))
-            link_url = post.get("linkUrl")
-            if link_url:
-                fields.append(("media[link]", str(link_url)))
-            media_urls = post.get("mediaUrls") or []
-            if media_urls:
-                fields.append(("media[photo]", str(media_urls[0])))
-            try:
-                response = self._request_json(
-                    f"{base}/1/updates/create.json",
-                    token,
-                    data=urllib.parse.urlencode(fields).encode("utf-8"),
-                )
-            except (urllib.error.URLError, OSError, ValueError) as error:
-                results.append(
-                    {
-                        "itemId": post["itemId"],
-                        "success": False,
-                        "message": f"Buffer API request failed: {error}",
-                        "updateId": None,
-                    }
-                )
-                continue
-            success = bool(
-                isinstance(response, dict) and response.get("success")
-            )
-            updates = (
-                response.get("updates", [])
-                if isinstance(response, dict)
-                else []
-            )
-            update_id = None
-            if updates and isinstance(updates[0], dict):
-                update_id = updates[0].get("id")
-            message = (
-                "Scheduled in the Buffer queue."
-                if success
-                else str(
-                    response.get("message", "Buffer rejected the update.")
-                    if isinstance(response, dict)
-                    else "Buffer rejected the update."
-                )
-            )
-            results.append(
-                {
-                    "itemId": post["itemId"],
-                    "success": success,
-                    "message": message,
-                    "updateId": update_id,
-                }
-            )
+            results.append(self._create_post(url, token, post, channel_ids))
         scheduled = sum(1 for result in results if result["success"])
         return {
             "success": scheduled == len(results),
@@ -228,21 +125,131 @@ class BufferService:
             "results": results,
         }
 
-    @staticmethod
-    def _request_json(
+    def _load_channel_ids(self, url: str, token: str) -> list[str]:
+        account = self._graphql_request(
+            url,
+            token,
+            "query { account { currentOrganization { id } "
+            "organizations { id } } }",
+        )
+        account_data = account.get("account") or {}
+        current = account_data.get("currentOrganization") or {}
+        organization_id = current.get("id")
+        if not organization_id:
+            organizations = account_data.get("organizations") or []
+            if organizations and isinstance(organizations[0], dict):
+                organization_id = organizations[0].get("id")
+        if not organization_id:
+            raise ValueError(
+                "No Buffer organization is available for this access token."
+            )
+        channels_data = self._graphql_request(
+            url,
+            token,
+            "query Channels($input: ChannelsInput!) { "
+            "channels(input: $input) { id name service } }",
+            {"input": {"organizationId": str(organization_id)}},
+        )
+        channels = channels_data.get("channels") or []
+        channel_ids = [
+            str(channel["id"])
+            for channel in channels
+            if isinstance(channel, dict)
+            and channel.get("id")
+            and str(channel.get("service", "")).lower() == "linkedin"
+        ]
+        if not channel_ids:
+            channel_ids = [
+                str(channel["id"])
+                for channel in channels
+                if isinstance(channel, dict) and channel.get("id")
+            ]
+        return channel_ids
+
+    def _create_post(
+        self,
         url: str,
         token: str,
-        *,
-        data: bytes | None,
-    ) -> Any:
+        post: dict[str, Any],
+        channel_ids: list[str],
+    ) -> dict[str, Any]:
+        text = str(post.get("text", ""))
+        link_url = post.get("linkUrl")
+        if link_url and str(link_url) not in text:
+            text = f"{text}\n\n{link_url}" if text else str(link_url)
+        scheduled_at = post.get("scheduledAt")
+        media_urls = post.get("mediaUrls") or []
+        mutation = (
+            "mutation CreatePost($input: CreatePostInput!) { "
+            "createPost(input: $input) { "
+            "... on PostActionSuccess { post { id } } "
+            "... on MutationError { message } } }"
+        )
+        post_ids: list[str] = []
+        errors: list[str] = []
+        for channel_id in channel_ids:
+            post_input: dict[str, Any] = {
+                "channelId": channel_id,
+                "text": text,
+                "schedulingType": "automatic",
+            }
+            if scheduled_at:
+                post_input["mode"] = "customScheduled"
+                post_input["dueAt"] = str(scheduled_at)
+            else:
+                post_input["mode"] = "shareNext"
+            if media_urls:
+                post_input["assets"] = {
+                    "images": [{"url": str(media_urls[0])}]
+                }
+            try:
+                data = self._graphql_request(
+                    url, token, mutation, {"input": post_input}
+                )
+            except (urllib.error.URLError, OSError, ValueError) as error:
+                errors.append(f"Buffer API request failed: {error}")
+                continue
+            result = data.get("createPost") or {}
+            created = result.get("post") if isinstance(result, dict) else None
+            if isinstance(created, dict) and created.get("id"):
+                post_ids.append(str(created["id"]))
+            else:
+                detail = (
+                    result.get("message")
+                    if isinstance(result, dict)
+                    else None
+                )
+                errors.append(str(detail or "Buffer rejected the post."))
+        success = bool(post_ids) and not errors
+        message = (
+            "Scheduled in the Buffer queue." if success else "; ".join(errors)
+        )
+        return {
+            "itemId": post["itemId"],
+            "success": success,
+            "message": message or "Buffer rejected the post.",
+            "updateId": post_ids[0] if post_ids else None,
+        }
+
+    @staticmethod
+    def _graphql_request(
+        url: str,
+        token: str,
+        query: str,
+        variables: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {"query": query}
+        if variables is not None:
+            payload["variables"] = variables
         request = urllib.request.Request(
             url,
-            data=data,
+            data=json.dumps(payload).encode("utf-8"),
             headers={
                 "Authorization": "Bearer " + token,
+                "Content-Type": "application/json",
                 "Accept": "application/json",
             },
-            method="POST" if data is not None else "GET",
+            method="POST",
         )
         try:
             with urllib.request.urlopen(request, timeout=20) as response:
@@ -250,9 +257,38 @@ class BufferService:
         except urllib.error.HTTPError as error:
             body = error.read().decode("utf-8", errors="replace")
             try:
-                return json.loads(body)
+                parsed = json.loads(body)
             except json.JSONDecodeError:
                 raise ValueError(
                     f"HTTP {error.code} from Buffer: {body[:200]}"
                 ) from error
-        return json.loads(body)
+            raise ValueError(
+                BufferService._graphql_error_message(parsed)
+                or f"HTTP {error.code} from Buffer."
+            )
+        parsed = json.loads(body)
+        if not isinstance(parsed, dict):
+            raise ValueError("Unexpected Buffer GraphQL response.")
+        error_message = BufferService._graphql_error_message(parsed)
+        if error_message:
+            raise ValueError(error_message)
+        data = parsed.get("data")
+        if not isinstance(data, dict):
+            raise ValueError("Unexpected Buffer GraphQL response.")
+        return data
+
+    @staticmethod
+    def _graphql_error_message(parsed: Any) -> str | None:
+        if not isinstance(parsed, dict):
+            return None
+        errors = parsed.get("errors")
+        if isinstance(errors, list) and errors:
+            messages = [
+                str(error.get("message"))
+                for error in errors
+                if isinstance(error, dict) and error.get("message")
+            ]
+            if messages:
+                return "; ".join(messages)
+            return "Buffer returned a GraphQL error."
+        return None
