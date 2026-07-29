@@ -7,6 +7,7 @@ import {
   type EvidenceChatContext,
 } from "@/agents/evidence-chat-agent";
 import { Icon } from "@/components/ui/icon";
+import { ConsultingReport } from "@/components/analysis/consulting-report";
 import type { ChatAnswer, SuggestedPlanChange } from "@/domain/chat";
 
 interface EvidenceChatPanelProps {
@@ -22,23 +23,17 @@ interface ChatMessage {
 }
 
 const QUICK_QUESTIONS = [
-  "最近关注者增长怎么样？",
-  "数据质量有什么限制？",
-  "洞察的证据是什么？",
-  "下个月应该发布什么？",
+  "How has follower growth changed recently?",
+  "What are the data quality limitations?",
+  "What evidence supports the insights?",
+  "What should we publish next month?",
 ] as const;
 
 export function EvidenceChatPanel({
   context,
   onApplyPlanChange,
 }: EvidenceChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      messageId: "welcome",
-      role: "agent",
-      text: "我只使用当前 Snapshot、已生成洞察和行动计划回答。数字会附带 metricId、时间范围和来源模块。",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -78,7 +73,7 @@ export function EvidenceChatPanel({
         {
           messageId: answer.answerId,
           role: "agent",
-          text: answer.dataStatement,
+          text: answer.report.executiveSummary,
           answer,
         },
       ]);
@@ -97,16 +92,16 @@ export function EvidenceChatPanel({
       <header className="evidence-chat__header">
         <div>
           <span className="section-label">EVIDENCE CHAT · MOCK</span>
-          <h2>基于证据的问答</h2>
-          <p>不会调用真实 LLM，不会访问当前会话以外的数据。</p>
+          <h2>Evidence review</h2>
+          <p>Deterministic demo responses use only the current session data.</p>
         </div>
         <span className="mode-badge mode-badge--mock">
-          <Icon name="sparkles" size={14} />
+          <Icon name="database" size={14} />
           evidence-chat-v1.0
         </span>
       </header>
 
-      <div className="chat-quick-questions" aria-label="快捷问题">
+      <div className="chat-quick-questions" aria-label="Suggested questions">
         {QUICK_QUESTIONS.map((question) => (
           <button
             key={question}
@@ -126,25 +121,17 @@ export function EvidenceChatPanel({
             className={`chat-message chat-message--${message.role}`}
           >
             <span className="chat-message__role">
-              {message.role === "agent" ? "Agent" : "你"}
+              {message.role === "agent" ? "Evidence Review" : "You"}
             </span>
-            <p>{message.text}</p>
-            {message.answer?.possibleMeaning && (
-              <div className="chat-answer-block">
-                <strong>可能意味着</strong>
-                <p>{message.answer.possibleMeaning}</p>
-              </div>
-            )}
-            {message.answer?.suggestedValidation && (
-              <div className="chat-answer-block">
-                <strong>建议验证</strong>
-                <p>{message.answer.suggestedValidation}</p>
-              </div>
+            {message.answer ? (
+              <ConsultingReport report={message.answer.report} />
+            ) : (
+              <p>{message.text}</p>
             )}
             {message.answer && message.answer.citations.length > 0 && (
               <details className="chat-evidence">
                 <summary>
-                  查看证据（{message.answer.citations.length}）
+                  Review evidence ({message.answer.citations.length})
                 </summary>
                 <ul>
                   {message.answer.citations.map((citation) => (
@@ -159,10 +146,10 @@ export function EvidenceChatPanel({
                           <span>
                             {citation.metric.period
                               ? `${citation.metric.period.start} — ${citation.metric.period.end}`
-                              : "无可用时间范围"}
+                              : "No date range available"}
                           </span>
                           <span>
-                            来源：{citation.metric.sourceModules.join("、")}
+                            Sources: {citation.metric.sourceModules.join(", ")}
                           </span>
                         </>
                       )}
@@ -183,7 +170,7 @@ export function EvidenceChatPanel({
                 }}
               >
                 <Icon name="check" size={14} />
-                应用这项计划修改
+                Apply plan change
               </button>
             )}
           </article>
@@ -191,7 +178,7 @@ export function EvidenceChatPanel({
         {loading && (
           <div className="chat-loading" role="status">
             <Icon name="spinner" size={16} className="spin" />
-            正在检索当前项目证据…
+            Reviewing current project evidence...
           </div>
         )}
         <div ref={endRef} />
@@ -199,14 +186,14 @@ export function EvidenceChatPanel({
 
       <form className="chat-composer" onSubmit={submit}>
         <label className="visually-hidden" htmlFor="evidence-chat-input">
-          输入问题
+          Enter a question
         </label>
         <input
           id="evidence-chat-input"
           value={input}
           disabled={loading}
           maxLength={400}
-          placeholder="询问指标、证据、建议或修改计划…"
+          placeholder="Ask about metrics, evidence, recommendations, or plan changes..."
           onChange={(event) => setInput(event.target.value)}
         />
         <button
@@ -214,7 +201,7 @@ export function EvidenceChatPanel({
           type="submit"
           disabled={loading || !input.trim()}
         >
-          发送
+          Review
           <Icon name="arrow" size={15} />
         </button>
       </form>

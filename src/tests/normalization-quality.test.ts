@@ -8,7 +8,7 @@ test("normalizes thousands separators and percentage representations", () => {
   const bytes = csvBytes(
     [
       "Post title,Created date,Impressions,Clicks,Engagement rate,Click through rate (CTR)",
-      'Synthetic post,2026-01-12,"12,345",321,4.8%,3.2',
+      'IVD clinical evidence briefing,2026-01-12,"12,345",321,4.8%,3.2',
     ].join("\n"),
   );
   const result = parseSpreadsheetBytes({
@@ -38,9 +38,9 @@ test("normalizes mixed supported dates and flags ambiguous dates", () => {
   const bytes = csvBytes(
     [
       "Post title,Created date,Impressions",
-      "Synthetic A,2026-01-02,100",
-      "Synthetic B,01/03/2026,120",
-      "Synthetic C,14/02/2026,140",
+      "MRI patient outcomes review,2026-01-02,100",
+      "CT economic value analysis,01/03/2026,120",
+      "Digital health clinical workflow,14/02/2026,140",
     ].join("\n"),
   );
   const result = parseSpreadsheetBytes({
@@ -67,7 +67,7 @@ test("normalizes mixed supported dates and flags ambiguous dates", () => {
 
 test("records missing critical fields without inventing values", () => {
   const bytes = csvBytes(
-    "Post title,Created date\nSynthetic post,2026-01-02",
+    "Post title,Created date\nSurgical robotics CE overview,2026-01-02",
   );
   const result = parseSpreadsheetBytes({
     bytes,
@@ -122,7 +122,7 @@ test("never evaluates workbook formulas or formula-like text", () => {
           "Impressions",
           "Clicks",
         ],
-        ["placeholder", "2026-01-02", "Document", 100, 5],
+        ["FDA regulatory evidence overview", "2026-01-02", "Document", 100, 5],
       ],
       mutate: (sheet) => {
         sheet.A2 = {

@@ -39,19 +39,19 @@ const POST_TIMES = ["09:30", "14:00", "11:00", "16:30"] as const;
 const FUTURE_KPI_DEFINITIONS: readonly KpiDefinition[] = [
   {
     metricId: "future.content.itemImpressions",
-    label: "下一次导入的逐帖 Impressions",
+    label: "Post-level impressions in the next import",
     source: "future_collection",
     availability: "collect_next_import",
   },
   {
     metricId: "future.content.itemClicks",
-    label: "下一次导入的逐帖 Clicks",
+    label: "Post-level clicks in the next import",
     source: "future_collection",
     availability: "collect_next_import",
   },
   {
     metricId: "future.content.itemEngagementRate",
-    label: "下一次导入的逐帖 Engagement Rate",
+    label: "Post-level engagement rate in the next import",
     source: "future_collection",
     availability: "collect_next_import",
   },
@@ -98,12 +98,12 @@ export function defaultPlanStartDate(
   if (!localToday) {
     throw new ActionPlanAgentError(
       "VALIDATION_FAILED",
-      "无法识别用户时区。",
+      "The workspace time zone could not be resolved.",
       [
         {
           code: "INVALID_TIME_ZONE",
           path: "preferences.timeZone",
-          message: `不支持时区 ${timeZone}。`,
+          message: `Time zone ${timeZone} is not supported.`,
         },
       ],
     );
@@ -125,14 +125,14 @@ function inputValidationIssues(
     issues.push({
       code: "SNAPSHOT_BLOCKED",
       path: "snapshot.canEnterInsights",
-      message: "Snapshot 存在阻断质量问题，不能生成行动计划。",
+      message: "Blocking snapshot quality issues prevent plan preparation.",
     });
   }
   if (!input.businessGoal.confirmed || !input.businessGoal.statement.trim()) {
     issues.push({
       code: "BUSINESS_GOAL_NOT_CONFIRMED",
       path: "businessGoal",
-      message: "必须先确认业务目标。",
+      message: "Confirm the business goal first.",
     });
   }
   for (const insight of input.approvedInsights) {
@@ -140,14 +140,14 @@ function inputValidationIssues(
       issues.push({
         code: "INSIGHT_NOT_APPROVED",
         path: `approvedInsights.${insight.insightId}`,
-        message: `洞察 ${insight.insightId} 尚未批准。`,
+        message: `Insight ${insight.insightId} is not approved.`,
       });
     }
     if (insight.snapshotId !== input.snapshot.snapshotId) {
       issues.push({
         code: "SNAPSHOT_REFERENCE_MISMATCH",
         path: `approvedInsights.${insight.insightId}.snapshotId`,
-        message: `洞察 ${insight.insightId} 不属于当前 Snapshot。`,
+        message: `Insight ${insight.insightId} does not belong to the current snapshot.`,
       });
     }
     for (const reference of insight.evidence) {
@@ -155,7 +155,7 @@ function inputValidationIssues(
         issues.push({
           code: "INSIGHT_REFERENCE_INVALID",
           path: `approvedInsights.${insight.insightId}.evidence`,
-          message: `洞察 ${insight.insightId} 引用了未知 Metric ${reference.metricId}。`,
+          message: `Insight ${insight.insightId} references unknown metric ${reference.metricId}.`,
         });
       }
     }
@@ -165,14 +165,14 @@ function inputValidationIssues(
       issues.push({
         code: "STRATEGY_NOT_APPROVED",
         path: `approvedStrategies.${strategy.strategyId}`,
-        message: `策略 ${strategy.strategyId} 尚未批准。`,
+        message: `Strategy ${strategy.strategyId} is not approved.`,
       });
     }
     if (strategy.snapshotId !== input.snapshot.snapshotId) {
       issues.push({
         code: "SNAPSHOT_REFERENCE_MISMATCH",
         path: `approvedStrategies.${strategy.strategyId}.snapshotId`,
-        message: `策略 ${strategy.strategyId} 不属于当前 Snapshot。`,
+        message: `Strategy ${strategy.strategyId} does not belong to the current snapshot.`,
       });
     }
     for (const insightId of strategy.insightIds) {
@@ -180,7 +180,7 @@ function inputValidationIssues(
         issues.push({
           code: "STRATEGY_INSIGHT_NOT_APPROVED",
           path: `approvedStrategies.${strategy.strategyId}.insightIds`,
-          message: `策略 ${strategy.strategyId} 引用了未批准洞察 ${insightId}。`,
+          message: `Strategy ${strategy.strategyId} references unapproved insight ${insightId}.`,
         });
       }
     }
@@ -189,7 +189,7 @@ function inputValidationIssues(
         issues.push({
           code: "STRATEGY_REFERENCE_INVALID",
           path: `approvedStrategies.${strategy.strategyId}.metricIds`,
-          message: `策略 ${strategy.strategyId} 引用了未知 Metric ${metricId}。`,
+          message: `Strategy ${strategy.strategyId} references unknown metric ${metricId}.`,
         });
       }
     }
@@ -207,7 +207,7 @@ function inputValidationIssues(
         input.approvedInsights.length === 0
           ? "approvedInsights"
           : "approvedStrategies",
-      message: "至少需要一条已批准洞察和一条已批准策略。",
+      message: "At least one approved insight and strategy are required.",
     });
   }
 
@@ -216,20 +216,20 @@ function inputValidationIssues(
     issues.push({
       code: "INVALID_TIME_ZONE",
       path: "preferences.timeZone",
-      message: `不支持时区 ${input.preferences.timeZone}。`,
+      message: `Time zone ${input.preferences.timeZone} is not supported.`,
     });
   }
   if (!isValidIsoDate(input.preferences.startDate)) {
     issues.push({
       code: "INVALID_START_DATE",
       path: "preferences.startDate",
-      message: "计划开始日期必须是 YYYY-MM-DD。",
+      message: "The plan start date must use YYYY-MM-DD.",
     });
   } else if (localToday && input.preferences.startDate < localToday) {
     issues.push({
       code: "START_DATE_IN_PAST",
       path: "preferences.startDate",
-      message: `计划开始日期不能早于用户时区中的今天 ${localToday}。`,
+      message: `The plan start date cannot be before ${localToday} in the workspace time zone.`,
     });
   }
   if (
@@ -240,7 +240,7 @@ function inputValidationIssues(
     issues.push({
       code: "INVALID_POSTS_PER_WEEK",
       path: "preferences.postsPerWeek",
-      message: `每周发布数量必须是 1–${MAX_POSTS_PER_WEEK} 的整数。`,
+      message: `Weekly publishing capacity must be an integer from 1–${MAX_POSTS_PER_WEEK}.`,
     });
   }
   return issues;
@@ -248,38 +248,38 @@ function inputValidationIssues(
 
 function ownerPlaceholder(preferences: ActionPlanPreferences): string {
   if (preferences.teamSize === null) {
-    return "待指定：内容负责人";
+    return "To assign: content owner";
   }
   return preferences.teamSize === 1
-    ? "团队负责人（待指定）"
-    : "待指定：内容策划/发布负责人";
+    ? "Team lead (to assign)"
+    : "To assign: content planning and publishing owner";
 }
 
 function contentFormats(preferences: ActionPlanPreferences): string[] {
   const resources = preferences.contentResources.join(" ").toLowerCase();
-  const formats = ["文字短帖", "文档轮播"];
-  if (resources.includes("video") || resources.includes("视频")) {
-    formats.push("短视频");
+  const formats = ["Short text post", "Document carousel"];
+  if (resources.includes("video")) {
+    formats.push("Short video");
   }
   if (
     resources.includes("design") ||
-    resources.includes("设计") ||
-    resources.includes("图片")
+    resources.includes("design") ||
+    resources.includes("image")
   ) {
-    formats.push("图文");
+    formats.push("Text with image");
   }
   return formats;
 }
 
 function mediaRequirement(contentFormat: string): string | null {
-  if (contentFormat.includes("轮播")) {
-    return "准备可拆分为单图或在 Buffer 中手动创建的轮播素材。";
+  if (contentFormat.includes("carousel")) {
+    return "Prepare carousel assets that can be separated into individual images.";
   }
-  if (contentFormat.includes("视频")) {
-    return "准备视频文件，并在 Buffer Composer 中手动添加。";
+  if (contentFormat.includes("video")) {
+    return "Prepare the reviewed video file for manual publishing.";
   }
-  if (contentFormat.includes("图文")) {
-    return "准备一张与主题一致、具有公开直接链接的图片。";
+  if (contentFormat.includes("image")) {
+    return "Prepare one relevant image with a public direct link.";
   }
   return null;
 }
@@ -347,7 +347,13 @@ function buildSchedule(
   const formats = contentFormats(input.preferences);
   const owner = ownerPlaceholder(input.preferences);
   const offsets = POST_OFFSETS[input.preferences.postsPerWeek];
-  const topicAngles = ["核心问题", "方法拆解", "案例观察", "常见误区", "复盘提示"];
+  const topicAngles = [
+    "Clinical workflow",
+    "Clinical evidence",
+    "Regulatory and FDA/CE status",
+    "Patient outcomes",
+    "Hospital procurement and economic value",
+  ];
 
   for (let weekIndex = 0; weekIndex < 4; weekIndex += 1) {
     const weekNumber = (weekIndex + 1) as 1 | 2 | 3 | 4;
@@ -364,14 +370,15 @@ function buildSchedule(
       const topic = `${strategy.title}：${topicAngles[postIndex % topicAngles.length]}`;
       const contentFormat = formats[(sequence - 1) % formats.length];
       const coreMessage = strategy.actions[postIndex % strategy.actions.length];
-      const callToAction = "查看相关资源，并记录下一次可验证的聚合行为。";
+      const callToAction =
+        "Review approved clinical or regulatory materials and record aggregate engagement from healthcare and procurement audiences.";
       const experiment = isExperiment
         ? {
             experimentId: `${itemId}-experiment`,
-            hypothesis: `如果围绕“${strategy.title}”只改变内容形式，则可用同口径逐帖指标判断该形式是否值得继续测试。`,
-            successCriteria: `在复盘时比较 ${experimentMetricIds.join(
-              "、",
-            )} 与当前 Snapshot 基线；仅记录相对改善，不承诺固定增长幅度。`,
+            hypothesis: `If only the format changes for "${strategy.title}", comparable post-level metrics can indicate whether to continue testing it.`,
+            successCriteria: `At review, compare ${experimentMetricIds.join(
+              ", ",
+            )} with the current snapshot baseline; record relative change without promising fixed growth.`,
             reviewDate: addDays(
               publishDate,
               Math.min(7, Math.max(0, Number(
@@ -390,7 +397,7 @@ function buildSchedule(
         contentFormat,
         targetAudience: input.preferences.focusAudience,
         coreMessage,
-        postText: `${topic}\n\n${coreMessage}\n\n${callToAction}`,
+        postText: "",
         channel: CONTENT_CHANNELS[(sequence - 1) % CONTENT_CHANNELS.length],
         scheduledTime: POST_TIMES[(sequence - 1) % POST_TIMES.length],
         timeZone: input.preferences.timeZone,
@@ -426,7 +433,7 @@ function buildSchedule(
     const tasks: WeekTask[] = [
       {
         taskId: `week-${weekNumber}-prepare`,
-        title: "确认主题、素材和单一 CTA",
+        title: "Confirm product topic, clinical evidence, regulatory wording, and one CTA",
         ownerPlaceholder: owner,
         dueDate: weekStart,
         status: "ai_draft",
@@ -434,7 +441,7 @@ function buildSchedule(
       },
       {
         taskId: `week-${weekNumber}-publish`,
-        title: "按内容日历发布并记录执行状态",
+        title: "Publish to the calendar and record execution status",
         ownerPlaceholder: owner,
         dueDate: lastPublishDate,
         status: "ai_draft",
@@ -442,7 +449,7 @@ function buildSchedule(
       },
       {
         taskId: `week-${weekNumber}-review`,
-        title: "按 KPI 口径复盘，不做个人级归因",
+        title: "Review professional-audience engagement without inferring procurement or patient outcomes",
         ownerPlaceholder: owner,
         dueDate: weekEnd,
         status: "ai_draft",
@@ -458,10 +465,10 @@ function buildSchedule(
       ownerPlaceholder: owner,
       publishDate: firstPublishDate,
       targetAudience: input.preferences.focusAudience,
-      callToAction: "使用单一 CTA，并在下一次导入时复核聚合指标。",
+      callToAction: "Use one professional CTA to approved clinical, regulatory, or economic-value material and review aggregate metrics in the next import.",
       kpiMetricIds: metricIds,
       reviewAction:
-        "比较本周逐帖指标与 Snapshot 基线，记录方向和限制，不把时间相关性解释为因果。",
+        "Compare weekly post metrics with the snapshot baseline, recording direction and limitations without treating correlation as causation.",
       dependencies: previousReviewTask,
     });
   }
@@ -662,7 +669,9 @@ export function isActionPlanShape(value: unknown): value is ActionPlan {
     typeof candidate.startDate === "string" &&
     typeof candidate.endDate === "string" &&
     (candidate.status === "ai_draft" ||
-      candidate.status === "user_confirmed") &&
+      candidate.status === "user_confirmed" ||
+      candidate.status === "revision_requested" ||
+      candidate.status === "rejected") &&
     typeof candidate.executiveSummary === "string" &&
     isStringArray(candidate.assumptions) &&
     isStringArray(candidate.risksAndLimitations) &&
@@ -789,7 +798,7 @@ export function validateActionPlan(
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan",
-      message: "计划输出不符合 ActionPlan 结构。",
+      message: "Plan output does not match the ActionPlan structure.",
     });
     return { valid: false, issues };
   }
@@ -821,7 +830,7 @@ export function validateActionPlan(
     issues.push({
       code: "SNAPSHOT_REFERENCE_MISMATCH",
       path: "plan.snapshotId",
-      message: "计划未引用当前 Snapshot。",
+      message: "The plan does not reference the current snapshot.",
     });
   }
   if (
@@ -836,7 +845,7 @@ export function validateActionPlan(
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan.preferences",
-      message: "计划输出未保持用户确认的日期、时区或发布能力。",
+      message: "The plan did not preserve the confirmed date, time zone, or publishing capacity.",
     });
   }
   for (const insightId of plan.sourceInsightIds) {
@@ -844,7 +853,7 @@ export function validateActionPlan(
       issues.push({
         code: "INSIGHT_NOT_APPROVED",
         path: "plan.sourceInsightIds",
-        message: `计划引用了未批准洞察 ${insightId}。`,
+        message: `The plan references unapproved insight ${insightId}.`,
       });
     }
   }
@@ -853,7 +862,7 @@ export function validateActionPlan(
       issues.push({
         code: "STRATEGY_NOT_APPROVED",
         path: "plan.sourceStrategyIds",
-        message: `计划引用了未批准策略 ${strategyId}。`,
+        message: `The plan references unapproved strategy ${strategyId}.`,
       });
     }
   }
@@ -866,7 +875,7 @@ export function validateActionPlan(
     issues.push({
       code: "INSIGHT_REFERENCE_INVALID",
       path: "plan.sourceInsightIds",
-      message: "计划必须完整保留全部已批准洞察引用。",
+      message: "The plan must retain every approved insight reference.",
     });
   }
   if (
@@ -878,14 +887,14 @@ export function validateActionPlan(
     issues.push({
       code: "STRATEGY_REFERENCE_INVALID",
       path: "plan.sourceStrategyIds",
-      message: "计划必须完整保留全部已批准策略引用。",
+      message: "The plan must retain every approved strategy reference.",
     });
   }
   if (plan.fourWeekPlan.length !== 4) {
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan.fourWeekPlan",
-      message: "行动计划必须恰好包含四周。",
+      message: "The action plan must contain exactly four weeks.",
     });
   }
 
@@ -899,7 +908,7 @@ export function validateActionPlan(
       issues.push({
         code: "INVALID_PLAN_STRUCTURE",
         path: `plan.contentCalendar.${item.itemId}.scheduledTime`,
-        message: `内容项 ${item.itemId} 的发布时间或时区无效。`,
+        message: `Content item ${item.itemId} has an invalid publishing time or time zone.`,
       });
     }
     if (
@@ -909,14 +918,14 @@ export function validateActionPlan(
       issues.push({
         code: "DATE_OUTSIDE_PLAN",
         path: `plan.contentCalendar.${item.itemId}.date`,
-        message: `内容日期 ${item.date} 不在有效计划范围内。`,
+        message: `Content date ${item.date} is outside the plan range.`,
       });
     }
     if (seenDates.has(item.date)) {
       issues.push({
         code: "DATE_CONFLICT",
         path: `plan.contentCalendar.${item.itemId}.date`,
-        message: `日期 ${item.date} 存在无法解释的内容发布冲突。`,
+        message: `Content on ${item.date} has an unexplained publishing conflict.`,
       });
     }
     seenDates.add(item.date);
@@ -924,7 +933,7 @@ export function validateActionPlan(
       issues.push({
         code: "STRATEGY_REFERENCE_INVALID",
         path: `plan.contentCalendar.${item.itemId}.strategyId`,
-        message: `内容项引用了未批准策略 ${item.strategyId}。`,
+        message: `The content item references unapproved strategy ${item.strategyId}.`,
       });
     }
     for (const insightId of item.sourceInsightIds) {
@@ -932,7 +941,7 @@ export function validateActionPlan(
         issues.push({
           code: "INSIGHT_REFERENCE_INVALID",
           path: `plan.contentCalendar.${item.itemId}.sourceInsightIds`,
-          message: `内容项引用了未批准洞察 ${insightId}。`,
+          message: `The content item references unapproved insight ${insightId}.`,
         });
       }
     }
@@ -955,7 +964,7 @@ export function validateActionPlan(
       issues.push({
         code: "EXPERIMENT_INCOMPLETE",
         path: `plan.contentCalendar.${item.itemId}.experiment`,
-        message: "实验必须包含假设、成功标准、复盘日期和 KPI。",
+        message: "Experiments require a hypothesis, success criteria, review date, and KPI.",
       });
     }
     item.experiment?.metricIds.forEach((metricId) =>
@@ -969,7 +978,7 @@ export function validateActionPlan(
     issues.push({
       code: "EXPERIMENT_INCOMPLETE",
       path: "plan.contentCalendar",
-      message: "计划至少需要一个明确标记的实验内容。",
+      message: "The plan requires at least one clearly marked experiment.",
     });
   }
   if (
@@ -979,7 +988,7 @@ export function validateActionPlan(
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan.contentCalendar",
-      message: "内容日历必须为四周生成唯一且符合发布能力的内容项。",
+      message: "The calendar must contain unique items within weekly capacity for all four weeks.",
     });
   }
 
@@ -1000,7 +1009,7 @@ export function validateActionPlan(
       issues.push({
         code: "INVALID_PLAN_STRUCTURE",
         path: `plan.fourWeekPlan.${week.weekNumber}`,
-        message: `第 ${week.weekNumber} 周的日期或内容数量不符合用户设置。`,
+        message: `Week ${week.weekNumber} dates or item count do not match the settings.`,
       });
     }
     if (
@@ -1010,7 +1019,7 @@ export function validateActionPlan(
       issues.push({
         code: "INVALID_PLAN_STRUCTURE",
         path: `plan.fourWeekPlan.${week.weekNumber}`,
-        message: `第 ${week.weekNumber} 周存在无效内容或任务依赖引用。`,
+        message: `Week ${week.weekNumber} has an invalid content or task dependency reference.`,
       });
     }
     for (const task of week.tasks) {
@@ -1022,7 +1031,7 @@ export function validateActionPlan(
         issues.push({
           code: "INVALID_PLAN_STRUCTURE",
           path: `plan.fourWeekPlan.${week.weekNumber}.tasks.${task.taskId}`,
-          message: `任务 ${task.taskId} 的日期或依赖无效。`,
+          message: `Task ${task.taskId} has an invalid date or dependency.`,
         });
       }
     }
@@ -1040,7 +1049,7 @@ export function validateActionPlan(
     issues.push({
       code: "INVALID_PLAN_STRUCTURE",
       path: "plan.fourWeekPlan.contentItems",
-      message: "四周计划中的内容引用必须唯一且完整。",
+      message: "Content references in the four-week plan must be unique and complete.",
     });
   }
   for (const review of plan.kpiReviewPlan) {
@@ -1048,7 +1057,7 @@ export function validateActionPlan(
       issues.push({
         code: "DATE_OUTSIDE_PLAN",
         path: `plan.kpiReviewPlan.${review.reviewId}.reviewDate`,
-        message: `KPI 复盘日期 ${review.reviewDate} 不在计划范围内。`,
+        message: `KPI review date ${review.reviewDate} is outside the plan range.`,
       });
     }
     review.metricIds.forEach((metricId) =>
@@ -1067,7 +1076,7 @@ export function validateActionPlan(
       issues.push({
         code: "KPI_REFERENCE_INVALID",
         path: `plan.kpiDefinitions.${metricId}`,
-        message: `KPI ${metricId} 在当前 Snapshot 中不可计算。`,
+        message: `KPI ${metricId} is unavailable in the current snapshot.`,
       });
     }
     if (
@@ -1079,7 +1088,7 @@ export function validateActionPlan(
       issues.push({
         code: "KPI_REFERENCE_INVALID",
         path: `plan.kpiDefinitions.${metricId}`,
-        message: `未来 KPI ${metricId} 不在允许采集的指标目录中。`,
+        message: `Future KPI ${metricId} is not in the approved measurement catalog.`,
       });
     }
   }
@@ -1087,7 +1096,7 @@ export function validateActionPlan(
     issues.push({
       code: "KPI_REFERENCE_INVALID",
       path: "plan.kpiDefinitions",
-      message: "KPI 定义中存在重复 metricId。",
+      message: "KPI definitions contain duplicate metric IDs.",
     });
   }
   for (const reference of allKpiReferences) {
@@ -1095,7 +1104,7 @@ export function validateActionPlan(
       issues.push({
         code: "KPI_REFERENCE_INVALID",
         path: reference.path,
-        message: `KPI 引用 ${reference.metricId} 没有有效定义。`,
+        message: `KPI reference ${reference.metricId} has no valid definition.`,
       });
     }
   }
@@ -1114,7 +1123,7 @@ export function validateActionPlan(
       issues.push({
         code: "INVALID_POSTS_PER_WEEK",
         path: `plan.contentCalendar.week${week}`,
-        message: `第 ${week} 周内容数量超过设置上限。`,
+        message: `Week ${week} exceeds the configured content limit.`,
       });
     }
   }
@@ -1166,8 +1175,9 @@ export function generateActionPlan(
   );
   const userTarget = input.businessGoal.userDefinedTarget;
   const targetStatement = userTarget
-    ? ` 用户明确设定的目标是 ${userTarget.metricId} 达到 ${userTarget.value} ${userTarget.unit}；该数字是用户目标，不是预测。`
+    ? ` The confirmed target is ${userTarget.metricId} at ${userTarget.value} ${userTarget.unit}; this value is a user-defined objective, not a forecast.`
     : "";
+  const executiveSummary = `The four-week plan operationalizes the confirmed business goal, “${input.businessGoal.statement},” through a consistent publishing cadence, controlled experiments, and scheduled performance reviews. The plan does not forecast growth or apply individual-level attribution.${targetStatement}`;
   const plan: ActionPlan = {
     schemaVersion: "1.1",
     promptVersion: "action-plan-v1.1",
@@ -1184,21 +1194,51 @@ export function generateActionPlan(
     startDate: input.preferences.startDate,
     endDate,
     status: "ai_draft",
-    executiveSummary: `未来四周将围绕“${input.businessGoal.statement}”执行已批准策略，通过稳定发布、可标记实验和固定复盘形成下一轮可比较数据。计划不承诺具体增长，也不进行个人级归因。${targetStatement}`,
+    executiveSummary,
+    report: {
+      executiveSummary,
+      keyFindings: input.approvedInsights.map(
+        (insight) => insight.report.executiveSummary,
+      ),
+      businessImplications: input.approvedStrategies.map(
+        (strategy) => strategy.report.businessImplications[0] ?? strategy.objective,
+      ),
+      recommendations: input.approvedStrategies.flatMap(
+        (strategy) => strategy.actions,
+      ),
+      confidenceLevel: input.approvedInsights.some(
+        (insight) => insight.confidence === "low",
+      )
+        ? "Low"
+        : input.approvedInsights.every(
+              (insight) => insight.confidence === "high",
+            )
+          ? "High"
+          : "Medium",
+      evidence: input.approvedInsights.flatMap((insight) =>
+        insight.evidence.map(
+          (reference) =>
+            `${reference.label}: ${reference.formattedValue} (${reference.metricId})`,
+        ),
+      ),
+      observedTrends: input.approvedInsights.flatMap(
+        (insight) => insight.report.observedTrends,
+      ),
+    },
     assumptions: [
       input.preferences.teamSize === null
-        ? "尚未提供团队规模，所有负责人使用“待指定”占位符。"
-        : `用户提供的团队规模为 ${input.preferences.teamSize} 人，具体姓名仍由用户指定。`,
+        ? "Team size is not specified; owner fields remain unassigned."
+        : `Confirmed team size: ${input.preferences.teamSize}. Named owners remain to be assigned.`,
       input.preferences.contentResources.length === 0
-        ? "未提供内容资源清单，默认使用文字短帖和文档轮播。"
-        : `可用内容资源：${input.preferences.contentResources.join("、")}。`,
-      `每周最多发布 ${input.preferences.postsPerWeek} 条内容，时区为 ${input.preferences.timeZone}。`,
+        ? "No content-resource inventory is available; the plan uses text posts and document carousels."
+        : `Available content resources: ${input.preferences.contentResources.join(", ")}.`,
+      `Maximum weekly publishing volume: ${input.preferences.postsPerWeek}; time zone: ${input.preferences.timeZone}.`,
     ],
     risksAndLimitations: [
-      "LinkedIn 数据为聚合数据，不能识别匿名访客、具体关注者或个人购买意向。",
-      "Visitor-to-Follower Proxy 不是用户级真实转化率。",
-      "发布窗口与指标变化的时间相关性不代表内容导致增长。",
-      "未来 KPI 需要在下一次导入后按相同口径采集，当前不可预知结果。",
+      "LinkedIn data is aggregated and cannot verify healthcare professional roles, KOL identities, or hospital procurement intent.",
+      "The Visitor-to-Follower Proxy is not a verified user-level conversion rate.",
+      "Correlation between publishing windows and metric changes does not establish causation.",
+      "Future KPI results require like-for-like collection in the next import and cannot be forecast from the current data.",
     ],
     ...schedule,
     kpiDefinitions,
@@ -1208,13 +1248,13 @@ export function generateActionPlan(
       metricIds: week.kpiMetricIds,
       action: week.reviewAction,
       comparisonRule:
-        "仅与当前 Snapshot 基线和同口径后续数据比较；不把相关性表述为因果关系。",
+        "Compare only with the current snapshot baseline and equivalent future data; do not describe correlation as causation.",
     })),
     nextImportQuestions: [
-      "下一次导入是否覆盖完整的计划日期范围？",
-      "逐帖 Impressions、Clicks 与 Engagement Rate 是否可按相同口径获得？",
-      "哪些实验内容按计划发布，哪些被修改或取消？",
-      "是否有 CRM、网站分析或线索数据可补充验证业务结果？",
+      "Does the next import cover the complete plan date range?",
+      "Are post-level impressions, clicks, and engagement rates available under consistent definitions?",
+      "Which experiments were published as planned, changed, or cancelled?",
+      "Are compliant records of professional engagement, expert feedback, or procurement milestones available to validate outcomes?",
     ],
     revisionHistory: [],
   };
@@ -1236,7 +1276,7 @@ function waitForGeneration(
 ): Promise<void> {
   if (signal?.aborted) {
     return Promise.reject(
-      new ActionPlanAgentError("GENERATION_CANCELLED", "计划生成已取消。"),
+      new ActionPlanAgentError("GENERATION_CANCELLED", "Plan preparation was cancelled."),
     );
   }
   return new Promise((resolve, reject) => {
@@ -1247,7 +1287,7 @@ function waitForGeneration(
     function onAbort() {
       clearTimeout(timer);
       reject(
-        new ActionPlanAgentError("GENERATION_CANCELLED", "计划生成已取消。"),
+        new ActionPlanAgentError("GENERATION_CANCELLED", "Plan preparation was cancelled."),
       );
     }
     signal?.addEventListener("abort", onAbort, { once: true });
@@ -1266,7 +1306,7 @@ export async function runActionPlanAgent(
   if (options.signal?.aborted) {
     throw new ActionPlanAgentError(
       "GENERATION_CANCELLED",
-      "计划生成已取消。",
+      "Plan preparation was cancelled.",
     );
   }
   return generateActionPlan(input, options.now);
@@ -1291,21 +1331,21 @@ export async function runValidatedActionPlanAdapter(
   if (options.signal?.aborted) {
     throw new ActionPlanAgentError(
       "GENERATION_CANCELLED",
-      "计划生成已取消。",
+      "Plan preparation was cancelled.",
     );
   }
   const output = await adapter.generate(input, { signal: options.signal });
   if (options.signal?.aborted) {
     throw new ActionPlanAgentError(
       "GENERATION_CANCELLED",
-      "计划生成已取消。",
+      "Plan preparation was cancelled.",
     );
   }
   const validation = validateActionPlan(output, input, options.now);
   if (!validation.valid || !isActionPlanShape(output)) {
     throw new ActionPlanAgentError(
       "VALIDATION_FAILED",
-      validation.issues[0]?.message ?? "计划输出结构无效。",
+      validation.issues[0]?.message ?? "Plan output structure is invalid.",
       validation.issues,
     );
   }
@@ -1344,27 +1384,37 @@ export function reviseCalendarItem(
     ...plan,
     status: "ai_draft",
     updatedAt,
-    contentCalendar: plan.contentCalendar.map((candidate) =>
-      candidate.itemId === itemId
-        ? {
-            ...candidate,
-            ...patch,
-            mediaRequirement:
-              patch.contentFormat === undefined
-                ? candidate.mediaRequirement
-                : mediaRequirement(patch.contentFormat),
-            workflowStatus: "planning",
-            validationStatus: "not_validated",
-            validationIssues: [],
-            lastEditedAt: updatedAt,
-          }
-        : candidate,
-    ),
+    contentCalendar: plan.contentCalendar.map((candidate) => {
+      if (candidate.itemId !== itemId) {
+        return candidate;
+      }
+      const revised: ContentCalendarItem =
+        {
+          ...candidate,
+          ...patch,
+          mediaRequirement:
+            patch.contentFormat === undefined
+              ? candidate.mediaRequirement
+              : mediaRequirement(patch.contentFormat),
+          workflowStatus: "planning",
+          validationStatus: "not_validated",
+          validationIssues: [],
+          lastEditedAt: updatedAt,
+        };
+      return {
+        ...revised,
+        postText: patch.postText === undefined ? "" : revised.postText,
+        status:
+          patch.status ??
+          (revised.status === "rejected" ? "rejected" : "ai_draft"),
+        workflowStatus: "planning",
+      };
+    }),
     revisionHistory: [
       ...plan.revisionHistory,
       makeRevision(
         "calendar_item",
-        `更新内容项 ${itemId}：${Object.keys(patch).join("、")}`,
+        `Updated content item ${itemId}: ${Object.keys(patch).join(", ")}`,
         now,
       ),
     ],
@@ -1398,7 +1448,7 @@ export function reviseActionPlanSchedule(
         preferences.focusAudience !== plan.preferences.focusAudience
           ? "audience"
           : "schedule",
-        "更新计划开始日期、发布能力或重点受众；未重新运行 Snapshot 和洞察。",
+        "Updated the plan start date, publishing capacity, or focus audience without rerunning the snapshot.",
         now,
       ),
     ],
@@ -1423,10 +1473,49 @@ export function confirmActionPlan(
     contentCalendar: plan.contentCalendar.map((item) => ({
       ...item,
       status: item.status === "rejected" ? "rejected" : "confirmed",
+      postText:
+        item.status === "rejected"
+          ? ""
+          : `${item.topic}\n\n${item.coreMessage}\n\n${item.callToAction}`,
     })),
     revisionHistory: [
       ...plan.revisionHistory,
-      makeRevision("plan_status", "用户确认当前行动计划。", now),
+      makeRevision("plan_status", "Reviewer approved the current action plan.", now),
+    ],
+  };
+}
+
+export function reviewActionPlan(
+  plan: ActionPlan,
+  status: "revision_requested" | "rejected",
+  now: Date = new Date(),
+): ActionPlan {
+  return {
+    ...plan,
+    status,
+    updatedAt: now.toISOString(),
+    fourWeekPlan: plan.fourWeekPlan.map((week) => ({
+      ...week,
+      tasks: week.tasks.map((task) => ({
+        ...task,
+        status: task.status === "rejected" ? "rejected" : "ai_draft",
+      })),
+    })),
+    contentCalendar: plan.contentCalendar.map((item) => ({
+      ...item,
+      postText: "",
+      status: item.status === "rejected" ? "rejected" : "ai_draft",
+      workflowStatus: "planning",
+    })),
+    revisionHistory: [
+      ...plan.revisionHistory,
+      makeRevision(
+        "plan_status",
+        status === "rejected"
+          ? "Reviewer rejected the current action plan."
+          : "Reviewer requested revisions to the current action plan.",
+        now,
+      ),
     ],
   };
 }

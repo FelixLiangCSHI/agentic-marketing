@@ -141,7 +141,7 @@ export function handVerifiedInput(): AnalysisInput {
       content: [
         contentRecord(2, {
           contentId: "synthetic-1",
-          title: "Synthetic A",
+          title: "Ultrasound clinical workflow evidence",
           publishedAt: "2026-01-01T08:00:00.000Z",
           contentType: "Document",
           impressions: 100,
@@ -152,7 +152,7 @@ export function handVerifiedInput(): AnalysisInput {
         }),
         contentRecord(3, {
           contentId: "synthetic-2",
-          title: "Synthetic B",
+          title: "Patient monitoring outcomes for ICU teams",
           publishedAt: "2026-01-02T08:00:00.000Z",
           contentType: "Document",
           impressions: 100,
@@ -163,7 +163,7 @@ export function handVerifiedInput(): AnalysisInput {
         }),
         contentRecord(4, {
           contentId: "synthetic-3",
-          title: "Synthetic C",
+          title: "Endoscopy KOL procedure briefing",
           publishedAt: "2026-01-03T08:00:00.000Z",
           contentType: "Video",
           impressions: 100,

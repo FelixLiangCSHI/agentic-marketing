@@ -79,7 +79,7 @@ test("uses median engagement and stable competition ranking for ties", () => {
   const metrics = calculateContentMetrics([
     contentRecord(2, {
       contentId: "a",
-      title: "A",
+      title: "Ultrasound clinical workflow evidence",
       publishedAt: "2026-01-01T00:00:00.000Z",
       contentType: "Document",
       impressions: 100,
@@ -90,7 +90,7 @@ test("uses median engagement and stable competition ranking for ties", () => {
     }),
     contentRecord(3, {
       contentId: "b",
-      title: "B",
+      title: "IVD analytical performance review",
       publishedAt: "2026-01-02T00:00:00.000Z",
       contentType: "Document",
       impressions: 200,
@@ -101,7 +101,7 @@ test("uses median engagement and stable competition ranking for ties", () => {
     }),
     contentRecord(4, {
       contentId: "c",
-      title: "C",
+      title: "Surgical robotics patient outcomes briefing",
       publishedAt: "2026-01-03T00:00:00.000Z",
       contentType: "Video",
       impressions: 100,
@@ -113,7 +113,10 @@ test("uses median engagement and stable competition ranking for ties", () => {
   ]);
 
   assert.equal(metrics.medianEngagementRate.value, 0.1);
-  assert.equal(metrics.contentRanking.items[0].label, "C");
+  assert.equal(
+    metrics.contentRanking.items[0].label,
+    "Surgical robotics patient outcomes briefing",
+  );
   assert.equal(metrics.contentRanking.items[0].rank, 1);
   assert.equal(metrics.contentRanking.items[1].rank, 2);
   assert.equal(metrics.contentRanking.items[2].rank, 2);
@@ -302,7 +305,7 @@ test("does not calculate period change across an irregular series", () => {
   assert.equal(metrics.periodOverPeriodChange.reliability, "unavailable");
   assert.equal(
     metrics.periodOverPeriodChange.reliabilityReasons.some((reason) =>
-      reason.includes("间隔不符合"),
+      reason.includes("not comparably spaced"),
     ),
     true,
   );

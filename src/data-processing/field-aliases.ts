@@ -13,30 +13,30 @@ interface AliasEntry<TField extends StandardField> {
 }
 
 export const FIELD_LABELS: Record<StandardField, string> = {
-  date: "日期",
-  totalFollowers: "关注者总数",
-  newFollowers: "新增关注者",
-  organicFollowers: "自然关注者",
-  sponsoredFollowers: "付费关注者",
-  demographicDimension: "画像维度",
-  demographicValue: "画像值",
-  demographicCount: "画像数量",
-  demographicPercentage: "画像占比",
-  pageViews: "页面浏览量",
-  uniqueVisitors: "独立访客",
-  customButtonClicks: "自定义按钮点击",
-  contentId: "内容 ID",
-  title: "内容标题",
-  publishedAt: "发布时间",
-  contentType: "内容类型",
-  impressions: "展示次数",
-  uniqueImpressions: "独立展示次数",
-  clicks: "点击次数",
-  reactions: "互动反应",
-  comments: "评论数",
-  reposts: "转发数",
-  engagementRate: "互动率",
-  clickThroughRate: "点击率",
+  date: "Date",
+  totalFollowers: "Total followers",
+  newFollowers: "New followers",
+  organicFollowers: "Organic followers",
+  sponsoredFollowers: "Sponsored followers",
+  demographicDimension: "Audience dimension",
+  demographicValue: "Audience value",
+  demographicCount: "Audience count",
+  demographicPercentage: "Audience percentage",
+  pageViews: "Page views",
+  uniqueVisitors: "Unique visitors",
+  customButtonClicks: "Custom button clicks",
+  contentId: "Content ID",
+  title: "Content title",
+  publishedAt: "Published at",
+  contentType: "Content type",
+  impressions: "Impressions",
+  uniqueImpressions: "Unique impressions",
+  clicks: "Clicks",
+  reactions: "Reactions",
+  comments: "Comments",
+  reposts: "Reposts",
+  engagementRate: "Engagement rate",
+  clickThroughRate: "Click-through rate",
 };
 
 const SHARED_DEMOGRAPHIC_VALUE_ALIASES = [
@@ -52,7 +52,7 @@ const SHARED_DEMOGRAPHIC_VALUE_ALIASES = [
 ] as const;
 
 const FOLLOWERS_ALIASES: readonly AliasEntry<FollowersField>[] = [
-  { field: "date", aliases: ["date", "day", "日期"] },
+  { field: "date", aliases: ["date", "day"] },
   {
     field: "totalFollowers",
     aliases: ["total followers", "lifetime followers", "follower count"],
@@ -98,7 +98,7 @@ const FOLLOWERS_ALIASES: readonly AliasEntry<FollowersField>[] = [
 ];
 
 const VISITORS_ALIASES: readonly AliasEntry<VisitorsField>[] = [
-  { field: "date", aliases: ["date", "day", "日期"] },
+  { field: "date", aliases: ["date", "day"] },
   {
     field: "pageViews",
     aliases: [

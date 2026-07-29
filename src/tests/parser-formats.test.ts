@@ -50,7 +50,7 @@ test("parses a normal XLSX Content sheet", () => {
           "Clicks",
           "Engagement rate",
         ],
-        ["Synthetic guide", "2026-03-08", "Document", 1200, 72, "6%"],
+        ["Ultrasound clinical workflow guide", "2026-03-08", "Document", 1200, 72, "6%"],
       ],
     },
   ]);

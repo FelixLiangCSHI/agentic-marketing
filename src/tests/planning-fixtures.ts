@@ -21,7 +21,7 @@ export function approvedPlanningInput(
   }));
   const businessGoal: BusinessGoal = {
     goalId: "goal-synthetic",
-    statement: "建立可复盘的 LinkedIn 内容运营节奏",
+    statement: "Support hospital medical device evaluation with clinical evidence, regulatory progress, and economic value.",
     confirmed: true,
     confirmedAt: PLANNING_NOW.toISOString(),
   };
@@ -36,9 +36,15 @@ export function approvedPlanningInput(
       timeZone: "Asia/Shanghai",
       postsPerWeek: 3,
       teamSize: null,
-      contentResources: ["文案", "设计"],
-      targetMarket: "APAC",
-      focusAudience: "医疗影像行业决策者",
+      contentResources: [
+        "clinical evidence",
+        "regulatory materials",
+        "health economics analysis",
+        "expert interviews",
+        "medical design",
+      ],
+      targetMarket: "North American and European hospital systems",
+      focusAudience: "Healthcare professionals, clinical experts, procurement teams, and regulatory leaders",
     },
     ...overrides,
   };

@@ -1,5 +1,6 @@
 import type { AnalysisPeriod, SourceReference } from "@/domain/analysis";
 import type { LinkedInModule } from "@/domain/linkedin";
+import type { ConsultingReport } from "@/domain/consulting-report";
 
 export type ChatIntent =
   | "metric_query"
@@ -44,9 +45,7 @@ export interface ChatAnswer {
   promptVersion: "evidence-chat-v1.0";
   intent: ChatIntent;
   status: ChatAnswerStatus;
-  dataStatement: string;
-  possibleMeaning: string | null;
-  suggestedValidation: string | null;
+  report: ConsultingReport;
   citations: ChatEvidenceCitation[];
   suggestedPlanChange: SuggestedPlanChange | null;
 }

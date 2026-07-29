@@ -9,6 +9,7 @@ import {
   isActionPlanShape,
   localDateInTimeZone,
   normalizeActionPlan,
+  reviewActionPlan,
   reviseActionPlanSchedule,
   reviseCalendarItem,
   runActionPlanAgent,
@@ -63,15 +64,24 @@ test("builds a timezone-safe four-week plan within the 30-day range", () => {
   assert.equal(plan.contentCalendar.length, 12);
   assert.equal(plan.schemaVersion, "1.1");
   assert.equal(plan.promptVersion, "action-plan-v1.1");
+  assert.deepEqual(Object.keys(plan.report ?? {}), [
+    "executiveSummary",
+    "keyFindings",
+    "businessImplications",
+    "recommendations",
+    "confidenceLevel",
+    "evidence",
+    "observedTrends",
+  ]);
   assert.equal(new Set(plan.contentCalendar.map((item) => item.date)).size, 12);
   assert.ok(plan.contentCalendar.every((item) => item.date >= plan.startDate));
   assert.ok(
-    plan.contentCalendar.every((item) => item.ownerPlaceholder.includes("待指定")),
+    plan.contentCalendar.every((item) => item.ownerPlaceholder.includes("assign")),
   );
   assert.ok(
     plan.contentCalendar.every(
       (item) =>
-        item.postText.length > 0 &&
+        item.postText.length === 0 &&
         item.scheduledTime.length === 5 &&
         item.timeZone === input.preferences.timeZone &&
         item.workflowStatus === "planning" &&
@@ -133,7 +143,7 @@ test("labels experiments with hypothesis, success criteria, and review date", ()
   for (const item of experiments) {
     assert.ok(item.experiment);
     assert.ok(item.experiment.hypothesis.length > 0);
-    assert.ok(item.experiment.successCriteria.includes("不承诺固定增长幅度"));
+    assert.ok(item.experiment.successCriteria.includes("without promising fixed growth"));
     assert.ok(item.experiment.reviewDate >= item.date);
   }
 });
@@ -170,7 +180,7 @@ test("applies scoped plan edits and supports undoing the latest revision", () =>
   assert.equal(rescheduled.snapshotId, original.snapshotId);
   assert.ok(
     rescheduled.assumptions.some((assumption) =>
-      assumption.includes("每周最多发布 2 条"),
+      assumption.includes("Maximum weekly publishing volume: 2"),
     ),
   );
 
@@ -178,6 +188,21 @@ test("applies scoped plan edits and supports undoing the latest revision", () =>
   assert.equal(confirmed.status, "user_confirmed");
   assert.ok(
     confirmed.contentCalendar.every((item) => item.status === "confirmed"),
+  );
+  assert.ok(
+    confirmed.contentCalendar.every((item) => item.postText.length > 0),
+  );
+
+  const returned = reviewActionPlan(
+    confirmed,
+    "revision_requested",
+    PLANNING_NOW,
+  );
+  assert.equal(returned.status, "revision_requested");
+  assert.ok(
+    returned.contentCalendar.every(
+      (item) => item.status !== "confirmed" && item.postText.length === 0,
+    ),
   );
 });
 

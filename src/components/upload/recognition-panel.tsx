@@ -45,12 +45,12 @@ const PERCENTAGE_FIELDS = new Set<StandardField>([
 
 function confidenceLabel(confidence: ConfidenceLevel): string {
   if (confidence === "high") {
-    return "高置信度";
+    return "High confidence";
   }
   if (confidence === "medium") {
-    return "中置信度";
+    return "Medium confidence";
   }
-  return "低置信度";
+  return "Low confidence";
 }
 
 function confidenceClass(confidence: ConfidenceLevel): string {
@@ -71,15 +71,15 @@ function formatValue(value: unknown, field: StandardField): string {
 
   if (typeof value === "number") {
     return PERCENTAGE_FIELDS.has(field)
-      ? new Intl.NumberFormat("zh-CN", {
+      ? new Intl.NumberFormat("en-US", {
           style: "percent",
           maximumFractionDigits: 2,
         }).format(value)
-      : value.toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+      : value.toLocaleString("en-US", { maximumFractionDigits: 2 });
   }
 
   if (typeof value === "boolean") {
-    return value ? "是" : "否";
+    return value ? "Yes" : "No";
   }
 
   return String(value);
@@ -87,7 +87,7 @@ function formatValue(value: unknown, field: StandardField): string {
 
 function displayRawValue(value: RawCellValue): string {
   if (value === null) {
-    return "空值";
+    return "Empty";
   }
   const text = String(value);
   return text.length > 80 ? `${text.slice(0, 77)}…` : text;
@@ -140,8 +140,8 @@ export function RecognitionPanel({
       <section className="recognition-panel">
         <EmptyState
           icon="table"
-          title="等待识别结果"
-          description="上传任一文件后，这里会显示模块判断、字段映射、标准化预览和数据质量问题。"
+          title="Awaiting recognition results"
+          description="Upload a file to review module detection, field mappings, normalized previews, and quality issues."
         />
       </section>
     );
@@ -157,8 +157,8 @@ export function RecognitionPanel({
       <section className="recognition-panel">
         <EmptyState
           icon="alert"
-          title="工作簿没有可展示的 Sheet"
-          description="请重新导出文件后再试。"
+          title="The workbook has no displayable sheets"
+          description="Export the file again and retry."
         />
       </section>
     );
@@ -202,21 +202,21 @@ export function RecognitionPanel({
               <Icon
                 name={
                   result.parserMode === "synthetic-mock"
-                    ? "sparkles"
+                    ? "database"
                     : "lock"
                 }
                 size={14}
               />
               {result.parserMode === "synthetic-mock"
                 ? "Synthetic Mock"
-                : "临时解析 · 不持久化"}
+                : "Temporary analysis · Not persisted"}
             </span>
             <span>{result.file.format.toLocaleUpperCase("en-US")}</span>
             <span>{formatFileSize(result.file.size)}</span>
           </div>
           <h2 id="recognition-title">{result.file.name}</h2>
           <p>
-            已识别 {result.workbook.sheetCount} 个 Sheet；请确认模块和字段映射后再进入分析。
+            {result.workbook.sheetCount} sheets recognized. Confirm the module and mappings before analysis.
           </p>
         </div>
         <div className="recognition-panel__status">
@@ -234,7 +234,7 @@ export function RecognitionPanel({
               name={selectedSheet.canProceed ? "check" : "alert"}
               size={15}
             />
-            {selectedSheet.canProceed ? "可进入下一阶段" : "需要处理"}
+            {selectedSheet.canProceed ? "Ready for next stage" : "Action required"}
           </span>
         </div>
       </header>
@@ -243,15 +243,15 @@ export function RecognitionPanel({
         <div className="callout callout--warning" role="alert">
           <Icon name="alert" size={20} />
           <div>
-            <strong>模块与上传槽位不一致</strong>
+            <strong>Module does not match the upload slot</strong>
             <p>
-              当前识别为{" "}
+              Recognized as{" "}
               {result.detectedModules.length
                 ? result.detectedModules
                     .map((item) => MODULE_LABELS[item])
                     .join("、")
-                : "无法确定"}
-              ，上传位置是 {MODULE_LABELS[module]}。如确认文件属于该模块，可按槽位重新识别。
+                : "Undetermined"}
+              ; the upload slot is {MODULE_LABELS[module]}. Reanalyze using the slot if that assignment is correct.
             </p>
           </div>
           {slot.file && (
@@ -260,7 +260,7 @@ export function RecognitionPanel({
               type="button"
               onClick={onManualOverride}
             >
-              按 {MODULE_LABELS[module]} 重新识别
+              Reanalyze as {MODULE_LABELS[module]}
             </button>
           )}
         </div>
@@ -270,46 +270,46 @@ export function RecognitionPanel({
         <div className="callout callout--danger" role="alert">
           <Icon name="alert" size={20} />
           <div>
-            <strong>检测到重复模块</strong>
-            <p>另一个上传文件也被识别为同一模块；确认前请移除或替换其中一个。</p>
+            <strong>Duplicate module detected</strong>
+            <p>Another upload represents the same module. Remove or replace one before confirmation.</p>
           </div>
         </div>
       )}
 
       <div className="recognition-summary">
         <div>
-          <span>推测模块</span>
+          <span>Detected module</span>
           <strong>
-            {detectedModule ? MODULE_LABELS[detectedModule] : "待手动选择"}
+            {detectedModule ? MODULE_LABELS[detectedModule] : "Manual selection required"}
           </strong>
         </div>
         <div>
-          <span>表头行</span>
+          <span>Header row</span>
           <strong>
             {selectedSheet.headerRow
-              ? `第 ${selectedSheet.headerRow} 行`
-              : "未定位"}
+              ? `Row ${selectedSheet.headerRow}`
+              : "Not located"}
           </strong>
         </div>
         <div>
-          <span>有效数据</span>
+          <span>Valid data</span>
           <strong>
-            {selectedSheet.validRows.toLocaleString("zh-CN")} /{" "}
-            {selectedSheet.totalRows.toLocaleString("zh-CN")} 行
+            {selectedSheet.validRows.toLocaleString("en-US")} /{" "}
+            {selectedSheet.totalRows.toLocaleString("en-US")} rows
           </strong>
         </div>
         <div>
-          <span>时间范围</span>
+          <span>Date range</span>
           <strong>
             {selectedSheet.dateRange
               ? `${selectedSheet.dateRange.start.slice(0, 10)} — ${selectedSheet.dateRange.end.slice(0, 10)}`
-              : "未识别"}
+              : "Not recognized"}
           </strong>
         </div>
       </div>
 
       <div className="sheet-layout">
-        <nav className="sheet-list" aria-label="工作簿 Sheet">
+        <nav className="sheet-list" aria-label="Workbook sheets">
           <span className="section-label">WORKBOOK SHEETS</span>
           {result.workbook.sheets.map((sheet) => (
             <button
@@ -334,7 +334,7 @@ export function RecognitionPanel({
               <small>
                 {sheet.detection.detectedModule
                   ? MODULE_LABELS[sheet.detection.detectedModule]
-                  : "待识别"}{" "}
+                  : "Pending"}{" "}
                 · {sheet.validRows}/{sheet.totalRows}
               </small>
               <Icon name="chevron" size={15} />
@@ -352,13 +352,13 @@ export function RecognitionPanel({
               {selectedSheet.mappings.filter(
                 (mapping) => mapping.status === "mapped",
               ).length}{" "}
-              个字段已映射
+              fields mapped
             </span>
           </div>
 
           {selectedSheet.detection.reasons.length > 0 && (
             <div className="detection-reasons">
-              <strong>识别依据</strong>
+              <strong>Recognition evidence</strong>
               <ul>
                 {selectedSheet.detection.reasons.map((reason) => (
                   <li key={reason}>{reason}</li>
@@ -371,10 +371,10 @@ export function RecognitionPanel({
             <table className="mapping-table">
               <thead>
                 <tr>
-                  <th>原始字段</th>
-                  <th>标准字段</th>
-                  <th>状态</th>
-                  <th>映射依据</th>
+                  <th>Source field</th>
+                  <th>Standard field</th>
+                  <th>Status</th>
+                  <th>Mapping evidence</th>
                 </tr>
               </thead>
               <tbody>
@@ -388,7 +388,7 @@ export function RecognitionPanel({
                     <tr key={overrideKey}>
                       <td>
                         <strong>{mapping.rawHeader}</strong>
-                        <small>第 {mapping.columnIndex + 1} 列</small>
+                        <small>Column {mapping.columnIndex + 1}</small>
                       </td>
                       <td>
                         <select
@@ -401,7 +401,7 @@ export function RecognitionPanel({
                             result.parserMode === "synthetic-mock" ||
                             slot.status === "parsing"
                           }
-                          aria-label={`映射字段 ${mapping.rawHeader}`}
+                          aria-label={`Map field ${mapping.rawHeader}`}
                           onChange={(event) => {
                             const value = event.target.value;
                             if (value === "__auto__") {
@@ -414,12 +414,12 @@ export function RecognitionPanel({
                           }}
                         >
                           <option value="__auto__">
-                            自动：
+                            Automatic:
                             {mapping.standardField
                               ? FIELD_LABELS[mapping.standardField]
-                              : "未映射"}
+                              : "Unmapped"}
                           </option>
-                          <option value="__ignore__">忽略此字段</option>
+                          <option value="__ignore__">Ignore this field</option>
                           {MODULE_FIELDS[mappingModule].map((field) => (
                             <option key={field} value={field}>
                               {FIELD_LABELS[field]}
@@ -432,10 +432,10 @@ export function RecognitionPanel({
                           className={`mapping-status mapping-status--${mapping.status}`}
                         >
                           {mapping.status === "mapped"
-                            ? "已映射"
+                            ? "Mapped"
                             : mapping.status === "conflict"
-                              ? "有冲突"
-                              : "未映射"}
+                              ? "Conflict"
+                              : "Unmapped"}
                         </span>
                       </td>
                       <td>{mapping.reason}</td>
@@ -451,7 +451,7 @@ export function RecognitionPanel({
             <div className="field-groups">
               {selectedSheet.unmappedFields.length > 0 && (
                 <div>
-                  <strong>未映射字段</strong>
+                  <strong>Unmapped fields</strong>
                   <div className="tag-list">
                     {selectedSheet.unmappedFields.map((field) => (
                       <span key={field}>{field}</span>
@@ -461,7 +461,7 @@ export function RecognitionPanel({
               )}
               {selectedSheet.missingCriticalFields.length > 0 && (
                 <div>
-                  <strong>缺失关键字段</strong>
+                  <strong>Missing required fields</strong>
                   <div className="tag-list tag-list--danger">
                     {selectedSheet.missingCriticalFields.map((field) => (
                       <span key={field}>{FIELD_LABELS[field]}</span>
@@ -476,24 +476,24 @@ export function RecognitionPanel({
             <div className="section-heading">
               <div>
                 <span className="section-label">NORMALIZED PREVIEW</span>
-                <h3>标准化预览</h3>
+                <h3>Normalized preview</h3>
               </div>
-              <span>最多显示前 {selectedSheet.preview.length} 条</span>
+              <span>Showing up to {selectedSheet.preview.length} records</span>
             </div>
 
             {selectedSheet.preview.length === 0 ||
             mappedColumns.length === 0 ? (
               <EmptyState
                 icon="table"
-                title="暂无可预览记录"
-                description="请先解决模块或关键字段识别问题。"
+                title="No preview records available"
+                description="Resolve module or required-field recognition first."
               />
             ) : (
               <div className="preview-table-wrap">
                 <table className="preview-table">
                   <thead>
                     <tr>
-                      <th>来源行</th>
+                      <th>Source row</th>
                       {mappedColumns.map((field) => (
                         <th key={field}>{FIELD_LABELS[field]}</th>
                       ))}
@@ -528,15 +528,15 @@ export function RecognitionPanel({
             <div className="section-heading">
               <div>
                 <span className="section-label">DATA QUALITY</span>
-                <h3>质量问题与提示</h3>
+                <h3>Quality issues and notices</h3>
               </div>
-              <span>{selectedSheet.issues.length} 项</span>
+              <span>{selectedSheet.issues.length} items</span>
             </div>
 
             {sortedIssues.length === 0 ? (
               <div className="quality-clear">
                 <Icon name="check" size={18} />
-                <span>未发现阻断性问题。</span>
+                <span>No blocking issues found.</span>
               </div>
             ) : (
               <ul className="issue-list">
@@ -552,12 +552,12 @@ export function RecognitionPanel({
                     <div>
                       <strong>
                         {issue.code}
-                        {issue.rowNumber ? ` · 第 ${issue.rowNumber} 行` : ""}
+                        {issue.rowNumber ? ` · Row ${issue.rowNumber}` : ""}
                       </strong>
                       <p>{issue.message}</p>
                       {issue.rawValue !== undefined && (
                         <small>
-                          原始值：{displayRawValue(issue.rawValue)}
+                          Source value: {displayRawValue(issue.rawValue)}
                         </small>
                       )}
                     </div>
@@ -572,7 +572,7 @@ export function RecognitionPanel({
       <footer className="recognition-actions">
         <div>
           <Icon name="shield" size={18} />
-          <span>确认仅代表字段识别无误，不代表已完成指标分析。</span>
+          <span>Confirmation verifies field recognition only; metric analysis follows.</span>
         </div>
         <div>
           {slot.mappingDirty && slot.file && (
@@ -582,7 +582,7 @@ export function RecognitionPanel({
               onClick={onApplyMappings}
             >
               <Icon name="refresh" size={16} />
-              应用映射并重新校验
+              Apply mappings and revalidate
             </button>
           )}
           <button
@@ -594,9 +594,9 @@ export function RecognitionPanel({
             <Icon name={slot.confirmed ? "check" : "arrow"} size={16} />
             {slot.confirmed
               ? result.parserMode === "synthetic-mock"
-                ? "示例已确认"
-                : "模块已确认"
-              : `确认 ${MODULE_CONFIG[module].label} 识别结果`}
+                ? "Demo confirmed"
+                : "Module confirmed"
+              : `Confirm ${MODULE_CONFIG[module].label} recognition`}
           </button>
         </div>
       </footer>

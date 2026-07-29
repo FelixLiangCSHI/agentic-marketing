@@ -98,9 +98,9 @@ test("computes the proxy ratio and labels it as non-conversion proxy", () => {
 
   assert.equal(proxy.value, 35 / 370);
   assert.match(proxy.label, /Proxy/);
-  assert.match(proxy.caveat ?? "", /不能.*真实转化率/);
+  assert.match(proxy.caveat ?? "", /not a conversion rate/);
   assert.equal(
-    proxy.reliabilityReasons.some((reason) => reason.includes("不是用户级")),
+    proxy.reliabilityReasons.some((reason) => reason.includes("not a user-level")),
     true,
   );
 });

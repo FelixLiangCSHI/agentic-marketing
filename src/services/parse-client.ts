@@ -70,7 +70,7 @@ export async function parseLinkedInFile(
   if (!isParseApiResponse(payload)) {
     throw new ParseClientError({
       code: "PARSE_FAILED",
-      message: "解析服务返回了无法识别的响应。",
+      message: "The parsing service returned an unrecognized response.",
       retryable: true,
     });
   }

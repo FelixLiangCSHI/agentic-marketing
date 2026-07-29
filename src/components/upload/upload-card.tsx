@@ -29,18 +29,18 @@ const ICONS: Record<LinkedInModule, IconName> = {
 
 function statusLabel(slot: UploadSlotState): string {
   if (slot.status === "parsing") {
-    return "安全解析中";
+    return "Securely parsing";
   }
   if (slot.status === "error") {
-    return "需要处理";
+    return "Action required";
   }
   if (slot.confirmed) {
-    return "已确认";
+    return "Confirmed";
   }
   if (slot.status === "parsed") {
-    return "待确认";
+    return "Pending confirmation";
   }
-  return "待上传";
+  return "Awaiting upload";
 }
 
 function aggregateDateRange(slot: UploadSlotState): string {
@@ -50,7 +50,7 @@ function aggregateDateRange(slot: UploadSlotState): string {
     ) ?? [];
 
   if (ranges.length === 0) {
-    return "未识别";
+    return "Not recognized";
   }
 
   const starts = ranges.map(({ start }) => start).sort();
@@ -117,7 +117,7 @@ export function UploadCard({
         className="visually-hidden"
         type="file"
         accept={ACCEPTED_FILE_TYPES}
-        aria-label={`选择 ${config.label} 数据文件`}
+        aria-label={`Select ${config.label} data file`}
         onChange={(event) => chooseFile(event.target.files?.[0])}
       />
 
@@ -135,17 +135,17 @@ export function UploadCard({
           <span className="drop-zone__icon">
             <Icon name="upload" size={22} />
           </span>
-          <strong>拖拽文件到这里</strong>
-          <span>或</span>
+          <strong>Drop a file here</strong>
+          <span>or</span>
           <button
             className="text-button"
             type="button"
             onClick={() => inputRef.current?.click()}
           >
-            浏览本地文件
+            Browse files
           </button>
           <small>
-            XLSX、XLS、CSV · 最大 {formatFileSize(MAX_UPLOAD_SIZE_BYTES)}
+            XLSX, XLS, CSV · Maximum {formatFileSize(MAX_UPLOAD_SIZE_BYTES)}
           </small>
         </div>
       ) : (
@@ -167,7 +167,7 @@ export function UploadCard({
           {slot.status === "parsing" && (
             <div className="parse-progress" role="status">
               <span />
-              <p>正在服务端校验签名、定位表头并规范化数据…</p>
+              <p>Validating the signature, locating headers, and normalizing data...</p>
             </div>
           )}
 
@@ -178,14 +178,14 @@ export function UploadCard({
                 <dd>{slot.result.workbook.sheetCount}</dd>
               </div>
               <div>
-                <dt>有效行</dt>
+                <dt>Valid rows</dt>
                 <dd>
-                  {slot.result.validRows.toLocaleString("zh-CN")} /{" "}
-                  {slot.result.totalRows.toLocaleString("zh-CN")}
+                  {slot.result.validRows.toLocaleString("en-US")} /{" "}
+                  {slot.result.totalRows.toLocaleString("en-US")}
                 </dd>
               </div>
               <div>
-                <dt>时间范围</dt>
+                <dt>Date range</dt>
                 <dd>{aggregateDateRange(slot)}</dd>
               </div>
             </dl>
@@ -204,7 +204,7 @@ export function UploadCard({
           {repeated && (
             <div className="inline-warning" role="alert">
               <Icon name="alert" size={17} />
-              <span>同一模块已在其他上传卡片中出现，请移除或重新选择。</span>
+              <span>This module appears in another upload. Remove or replace one file.</span>
             </div>
           )}
 
@@ -216,7 +216,7 @@ export function UploadCard({
                 onClick={onInspect}
               >
                 <Icon name="table" size={15} />
-                查看识别
+                Review recognition
               </button>
             )}
             <button
@@ -226,7 +226,7 @@ export function UploadCard({
               onClick={() => inputRef.current?.click()}
             >
               <Icon name="refresh" size={15} />
-              重新选择
+              Replace
             </button>
             <button
               className="icon-text-button icon-text-button--danger"
@@ -235,7 +235,7 @@ export function UploadCard({
               onClick={onRemove}
             >
               <Icon name="trash" size={15} />
-              移除
+              Remove
             </button>
           </div>
         </div>

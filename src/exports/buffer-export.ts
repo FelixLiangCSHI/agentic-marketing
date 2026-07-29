@@ -95,15 +95,15 @@ export function defaultBufferDateRange(
   if (!start) {
     throw new BufferExportError(
       "INVALID_HANDOFF_OPTIONS",
-      `不支持时区 ${timeZone}。`,
+      `Time zone ${timeZone} is not supported.`,
       [
         issue(
           "INVALID_HANDOFF_TIME_ZONE",
           "error",
           null,
           "timeZone",
-          `不支持时区 ${timeZone}。`,
-          "请选择有效的 IANA 时区后重试。",
+          `Time zone ${timeZone} is not supported.`,
+          "Select a valid IANA time zone and retry.",
         ),
       ],
     );
@@ -181,8 +181,8 @@ function itemIssues(
         "info",
         item.itemId,
         "channel",
-        "该内容不属于本次选择的渠道。",
-        "如需导出，请在渠道筛选中选择该渠道。",
+        "This content does not belong to a selected channel.",
+        "Select the channel in the filter to include it.",
         false,
       ),
     );
@@ -197,8 +197,8 @@ function itemIssues(
         "info",
         item.itemId,
         "date",
-        "该内容不在本次导出日期范围内，仍保留在 30 天计划中。",
-        "调整日期范围或保留到下一批交接。",
+        "This content is outside the export date range and remains in the 30-day plan.",
+        "Adjust the date range or retain it for a later handoff.",
         false,
       ),
     );
@@ -210,8 +210,8 @@ function itemIssues(
         "error",
         item.itemId,
         "status",
-        "只有用户已确认的内容可以交付 Buffer。",
-        "由 Lucy 审核后将内容状态设为已批准。",
+        "Only reviewer-approved content can be handed off to Buffer.",
+        "Complete review and set the content status to approved.",
       ),
     );
   }
@@ -222,8 +222,8 @@ function itemIssues(
         "error",
         item.itemId,
         "workflowStatus",
-        "该内容已被用户标记为 published，不应再次排期。",
-        "确认实际状态；如需新版本，请复制为新的计划项。",
+        "This content is marked as published and should not be scheduled again.",
+        "Confirm its status or duplicate it as a new plan item.",
       ),
     );
   } else if (item.workflowStatus === "failed") {
@@ -233,8 +233,8 @@ function itemIssues(
         "warning",
         item.itemId,
         "workflowStatus",
-        "该内容曾标记为交接失败，本次将作为重试。",
-        "确认失败原因已修复后再继续。",
+        "This content previously failed handoff and will be retried.",
+        "Confirm the previous issue is resolved before continuing.",
         false,
       ),
     );
@@ -249,8 +249,8 @@ function itemIssues(
         "warning",
         item.itemId,
         "workflowStatus",
-        "该内容已生成过 Buffer 交接文件，本次属于重复导出。",
-        "确认不会在 Buffer 中创建重复排期后再继续。",
+        "A Buffer handoff file already includes this content, making this a duplicate export.",
+        "Confirm this will not create a duplicate schedule in Buffer.",
         false,
       ),
     );
@@ -262,8 +262,8 @@ function itemIssues(
         "error",
         item.itemId,
         "postText",
-        "发布文案为空。",
-        "补充经审核的发布文案，不会由导出器自动生成或猜测。",
+        "Publishing copy is empty.",
+        "Add reviewed copy; the exporter does not create or infer it.",
       ),
     );
   }
@@ -274,8 +274,8 @@ function itemIssues(
         "error",
         item.itemId,
         "channel",
-        "当前 Buffer 适配器不支持该渠道。",
-        "选择当前系统支持的渠道，或等待新增渠道级适配器。",
+        "The current Buffer adapter does not support this channel.",
+        "Select a supported channel.",
       ),
     );
   }
@@ -286,8 +286,8 @@ function itemIssues(
         "error",
         item.itemId,
         "date",
-        "排期日期无效。",
-        "使用 YYYY-MM-DD 格式的有效日期。",
+        "The scheduled date is invalid.",
+        "Use a valid YYYY-MM-DD date.",
       ),
     );
   }
@@ -298,8 +298,8 @@ function itemIssues(
         "error",
         item.itemId,
         "scheduledTime",
-        "排期时间无效。",
-        "使用 24 小时 HH:mm 格式。",
+        "The scheduled time is invalid.",
+        "Use 24-hour HH:mm format.",
       ),
     );
   }
@@ -310,8 +310,8 @@ function itemIssues(
         "error",
         item.itemId,
         "timeZone",
-        "内容项时区不是有效的 IANA 时区。",
-        "选择受支持的 IANA 时区。",
+        "The content item time zone is not a valid IANA time zone.",
+        "Select a supported IANA time zone.",
       ),
     );
   } else if (item.timeZone !== options.timeZone) {
@@ -321,8 +321,8 @@ function itemIssues(
         "error",
         item.itemId,
         "timeZone",
-        `内容项时区 ${item.timeZone} 与本次交接时区 ${options.timeZone} 不一致。`,
-        "统一内容项和交接时区；CSV 本身不携带时区列。",
+        `Content time zone ${item.timeZone} differs from handoff time zone ${options.timeZone}.`,
+        "Align content and handoff time zones; CSV does not contain a time-zone column.",
       ),
     );
   }
@@ -343,8 +343,8 @@ function itemIssues(
           "error",
           item.itemId,
           "scheduledTime",
-          "该本地时间不存在，可能落在夏令时跳转区间。",
-          "选择该时区中真实存在的本地时间。",
+          "This local time does not exist, possibly due to a daylight-saving transition.",
+          "Select a valid local time in this time zone.",
         ),
       );
     } else if (scheduledAt.valueOf() <= now.valueOf()) {
@@ -354,8 +354,8 @@ function itemIssues(
           "error",
           item.itemId,
           "scheduledTime",
-          "转换到 UTC 后的排期时间已经过去。",
-          "调整日期或时间后重新校验。",
+          "The scheduled time is in the past after UTC conversion.",
+          "Adjust the date or time and revalidate.",
         ),
       );
     }
@@ -367,8 +367,8 @@ function itemIssues(
         "error",
         item.itemId,
         "linkUrl",
-        "链接必须是有效的公开 HTTP(S) URL，且不能包含嵌入凭据。",
-        "修正链接或清空可选链接字段。",
+        "The link must be a public HTTP(S) URL without embedded credentials.",
+        "Correct the link or clear the optional field.",
       ),
     );
   }
@@ -379,8 +379,8 @@ function itemIssues(
         "error",
         item.itemId,
         "mediaUrls",
-        "Buffer 官方批量上传当前仅支持每条内容一张图片。",
-        "只保留一个直接图片 URL，其他素材在 Buffer 中手动处理。",
+        "Buffer bulk upload supports one image per content item.",
+        "Retain one direct image URL and handle other assets manually in Buffer.",
       ),
     );
   }
@@ -392,8 +392,8 @@ function itemIssues(
           "error",
           item.itemId,
           "mediaUrls",
-          "媒体链接必须是有效的公开 HTTP(S) URL，且不能包含嵌入凭据。",
-          "替换为公开的直接图片 URL。",
+          "The media link must be a public HTTP(S) URL without embedded credentials.",
+          "Replace it with a public direct image URL.",
         ),
       );
     } else if (!isDirectImageUrl(mediaUrl)) {
@@ -403,15 +403,15 @@ function itemIssues(
           "error",
           item.itemId,
           "mediaUrls",
-          "媒体链接不像以图片扩展名结尾的直接图片 URL。",
-          "使用能单独打开图片并以 jpg、png、gif、webp 或 heic 结尾的 URL。",
+          "The media link does not appear to be a direct image URL.",
+          "Use a URL ending in jpg, png, gif, webp, or heic that opens the image directly.",
         ),
       );
     }
   }
   if (
-    item.contentFormat.includes("轮播") ||
-    item.contentFormat.includes("视频")
+    item.contentFormat.includes("carousel") ||
+    item.contentFormat.includes("video")
   ) {
     issues.push(
       issue(
@@ -419,8 +419,8 @@ function itemIssues(
         "error",
         item.itemId,
         "contentFormat",
-        "Buffer 官方 CSV 批量上传当前不支持视频或轮播内容。",
-        "改为文字/单图版本，或在 Buffer Composer 中手动创建该内容。",
+        "Buffer CSV bulk upload does not support video or carousel content.",
+        "Use text or a single image, or create the content manually in Buffer.",
       ),
     );
   } else if (item.mediaRequirement && item.mediaUrls.length === 0) {
@@ -430,8 +430,8 @@ function itemIssues(
         "warning",
         item.itemId,
         "mediaUrls",
-        "计划包含素材需求但尚未提供直接图片 URL；CSV 仍可交付文字。",
-        "导出前补充直接图片 URL，或由 Lucy 在 Buffer 中手动添加图片。",
+        "The plan requires media but has no direct image URL; CSV can still carry the text.",
+        "Add a direct image URL before export or add the image manually in Buffer.",
         false,
       ),
     );
@@ -443,8 +443,8 @@ function itemIssues(
         "warning",
         item.itemId,
         "campaignTag",
-        "Buffer Tags 区分大小写，且必须已存在于 Lucy 的账户。",
-        "在 Buffer 中确认同名 Tag 已存在，否则该 Tag 会被忽略。",
+        "Buffer tags are case-sensitive and must already exist in the workspace.",
+        "Confirm the matching tag exists in Buffer or it will be ignored.",
         false,
       ),
     );
@@ -459,8 +459,8 @@ function itemIssues(
         "error",
         item.itemId,
         "postText",
-        `文案和链接合计超过 ${channelDefinition.maxTextLength} 个字符。`,
-        "由 Lucy 编辑文案；导出器不会静默截断。",
+        `Copy and link exceed ${channelDefinition.maxTextLength} characters.`,
+        "Edit the copy; the exporter does not truncate it silently.",
       ),
     );
   }
@@ -526,8 +526,8 @@ export function validateBufferHandoff(
         "error",
         null,
         "dateRange",
-        "导出日期范围无效，结束日期不能早于开始日期。",
-        "选择有效的开始和结束日期。",
+        "The export date range is invalid; the end cannot precede the start.",
+        "Select valid start and end dates.",
       ),
     );
   }
@@ -538,8 +538,8 @@ export function validateBufferHandoff(
         "error",
         null,
         "channels",
-        "尚未选择目标渠道。",
-        "至少选择一个当前支持的渠道。",
+        "No target channel is selected.",
+        "Select at least one supported channel.",
       ),
     );
   }
@@ -550,8 +550,8 @@ export function validateBufferHandoff(
         "error",
         null,
         "timeZone",
-        "本次交接时区无效。",
-        "选择有效的 IANA 时区。",
+        "The handoff time zone is invalid.",
+        "Select a valid IANA time zone.",
       ),
     );
   }
@@ -561,8 +561,8 @@ export function validateBufferHandoff(
       "info",
       null,
       "timeZone",
-      "Buffer 官方通用 CSV 没有时区列；Posting Time 按目标渠道在 Buffer 中配置的时区解释。",
-      `导入前确认 Buffer 渠道时区为 ${options.timeZone}，并在预览中复核时间。`,
+      "Buffer CSV has no time-zone column; Posting Time uses the target channel time zone configured in Buffer.",
+      `Before import, confirm the Buffer channel time zone is ${options.timeZone} and verify times in preview.`,
       false,
     ),
   );
@@ -606,8 +606,8 @@ export function validateBufferHandoff(
     "SCHEDULE_CONFLICT",
     (item) => `${item.channel}|${item.date}|${item.scheduledTime}`,
     "scheduledTime",
-    "同一渠道在同一时间存在多条待交接内容。",
-    "在 Buffer 中确认队列或调整其中一条内容的时间。",
+    "Multiple handoff items use the same channel and time.",
+    "Review the Buffer queue or adjust one item's time.",
   );
   addPairWarnings(
     reviews,
@@ -617,10 +617,10 @@ export function validateBufferHandoff(
         .normalize("NFKC")
         .trim()
         .replace(/\s+/g, " ")
-        .toLocaleLowerCase("zh-CN")}`,
+        .toLocaleLowerCase("en-US")}`,
     "postText",
-    "同一渠道存在重复文案。",
-    "确认这是有意重复发布，而不是误操作。",
+    "Duplicate copy exists for the same channel.",
+    "Confirm the repeated publication is intentional.",
   );
 
   const channelCounts: Partial<Record<BufferSupportedChannel, number>> = {};
@@ -640,8 +640,8 @@ export function validateBufferHandoff(
         "warning",
         null,
         "channels",
-        `至少一个渠道的本次内容数超过当前官方资料所示 Free 队列容量 ${BUFFER_OFFICIAL_GUIDANCE.freePlan.queueCapacityPerChannel} 条。`,
-        "按日期分批导出，或由 Lucy 根据当前 Buffer 套餐确认后继续。",
+        `At least one channel exceeds the documented free queue capacity of ${BUFFER_OFFICIAL_GUIDANCE.freePlan.queueCapacityPerChannel} items.`,
+        "Export in date-based batches or confirm capacity for the current Buffer plan.",
         false,
       ),
     );
@@ -760,7 +760,7 @@ export function createBufferHandoffExport(
     ].filter((candidate) => candidate.severity === "warning");
     throw new BufferExportError(
       "WARNING_ACKNOWLEDGEMENT_REQUIRED",
-      "请先确认已审阅本次交接警告。",
+      "Acknowledge the handoff warnings before continuing.",
       warnings,
     );
   }
@@ -775,7 +775,7 @@ export function createBufferHandoffExport(
       .filter((candidate) => candidate.blocksExport);
     throw new BufferExportError(
       "NO_EXPORTABLE_CONTENT",
-      "没有可生成 Buffer 交接文件的内容。",
+      "No content is eligible for a Buffer handoff file.",
       errors,
     );
   }
@@ -842,7 +842,7 @@ export function createBufferHandoffExport(
         ),
         changedAt: generatedAt,
         changeType: "buffer_handoff",
-        summary: `生成 Buffer 交接文件：导出 ${exportedItemIds.length} 项，跳过 ${skippedItemIds.length} 项；未标记为 published。`,
+        summary: `Prepared Buffer handoff files: exported ${exportedItemIds.length} items and skipped ${skippedItemIds.length}; no items were marked published.`,
       },
     ],
   };

@@ -52,38 +52,23 @@ interface PipelineStage {
 
 const PIPELINE_STAGES: readonly PipelineStage[] = [
   {
-    label: "数据接入",
-    description: "上传与模块识别",
+    label: "Historical Analysis",
+    description: "Posts and performance",
     icon: "database",
   },
   {
-    label: "数据质量",
-    description: "映射与异常确认",
-    icon: "shield",
-  },
-  {
-    label: "指标计算",
-    description: "确定性程序计算",
-    icon: "table",
-  },
-  {
-    label: "受众洞察",
-    description: "聚合画像比较",
-    icon: "followers",
-  },
-  {
-    label: "内容洞察",
-    description: "内容表现模式",
+    label: "Campaign Strategy",
+    description: "Human approval required",
     icon: "content",
   },
   {
-    label: "策略建议",
-    description: "机会与风险",
-    icon: "sparkles",
+    label: "30-Day Calendar",
+    description: "Schedule and approval",
+    icon: "content",
   },
   {
-    label: "30 天计划",
-    description: "实验与行动排期",
+    label: "Prepare Content",
+    description: "Publishing-ready content",
     icon: "arrow",
   },
 ];
@@ -91,7 +76,7 @@ const PIPELINE_STAGES: readonly PipelineStage[] = [
 function fallbackParseError(): ParseError {
   return {
     code: "PARSE_FAILED",
-    message: "无法连接解析服务，请检查本地服务后重试。",
+    message: "The parsing service is unavailable. Check the local service and try again.",
     retryable: true,
   };
 }
@@ -147,13 +132,13 @@ function AppHeader({
         <span className="brand__divider" />
         <div>
           <strong>Marketing Intelligence</strong>
-          <span>AI Agent Workspace</span>
+          <span>Campaign Operations Workspace</span>
         </div>
       </div>
       <div className="app-header__meta">
         <span className="product-status">
           <span />
-          证据策略 Demo
+          Evidence Strategy Demo
         </span>
         {mode && (
           <span
@@ -163,14 +148,14 @@ function AppHeader({
                 : "mode-badge mode-badge--private"
             }
           >
-            <Icon name={mode === "mock" ? "sparkles" : "lock"} size={14} />
-            {mode === "mock" ? "Synthetic Mock" : "本地临时会话"}
+            <Icon name={mode === "mock" ? "database" : "lock"} size={14} />
+            {mode === "mock" ? "Synthetic Demo Data" : "Local Session"}
           </span>
         )}
         {mode && (
           <button className="header-button" type="button" onClick={onReset}>
             <Icon name="refresh" size={15} />
-            重新开始
+            Start over
           </button>
         )}
       </div>
@@ -190,17 +175,17 @@ function PipelineNavigation({
   return (
     <aside className="pipeline-nav">
       <div className="pipeline-nav__heading">
-        <span>ANALYSIS FLOW</span>
-        <strong>分析流程</strong>
+        <span>CAMPAIGN WORKFLOW</span>
+        <strong>Workflow progress</strong>
       </div>
       <ol>
         {PIPELINE_STAGES.map((stage, index) => {
           const status =
-            packageReady && index === 1 && hasBlockingIssues
+            packageReady && index === 0 && hasBlockingIssues
               ? "error"
-              : packageReady && index <= 2
+              : packageReady && index === 0
               ? "completed"
-              : packageReady && index === 3 && !hasBlockingIssues
+              : packageReady && index === 1 && !hasBlockingIssues
                 ? "running"
                 : index === 0 && ingestionComplete
                   ? "completed"
@@ -229,9 +214,7 @@ function PipelineNavigation({
       </ol>
       <div className="pipeline-nav__note">
         <Icon name="lock" size={17} />
-        <p>
-          上传文件仅在当前请求中解析，Demo 不写入磁盘或数据库。
-        </p>
+        <p>Human approval checkpoints prevent unreviewed recommendations from advancing.</p>
       </div>
     </aside>
   );
@@ -250,21 +233,21 @@ function ContextRail({
     <aside className="context-rail">
       <section className="context-card">
         <span className="section-label">SESSION CONTEXT</span>
-        <h3>本次接入</h3>
+        <h3>Current intake</h3>
         <div className="context-score">
           <strong>{completedCount}</strong>
-          <span>/ 3 模块已确认</span>
+          <span>/ 3 modules confirmed</span>
         </div>
-        <div className="context-progress" aria-label={`${completedCount}/3 已确认`}>
+        <div className="context-progress" aria-label={`${completedCount}/3 confirmed`}>
           <span style={{ width: `${(completedCount / 3) * 100}%` }} />
         </div>
         <dl className="context-metrics">
           <div>
-            <dt>有效记录</dt>
-            <dd>{validRows.toLocaleString("zh-CN")}</dd>
+            <dt>Valid records</dt>
+            <dd>{validRows.toLocaleString("en-US")}</dd>
           </div>
           <div>
-            <dt>文件上限</dt>
+            <dt>File limit</dt>
             <dd>{formatFileSize(MAX_UPLOAD_SIZE_BYTES)}</dd>
           </div>
         </dl>
@@ -275,12 +258,12 @@ function ContextRail({
       <section className="context-card context-card--privacy">
         <Icon name="shield" size={20} />
         <div>
-          <h3>数据隐私边界</h3>
+          <h3>Data privacy boundaries</h3>
           <ul>
-            <li>仅处理 LinkedIn 聚合分析数据</li>
-            <li>不能识别匿名访客或具体关注者</li>
-            <li>不会推断个人购买意向</li>
-            <li>公式只识别并忽略，不执行</li>
+            <li>Processes aggregate LinkedIn analytics only</li>
+            <li>Cannot identify visitors or individual followers</li>
+            <li>Does not infer individual purchase intent</li>
+            <li>Recognizes and ignores formulas without executing them</li>
           </ul>
         </div>
       </section>
@@ -412,6 +395,90 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
   const missingModules = LINKEDIN_MODULES.filter(
     (module) => !state.slots[module].confirmed,
   );
+  const hasIntakeActivity = LINKEDIN_MODULES.some(
+    (module) => state.slots[module].status !== "idle",
+  );
+  const confidencePercent = Math.round((completedCount / 3) * 100);
+  const hasBlockingIssues = snapshot?.quality.hasBlockingIssues ?? false;
+  const hasQualityWarnings = (snapshot?.quality.warningCount ?? 0) > 0;
+  let confidenceLabel = "Not assessed";
+  let confidenceTone = "neutral";
+  let confidenceDetail = `${completedCount} of 3 modules confirmed`;
+
+  if (hasBlockingIssues) {
+    const issueCount = snapshot?.quality.blockingIssueCount ?? 0;
+    confidenceLabel = "Low";
+    confidenceTone = "danger";
+    confidenceDetail = `${issueCount} blocking quality issue${issueCount === 1 ? "" : "s"}`;
+  } else if (hasQualityWarnings) {
+    const warningCount = snapshot?.quality.warningCount ?? 0;
+    confidenceLabel = "Moderate";
+    confidenceTone = "approval";
+    confidenceDetail = `${warningCount} quality warning${warningCount === 1 ? "" : "s"}`;
+  } else if (completedCount === 3) {
+    confidenceLabel = "High";
+    confidenceTone = "ready";
+  } else if (completedCount === 2) {
+    confidenceLabel = "Moderate";
+  } else if (completedCount === 1) {
+    confidenceLabel = "Developing";
+  }
+  const workflowSummary = state.analysisReady
+    ? {
+        badge: hasBlockingIssues ? "Attention required" : "In review",
+        title: hasBlockingIssues
+          ? "Analysis requires remediation"
+          : "Campaign strategy review",
+        detail: "Step 2 of 4",
+        tone: hasBlockingIssues ? "danger" : "active",
+      }
+    : ready
+      ? {
+          badge: "Ready",
+          title: "Historical analysis ready",
+          detail: "Step 1 of 4",
+          tone: "ready",
+        }
+      : hasIntakeActivity
+        ? {
+            badge: "In progress",
+            title: "Data intake in progress",
+            detail: "Step 1 of 4",
+            tone: "active",
+          }
+        : {
+            badge: "Open",
+            title: "Awaiting source data",
+            detail: "Step 1 of 4",
+            tone: "neutral",
+          };
+  const approvalGate = hasBlockingIssues
+    ? {
+        badge: "Blocked",
+        title: "Resolve data quality issues",
+        detail: "Approval cannot advance while blocking issues remain.",
+        tone: "danger",
+      }
+    : state.analysisReady
+      ? {
+          badge: "Required",
+          title: "Human review pending",
+          detail: "Recommendations require explicit approval before planning.",
+          tone: "approval",
+        }
+      : ready
+        ? {
+            badge: "Available",
+            title: "Analysis gate available",
+            detail: "Start analysis to prepare evidence for human review.",
+            tone: "ready",
+          }
+        : {
+            badge: "Locked",
+            title: "Approval gate locked",
+            detail: "Confirm all three source modules to unlock review.",
+            tone: "neutral",
+          };
 
   return (
     <div className="app-shell">
@@ -421,43 +488,83 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
       />
 
       <div className="page-frame">
-        <section className="hero">
-          <div>
-            <span className="hero__eyebrow">
-              <Icon name="sparkles" size={15} />
-              LINKEDIN MARKETING AI AGENT
-            </span>
-            <h1>把 LinkedIn 导出，转换为可追溯的营销分析输入</h1>
-            <p>
-              安全识别 Followers、Visitors 与 Content 工作簿，逐 Sheet 定位表头、映射字段并规范化数据；确认后，后续分析只依赖统一模型。
-            </p>
-            <div className="hero__trust">
-              <span>
-                <Icon name="shield" size={15} />
-                服务端双重校验
-              </span>
-              <span>
-                <Icon name="lock" size={15} />
-                默认不持久化
-              </span>
-              <span>
-                <Icon name="table" size={15} />
-                行级证据来源
-              </span>
-            </div>
-          </div>
-          <div className="mock-entry">
-            <span className="mock-entry__icon">
-              <Icon name="sparkles" size={22} />
-            </span>
+        <section
+          className="dashboard-overview"
+          aria-labelledby="workflow-overview-title"
+        >
+          <header className="dashboard-overview__header">
             <div>
-              <strong>没有文件？</strong>
-              <p>载入完全虚构的小型 CSV，体验相同的识别与确认接口。</p>
+              <span className="section-label">CAMPAIGN OPERATIONS</span>
+              <h1 id="workflow-overview-title">Campaign workflow overview</h1>
+              <p>
+                Governed intake, analysis, approval, and publishing preparation
+                for LinkedIn campaign operations.
+              </p>
             </div>
-            <button className="secondary-button" type="button" onClick={loadMock}>
-              使用脱敏示例
-              <Icon name="arrow" size={16} />
-            </button>
+            <div className="mock-entry">
+              <div>
+                <strong>Demo workspace</strong>
+                <p>Load fictional data into the same governed intake.</p>
+              </div>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={loadMock}
+              >
+                Use demo data
+              </button>
+            </div>
+          </header>
+
+          <div
+            className="dashboard-overview__status"
+            aria-label="Current workflow status"
+          >
+            <article className="overview-status-card">
+              <div className="overview-status-card__heading">
+                <h2>Workflow status</h2>
+                <span
+                  className={`overview-badge overview-badge--${workflowSummary.tone}`}
+                >
+                  {workflowSummary.badge}
+                </span>
+              </div>
+              <strong>{workflowSummary.title}</strong>
+              <p>{workflowSummary.detail}</p>
+            </article>
+
+            <article className="overview-status-card">
+              <div className="overview-status-card__heading">
+                <h2>Data confidence</h2>
+                <span
+                  className={`overview-badge overview-badge--${confidenceTone}`}
+                >
+                  {confidenceLabel}
+                </span>
+              </div>
+              <strong>{confidencePercent}% source coverage</strong>
+              <p>{confidenceDetail}</p>
+              <progress
+                aria-label="Data confidence based on confirmed source modules"
+                max="100"
+                value={confidencePercent}
+              >
+                {confidencePercent}%
+              </progress>
+            </article>
+
+            <article className="overview-status-card">
+              <div className="overview-status-card__heading">
+                <h2>Approval gate</h2>
+                <span
+                  className={`overview-badge overview-badge--${approvalGate.tone}`}
+                >
+                  {approvalGate.badge}
+                </span>
+              </div>
+              <strong>{approvalGate.title}</strong>
+              <p>{approvalGate.detail}</p>
+            </article>
           </div>
         </section>
 
@@ -465,7 +572,7 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
           <PipelineNavigation
             ingestionComplete={ready}
             packageReady={state.analysisReady}
-            hasBlockingIssues={snapshot?.quality.hasBlockingIssues ?? false}
+            hasBlockingIssues={hasBlockingIssues}
           />
 
           <main className="workspace">
@@ -490,11 +597,11 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
                   <div className="section-heading section-heading--large">
                     <div>
                       <span className="section-label">DATA SOURCES</span>
-                      <h2>上传 LinkedIn 分析导出</h2>
-                      <p>三个模块必须独立确认；支持多 Sheet 工作簿。</p>
+                      <h2>Upload LinkedIn analytics exports</h2>
+                      <p>Confirm each module independently; multi-sheet workbooks are supported.</p>
                     </div>
                     <span className="upload-counter">
-                      {completedCount} / 3 已确认
+                      {completedCount} / 3 confirmed
                     </span>
                   </div>
 
@@ -566,8 +673,8 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
                   <section className="recognition-panel">
                     <EmptyState
                       icon="table"
-                      title="上传后在这里确认识别结果"
-                      description="系统会展示文件与 Sheet 信息、字段映射、未识别字段、标准化预览和质量警告。"
+                      title="Review recognition results here"
+                      description="File and sheet details, field mappings, unmatched fields, normalized previews, and quality warnings appear here."
                     />
                   </section>
                 )}
@@ -586,19 +693,19 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
                     <div>
                       <strong>
                         {ready
-                          ? "三个数据模块已确认"
-                          : "尚未满足进入下一阶段的条件"}
+                          ? "All three data modules are confirmed"
+                          : "Requirements for the next stage are not yet met"}
                       </strong>
                       <p>
                         {ready
-                          ? "可以生成供指标计算使用的统一数据包。"
+                          ? "The standardized analysis package is ready."
                           : missingModules.length > 0
-                            ? `待确认：${missingModules
+                            ? `Pending confirmation: ${missingModules
                                 .map((item) => MODULE_CONFIG[item].label)
                                 .join("、")}。${missingModules
                                 .map((item) => MODULE_CONFIG[item].impact)
                                 .join("")}`
-                            : "请解决重复模块或数据质量问题。"}
+                            : "Resolve duplicate modules or data quality issues."}
                       </p>
                     </div>
                   </div>
@@ -608,7 +715,7 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
                     disabled={!ready}
                     onClick={() => dispatch({ type: "MARK_ANALYSIS_READY" })}
                   >
-                    生成统一数据包
+                    Analyze standardized data
                     <Icon name="arrow" size={16} />
                   </button>
                 </section>
@@ -619,7 +726,7 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
           <ContextRail completedCount={completedCount} validRows={validRows}>
             <section className="context-card">
               <span className="section-label">REQUIRED INPUTS</span>
-              <h3>数据要求</h3>
+              <h3>Data requirements</h3>
               <ul className="requirement-list">
                 {LINKEDIN_MODULES.map((module) => {
                   const slot = state.slots[module];
@@ -639,12 +746,12 @@ export function IngestionDemo({ mockResults }: IngestionDemoProps) {
                         <strong>{MODULE_CONFIG[module].label}</strong>
                         <small>
                           {slot.confirmed
-                            ? `${slot.result?.validRows.toLocaleString("zh-CN")} 条有效记录`
+                            ? `${slot.result?.validRows.toLocaleString("en-US")} valid records`
                             : slot.status === "parsed"
-                              ? "已解析，等待确认"
+                              ? "Parsed, awaiting confirmation"
                               : slot.status === "parsing"
-                                ? "正在识别"
-                                : "尚未确认"}
+                                ? "Analyzing"
+                                : "Not confirmed"}
                         </small>
                       </div>
                     </li>

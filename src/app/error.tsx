@@ -13,11 +13,11 @@ export default function Error({
       <span className="route-state__icon route-state__icon--error">
         <Icon name="alert" size={28} />
       </span>
-      <h1>工作区暂时无法加载</h1>
-      <p>上传内容不会被保留。请重试；如仍失败，请检查本地服务日志。</p>
+      <h1>The workspace could not load</h1>
+      <p>Uploaded content was not retained. Try again or check local service logs.</p>
       <button className="primary-button" type="button" onClick={unstable_retry}>
         <Icon name="refresh" size={16} />
-        重新加载
+        Reload
       </button>
     </main>
   );

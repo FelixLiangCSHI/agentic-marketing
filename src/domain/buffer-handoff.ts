@@ -62,7 +62,7 @@ export const BUFFER_OFFICIAL_GUIDANCE = {
   },
   accountImportPreviewVerified: false,
   note:
-    "字段依据 Buffer 官方帮助页；仍应从目标渠道设置下载最新模板并在 Buffer 预览中复核。",
+    "Fields follow official Buffer guidance; download the latest template from channel settings and verify it in the Buffer preview.",
 } as const;
 
 export interface BufferDateRange {

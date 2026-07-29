@@ -21,11 +21,11 @@ test("snapshot view exposes formulas, sources, and unavailable states", () => {
     }),
   );
 
-  assert.match(markup, /确定性指标与数据质量快照/);
-  assert.match(markup, /这个数字如何计算/);
-  assert.match(markup, /数据来源/);
-  assert.match(markup, /不可用/);
-  assert.match(markup, /相关性和代理比率均不得解释为因果/);
+  assert.match(markup, /Deterministic metrics and data quality snapshot/);
+  assert.match(markup, /How this value is calculated/);
+  assert.match(markup, /Data sources/);
+  assert.match(markup, /Unavailable/);
+  assert.match(markup, /correlations and proxies are not causation/);
 });
 
 test("blocking quality issues disable the Agent input gate", () => {
@@ -42,7 +42,7 @@ test("blocking quality issues disable the Agent input gate", () => {
     }),
   );
 
-  assert.match(markup, /存在阻断问题，不能进入 AI 洞察/);
+  assert.match(markup, /Blocking issues prevent recommendation review/);
   assert.match(
     markup,
     /<button class="primary-button" type="button" disabled="">/,

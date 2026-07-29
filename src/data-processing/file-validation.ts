@@ -88,7 +88,7 @@ export function validateFileEnvelope(
       ok: false,
       error: error(
         "UNSUPPORTED_FILE_TYPE",
-        "仅支持 XLSX、XLS 或 CSV 文件。",
+        "Only XLSX, XLS, and CSV files are supported.",
       ),
     };
   }
@@ -96,7 +96,7 @@ export function validateFileEnvelope(
   if (file.size === 0) {
     return {
       ok: false,
-      error: error("EMPTY_FILE", "文件为空，请重新导出后再试。"),
+      error: error("EMPTY_FILE", "The file is empty. Export it again and retry."),
     };
   }
 
@@ -105,7 +105,7 @@ export function validateFileEnvelope(
       ok: false,
       error: error(
         "REQUEST_TOO_LARGE",
-        `文件超过 ${formatFileSize(MAX_UPLOAD_SIZE_BYTES)} 限制。`,
+        `The file exceeds the ${formatFileSize(MAX_UPLOAD_SIZE_BYTES)} limit.`,
       ),
     };
   }
@@ -116,7 +116,7 @@ export function validateFileEnvelope(
     return {
       ok: true,
       extensionFormat,
-      mimeWarning: "浏览器未提供可靠 MIME 类型，服务端将校验文件签名。",
+      mimeWarning: "The browser did not provide a reliable MIME type; the server will validate the file signature.",
     };
   }
 
@@ -125,7 +125,7 @@ export function validateFileEnvelope(
       ok: false,
       error: error(
         "INVALID_MIME_TYPE",
-        "文件 MIME 类型与扩展名不一致，请确认文件未被错误重命名。",
+        "The MIME type does not match the extension. Confirm the file was not renamed incorrectly.",
       ),
     };
   }
@@ -247,7 +247,7 @@ export function validateServerFile(
       ok: false,
       error: error(
         "ENCRYPTED_WORKBOOK",
-        "工作簿已加密或受密码保护，请先解除保护后重新上传。",
+        "The workbook is encrypted or password protected. Remove protection before uploading.",
       ),
     };
   }
@@ -257,7 +257,7 @@ export function validateServerFile(
       ok: false,
       error: error(
         "FILE_SIGNATURE_MISMATCH",
-        "文件内容与扩展名不一致，已停止解析。",
+        "File content does not match the extension, so parsing stopped.",
         false,
       ),
     };

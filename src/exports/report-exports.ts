@@ -117,7 +117,7 @@ function exportFileName(
 
 function periodLabel(period: AnalysisPeriod | null): string {
   return period
-    ? `${period.start} 至 ${period.end}（${period.granularity}，样本 ${period.sampleSize}）`
+    ? `${period.start} to ${period.end} (${period.granularity}, sample ${period.sampleSize})`
     : "unavailable";
 }
 
@@ -129,13 +129,13 @@ function metricLine(metric: Metric): string {
   const reasons =
     metric.reliabilityReasons.length > 0
       ? metric.reliabilityReasons.join("；")
-      : "无额外说明";
+      : "No additional details";
   return [
     `- **${metric.label}** (\`${metric.metricId}\`): ${metric.formattedValue}`,
-    `  - 可靠性：${metric.reliability}（${reasons}）`,
-    `  - 时间范围：${periodLabel(metric.period)}`,
-    `  - 公式：${metric.formula}`,
-    `  - 来源模块：${modulesLabel(metric.sourceModules)}`,
+    `  - Reliability: ${metric.reliability} (${reasons})`,
+    `  - Date range: ${periodLabel(metric.period)}`,
+    `  - Formula: ${metric.formula}`,
+    `  - Source modules: ${modulesLabel(metric.sourceModules)}`,
     `  - Evidence ID：\`${metric.metricId}\``,
   ].join("\n");
 }
@@ -147,126 +147,149 @@ export function generateMarkdownReport(input: ReportExportInput): string {
   const insights = strategyBundle.insights;
   const strategies = strategyBundle.strategies;
   const limitations = new Set([
-    "LinkedIn 导出主要为聚合数据，不能识别匿名访客、具体关注者或个人购买意向。",
-    "Visitor-to-Follower Proxy 不是用户级真实转化率。",
-    "发布窗口与指标变化的时间相关性不代表内容导致增长。",
-    "无法支持的指标显示 unavailable，不进行估算。",
+    "LinkedIn exports are primarily aggregate data and cannot identify visitors, followers, or individual purchase intent.",
+    "The visitor-to-follower proxy is not a user-level conversion rate.",
+    "Temporal correlation between publishing and metric changes does not show content caused growth.",
+    "Unsupported metrics display as unavailable and are not estimated.",
     ...(plan?.risksAndLimitations ?? []),
   ]);
 
   const lines = [
-    `# LinkedIn Marketing 分析报告：${input.projectId}`,
+    `# LinkedIn Marketing Analysis Report: ${input.projectId}`,
     "",
-    `- 项目标识：${input.projectId}`,
+    `- Project: ${input.projectId}`,
     `- Snapshot ID：\`${snapshot.snapshotId}\``,
-    `- 生成时间：${plan?.updatedAt ?? strategyBundle.generatedAt}`,
-    `- 分析时间范围：${periodLabel(snapshot.analysisPeriod)}`,
-    `- 数据模块：${modulesLabel(snapshot.sourceModules)}`,
-    `- Prompt 版本：${strategyBundle.promptVersion}${
+    `- Prepared: ${plan?.updatedAt ?? strategyBundle.generatedAt}`,
+    `- Analysis period: ${periodLabel(snapshot.analysisPeriod)}`,
+    `- Data modules: ${modulesLabel(snapshot.sourceModules)}`,
+    `- Prompt version: ${strategyBundle.promptVersion}${
       plan ? ` / ${plan.promptVersion}` : ""
     }`,
-    `- 数据模式：${snapshot.inputMode === "mock" ? "Synthetic Mock" : "用户上传"}`,
+    `- Data mode: ${snapshot.inputMode === "mock" ? "Synthetic Mock" : "User Upload"}`,
     "",
     "## Executive Summary",
     "",
     plan?.executiveSummary ??
-      "当前已完成确定性指标和证据洞察，尚未生成经用户确认的 30 天行动计划。",
+      "Deterministic metrics and evidence-led findings are available; a confirmed 30-day action plan has not been generated.",
     "",
-    "## 数据范围",
+    "## Evidence",
     "",
-    `- Followers 记录：${snapshot.records.followers}`,
-    `- Visitors 记录：${snapshot.records.visitors}`,
-    `- Content 记录：${snapshot.records.content}`,
-    `- 共同分析范围：${periodLabel(snapshot.analysisPeriod)}`,
+    "### Data Scope",
     "",
-    "## 数据质量",
+    `- Follower records: ${snapshot.records.followers}`,
+    `- Visitor records: ${snapshot.records.visitors}`,
+    `- Content records: ${snapshot.records.content}`,
+    `- Shared analysis period: ${periodLabel(snapshot.analysisPeriod)}`,
     "",
-    `- 阻断问题：${snapshot.quality.blockingIssueCount}`,
-    `- Warning：${snapshot.quality.warningCount}`,
-    `- 可进入洞察：${snapshot.canEnterInsights ? "是" : "否"}`,
+    "### Data Quality",
+    "",
+    `- Blocking issues: ${snapshot.quality.blockingIssueCount}`,
+    `- Warnings: ${snapshot.quality.warningCount}`,
+    `- Eligible for findings: ${snapshot.canEnterInsights ? "Yes" : "No"}`,
     ...(qualityIssues.length > 0
       ? qualityIssues.map(
           (issue) =>
             `- [${issue.severity}] \`${issue.code}\` · ${issue.module}：${issue.message}（blocksAnalysis: ${issue.blocksAnalysis ? "yes" : "no"}）`,
         )
-      : ["- 未记录质量问题；这不代表数据能够回答所有业务问题。"]),
+      : ["- No quality issue is recorded; this does not establish coverage of every business question."]),
     "",
-    "## 指标",
+    "### Metrics",
     "",
     ...metrics.flatMap((metric) => [metricLine(metric), ""]),
-    "## 洞察",
+    "## Key Findings",
     "",
     ...(insights.length > 0
       ? insights.flatMap((insight) => [
           `### ${insight.title}`,
           "",
-          `- 状态：${insight.approvalStatus}`,
-          `- 结论：${insight.statement}`,
-          `- 可能意味着：${insight.possibleMeaning}`,
-          `- 建议验证：${insight.suggestedValidation}`,
-          `- Confidence：${insight.confidence}`,
+          `- Status: ${insight.approvalStatus}`,
+          `- ${insight.report.executiveSummary}`,
           `- Evidence IDs：${insight.evidence
             .map((item) => `\`${item.metricId}\``)
             .join("、")}`,
           "",
         ])
-      : ["- 尚无可导出的洞察。", ""]),
-    "## 建议",
+      : ["- No reportable finding is available.", ""]),
+    "## Business Implications",
+    "",
+    ...(insights.length > 0
+      ? insights.flatMap((insight) =>
+          insight.report.businessImplications.map((item) => `- ${item}`),
+        )
+      : ["- No material business implication is available."]),
+    "",
+    "## Recommendations",
     "",
     ...(strategies.length > 0
       ? strategies.flatMap((strategy) => [
           `### ${strategy.title}`,
           "",
-          `- 状态：${strategy.approvalStatus}`,
-          `- 目标：${strategy.objective}`,
-          `- 依据：${strategy.rationale}`,
-          `- 来源洞察：${strategy.insightIds
+          `- Status: ${strategy.approvalStatus}`,
+          `- ${strategy.report.executiveSummary}`,
+          `- Source insights: ${strategy.insightIds
             .map((id) => `\`${id}\``)
             .join("、")}`,
           `- Evidence IDs：${strategy.metricIds
             .map((id) => `\`${id}\``)
             .join("、")}`,
-          ...strategy.actions.map((action) => `- 行动：${action}`),
+          ...strategy.report.recommendations.map((action) => `- ${action}`),
           "",
         ])
-      : ["- 尚无可导出的策略建议。", ""]),
-    "## 30 天计划",
+      : ["- No approved recommendation is available.", ""]),
+    "## Confidence Level",
+    "",
+    ...(insights.length > 0
+      ? insights.map(
+          (insight) =>
+            `- ${insight.title}: ${insight.report.confidenceLevel}`,
+        )
+      : ["- Low"]),
+    "",
+    "## Observed Trends",
+    "",
+    ...(insights.length > 0
+      ? insights.flatMap((insight) =>
+          insight.report.observedTrends.map((item) => `- ${item}`),
+        )
+      : ["- No confirmed trend is available."]),
+    "",
+    "## 30-Day Action Plan",
     "",
     ...(plan
       ? [
           `- Plan ID：\`${plan.planId}\``,
-          `- 状态：${plan.status}`,
-          `- 计划范围：${plan.startDate} 至 ${plan.endDate}`,
-          "- 假设：",
+          `- Status: ${plan.status}`,
+          `- Plan range: ${plan.startDate} to ${plan.endDate}`,
+          "- Assumptions:",
           ...plan.assumptions.map((item) => `  - ${item}`),
           "",
           ...plan.fourWeekPlan.flatMap((week) => [
-            `### 第 ${week.weekNumber} 周 · ${week.dateRange.start} 至 ${week.dateRange.end}`,
+            `### Week ${week.weekNumber} · ${week.dateRange.start} to ${week.dateRange.end}`,
             "",
-            `- 目标：${week.objective}`,
-            `- 负责人：${week.ownerPlaceholder}`,
+            `- Objective: ${week.objective}`,
+            `- Owner: ${week.ownerPlaceholder}`,
             `- CTA：${week.callToAction}`,
             `- KPI Evidence IDs：${week.kpiMetricIds
               .map((id) => `\`${id}\``)
               .join("、")}`,
             ...week.tasks.map(
               (task) =>
-                `- 任务（${task.dueDate}）：${task.title} · ${task.status}`,
+                `- Task (${task.dueDate}): ${task.title} · ${task.status}`,
             ),
             "",
           ]),
-          "### 内容日历",
+          "### Content calendar",
           "",
           ...plan.contentCalendar.map(
             (item) =>
-              `- ${item.date} ${item.scheduledTime} (${item.timeZone}) · ${item.topic} · ${item.channel} · ${item.contentFormat} · 审批 ${item.status} · 交接 ${item.workflowStatus}${
-                item.isExperiment ? " · 实验" : ""
+              `- ${item.date} ${item.scheduledTime} (${item.timeZone}) · ${item.topic} · ${item.channel} · ${item.contentFormat} · Approval ${item.status} · Handoff ${item.workflowStatus}${
+                item.isExperiment ? " · Experiment" : ""
               } · Strategy \`${item.strategyId}\` · KPI ${item.measurementMetricIds
                 .map((id) => `\`${id}\``)
                 .join("、")}`,
           ),
           "",
-          "### KPI 复盘计划",
+          "### KPI review plan",
           "",
           ...plan.kpiReviewPlan.map(
             (review) =>
@@ -275,13 +298,13 @@ export function generateMarkdownReport(input: ReportExportInput): string {
                 .join("、")} · ${review.comparisonRule}`,
           ),
           "",
-          "### 下一次导入问题",
+          "### Questions for the next import",
           "",
           ...plan.nextImportQuestions.map((question) => `- ${question}`),
           "",
         ]
-      : ["- 尚未生成 30 天行动计划。", ""]),
-    "## 限制说明",
+      : ["- A 30-day action plan has not been generated.", ""]),
+    "## Limitations",
     "",
     ...[...limitations].map((item) => `- ${item}`),
     "",
@@ -293,27 +316,27 @@ export function generateMarkdownReport(input: ReportExportInput): string {
 export function generateContentCalendarCsv(plan: ActionPlan): string {
   const rows: unknown[][] = [
     [
-      "日期",
-      "时间",
-      "时区",
-      "渠道",
-      "主题",
-      "内容形式",
-      "目标受众",
-      "发布文案",
-      "核心信息",
+      "Date",
+      "Time",
+      "Time zone",
+      "Channel",
+      "Topic",
+      "Content format",
+      "Target audience",
+      "Publishing copy",
+      "Core message",
       "CTA",
-      "链接",
-      "媒体链接",
-      "策略 ID",
-      "衡量指标",
-      "审批状态",
-      "Buffer 工作流",
-      "是否实验",
-      "实验假设",
-      "成功标准",
-      "复盘日期",
-      "负责人",
+      "Link",
+      "Media link",
+      "Strategy ID",
+      "Measurement metrics",
+      "Approval status",
+      "Buffer workflow",
+      "Experiment",
+      "Experiment hypothesis",
+      "Success criteria",
+      "Review date",
+      "Owner",
     ],
     ...plan.contentCalendar.map((item) => [
       item.date,
@@ -332,7 +355,7 @@ export function generateContentCalendarCsv(plan: ActionPlan): string {
       item.measurementMetricIds,
       item.status,
       item.workflowStatus,
-      item.isExperiment ? "是" : "否",
+      item.isExperiment ? "Yes" : "No",
       item.experiment?.hypothesis ?? "",
       item.experiment?.successCriteria ?? "",
       item.experiment?.reviewDate ?? "",

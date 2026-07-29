@@ -60,7 +60,7 @@ async function confirmedBridgePlan() {
       strategyBundle: analysis.strategyBundle,
       businessGoal: {
         goalId: "goal-buffer-bridge",
-        statement: "建立可复盘的 Buffer 人工交接节奏",
+        statement: "Establish a medically and regulatorily reviewed content handoff process.",
         confirmed: true,
         confirmedAt: BRIDGE_NOW,
       },
@@ -69,9 +69,9 @@ async function confirmedBridgePlan() {
         timeZone: "Asia/Shanghai",
         postsPerWeek: 3,
         teamSize: null,
-        contentResources: ["文案", "设计"],
-        targetMarket: "APAC",
-        focusAudience: "Synthetic 决策者",
+        contentResources: ["clinical evidence", "regulatory materials", "expert interviews", "medical design"],
+        targetMarket: "North American hospital systems",
+        focusAudience: "Healthcare professionals, clinical experts, and procurement teams",
       },
     }),
   );
@@ -200,7 +200,7 @@ test("plan generation enforces approval, then returns a valid four-week plan", a
     strategyBundle: analysis.strategyBundle,
     businessGoal: {
       goalId: "goal-streamlit-test",
-      statement: "建立可复盘的内容运营节奏",
+      statement: "以临床证据和经济价值支持医院医疗器械评估",
       confirmed: true,
       confirmedAt: BRIDGE_NOW,
     },
@@ -209,9 +209,9 @@ test("plan generation enforces approval, then returns a valid four-week plan", a
       timeZone: "Asia/Shanghai",
       postsPerWeek: 2,
       teamSize: null,
-      contentResources: ["文案", "设计"],
-      targetMarket: "APAC",
-      focusAudience: "医疗行业决策者",
+      contentResources: ["临床证据", "健康经济学分析", "产品专家"],
+      targetMarket: "欧盟医疗机构",
+      focusAudience: "医疗专业人员、医院采购和法规事务负责人",
     },
   };
 
@@ -252,12 +252,12 @@ test("bridge chat refuses prompt injection without exposing configuration", asyn
   const answer = dataOf<{
     status: string;
     intent: string;
-    dataStatement: string;
+    report: { executiveSummary: string };
   }>(response);
 
   assert.equal(answer.status, "refused");
   assert.equal(answer.intent, "security_refusal");
-  assert.ok(answer.dataStatement.includes("不能提供"));
+  assert.ok(answer.report.executiveSummary.includes("cannot be fulfilled"));
 });
 
 test("Buffer bridge previews partial eligibility and exports per channel without publishing", async () => {
@@ -382,6 +382,6 @@ test("bridge maps retryable service failures without leaking raw errors", () => 
   );
   assert.equal(
     bridgeErrorFromUnknown(new Error("sensitive raw cell")).message,
-    "本地演示处理失败，未记录原始文件内容。",
+    "Local demo processing failed; source file content was not recorded.",
   );
 });

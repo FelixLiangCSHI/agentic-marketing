@@ -4,8 +4,13 @@ import type {
   SourceReference,
 } from "@/domain/analysis";
 import type { LinkedInModule } from "@/domain/linkedin";
+import type { ConsultingReport } from "@/domain/consulting-report";
 
-export type ApprovalStatus = "draft" | "approved" | "rejected";
+export type ApprovalStatus =
+  | "draft"
+  | "approved"
+  | "revision_requested"
+  | "rejected";
 export type InsightCategory =
   | "audience"
   | "content"
@@ -35,6 +40,7 @@ export interface EvidenceInsight {
   confidence: "high" | "medium" | "low";
   limitations: string[];
   approvalStatus: ApprovalStatus;
+  report: ConsultingReport;
 }
 
 export interface StrategyRecommendation {
@@ -48,6 +54,7 @@ export interface StrategyRecommendation {
   metricIds: string[];
   approvalStatus: ApprovalStatus;
   editedByUser: boolean;
+  report: ConsultingReport;
 }
 
 export interface BusinessGoal {

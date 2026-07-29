@@ -17,7 +17,7 @@ function exportInput(): ReportExportInput {
   const planningInput = approvedPlanningInput();
   const plan = generateActionPlan(planningInput, PLANNING_NOW);
   return {
-    projectId: "Synthetic APAC / Demo",
+    projectId: "Ultrasound Clinical Evidence Campaign",
     snapshot: planningInput.snapshot,
     strategyBundle: {
       promptVersion: "evidence-strategy-v1.0",
@@ -35,15 +35,15 @@ test("creates dated project filenames for all three export types", () => {
 
   assert.equal(
     artifacts.markdown.fileName,
-    "Synthetic-APAC-Demo-analysis-report-2026-07-28.md",
+    "Ultrasound-Clinical-Evidence-Campaign-analysis-report-2026-07-28.md",
   );
   assert.equal(
     artifacts.calendarCsv.fileName,
-    "Synthetic-APAC-Demo-content-calendar-2026-07-28.csv",
+    "Ultrasound-Clinical-Evidence-Campaign-content-calendar-2026-07-28.csv",
   );
   assert.equal(
     artifacts.structuredJson.fileName,
-    "Synthetic-APAC-Demo-analysis-data-2026-07-28.json",
+    "Ultrasound-Clinical-Evidence-Campaign-analysis-data-2026-07-28.json",
   );
 });
 
@@ -55,19 +55,20 @@ test("Markdown report includes required sections and evidence identifiers", () =
 
   for (const heading of [
     "## Executive Summary",
-    "## 数据范围",
-    "## 数据质量",
-    "## 指标",
-    "## 洞察",
-    "## 建议",
-    "## 30 天计划",
-    "## 限制说明",
+    "## Key Findings",
+    "## Business Implications",
+    "## Recommendations",
+    "## Confidence Level",
+    "## Evidence",
+    "## Observed Trends",
+    "## 30-Day Action Plan",
+    "## Limitations",
   ]) {
     assert.ok(markdown.content.includes(heading));
   }
   assert.ok(markdown.content.includes("followers.netGrowth"));
   assert.ok(markdown.content.includes("insight-audience-followers"));
-  assert.ok(markdown.content.includes("相关性不代表内容导致增长"));
+  assert.ok(markdown.content.includes("does not show content caused growth"));
 });
 
 test("calendar CSV escapes formulas, quotes, commas, newlines, and Unicode", () => {
@@ -116,6 +117,10 @@ test("exports remain usable before a plan exists without inventing calendar rows
   const artifacts = createReportExportArtifacts(input, PLANNING_NOW);
 
   assert.equal(artifacts.calendarCsv.content, "");
-  assert.ok(artifacts.markdown.content.includes("尚未生成 30 天行动计划"));
+  assert.ok(
+    artifacts.markdown.content.includes(
+      "A 30-day action plan has not been generated.",
+    ),
+  );
   assert.equal(JSON.parse(artifacts.structuredJson.content).actionPlan, null);
 });

@@ -42,9 +42,9 @@ export const SYNTHETIC_FILES: Record<
     content: [
       "Synthetic demo data - not a real LinkedIn export",
       "Post title,Created date,Content Type,Impressions,Clicks,Likes,Comments,Reposts,Engagement rate,Click through rate (CTR)",
-      "\"Synthetic: imaging workflow guide\",2026-05-08,Document,\"12,800\",486,412,31,22,7.4%,3.8%",
-      "\"Synthetic: customer story\",2026-05-22,Video,\"9,600\",298,276,18,14,6.3%,3.1%",
-      "\"Synthetic: product update\",2026-06-12,Image,\"8,400\",218,184,12,9,5.0%,2.6%",
+      "\"Ultrasound and MRI clinical evidence for imaging workflows\",2026-05-08,Document,\"12,800\",486,412,31,22,7.4%,3.8%",
+      "\"Patient monitoring and digital health outcomes for care teams\",2026-05-22,Video,\"9,600\",298,276,18,14,6.3%,3.1%",
+      "\"Endoscopy IVD CT and surgical robotics regulatory briefing\",2026-06-12,Image,\"8,400\",218,184,12,9,5.0%,2.6%",
     ].join("\n"),
   },
 };
