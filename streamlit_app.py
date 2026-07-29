@@ -143,7 +143,7 @@ def consulting_report(
 
 def render_page_intro(kicker: str, title: str, description: str = "") -> None:
     st.caption(kicker.upper())
-    st.header(title, divider="blue")
+    st.header(title, divider="gray")
     if description:
         st.write(description)
 
@@ -629,12 +629,19 @@ def stage_status(stage: str) -> tuple[str, str]:
 
 
 def render_header() -> None:
-    st.caption("MEDICAL DEVICE MARKETING OPERATIONS")
-    st.title("LinkedIn Campaign Workspace")
+    masthead, briefing_date = st.columns([4, 1], vertical_alignment="bottom")
+    with masthead:
+        st.caption("MEDICAL DEVICE MARKETING OPERATIONS · CONFIDENTIAL BRIEFING")
+        st.title("LinkedIn Campaign Workspace")
+    with briefing_date:
+        st.caption(
+            f"Prepared {local_today().strftime('%d %B %Y')}"
+        )
     st.write(
         "An evidence-led advisory workspace for planning, reviewing, and preparing "
         "LinkedIn campaigns for regulated medical device audiences."
     )
+    st.divider()
     snapshot = snapshot_data()
     plan = st.session_state.get("plan")
     summary_columns = st.columns(3, gap="medium")
@@ -648,6 +655,7 @@ def render_header() -> None:
                     else "Action required" if snapshot else "Not assessed"
                 ),
             )
+            st.caption("Evidence base status")
     with summary_columns[1]:
         with st.container(border=True):
             insight_count, strategy_count = approved_counts()
@@ -656,6 +664,7 @@ def render_header() -> None:
                 insight_count + strategy_count,
                 help="Approved insights and strategies",
             )
+            st.caption("Insights and strategies signed off")
     with summary_columns[2]:
         with st.container(border=True):
             st.metric(
@@ -666,6 +675,7 @@ def render_header() -> None:
                     else "Draft" if plan else "Not started"
                 ),
             )
+            st.caption("30-day engagement deliverable")
     st.info(
         "**Data handling:** Uploaded files are processed only in the current "
         "session. Do not upload patient data, protected health information, or "
