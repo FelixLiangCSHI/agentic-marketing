@@ -64,7 +64,7 @@ test("action plan report shows status, risks, views, metadata, and evidence", ()
   );
 
   assert.match(markup, /Prepared draft/);
-  assert.match(markup, /Risks and data limitations/);
+  assert.doesNotMatch(markup, /Risks and data limitations/);
   assert.match(markup, /Audience Insights/);
   assert.match(markup, /Content Insights/);
   assert.match(markup, /Prompt version/);

@@ -58,6 +58,40 @@ class ConfigurationWorkflowTests(unittest.TestCase):
             self.assertFalse(all(result.success for result in results))
             self.assertIsNone(store.load())
 
+
+class BufferSchedulingTests(unittest.TestCase):
+    def test_mock_endpoint_schedules_posts(self) -> None:
+        from streamlit_demo.buffer_service import BufferService
+
+        result = BufferService().schedule_posts(
+            ServiceConfiguration("mock://buffer", "buffer-test-credential"),
+            [
+                {
+                    "itemId": "item-1",
+                    "text": "Post copy",
+                    "scheduledAt": "2026-08-01T10:00:00+08:00",
+                    "mediaUrls": [],
+                    "linkUrl": None,
+                }
+            ],
+        )
+
+        self.assertTrue(result["success"])
+        self.assertEqual(len(result["results"]), 1)
+        self.assertTrue(result["results"][0]["success"])
+        self.assertEqual(result["results"][0]["itemId"], "item-1")
+
+    def test_missing_credential_is_rejected(self) -> None:
+        from streamlit_demo.buffer_service import BufferService
+
+        result = BufferService().schedule_posts(
+            ServiceConfiguration("mock://buffer", ""),
+            [{"itemId": "item-1", "text": "Post copy"}],
+        )
+
+        self.assertFalse(result["success"])
+        self.assertEqual(result["results"], [])
+
     def test_first_run_wizard_saves_and_future_launch_loads_configuration(
         self,
     ) -> None:

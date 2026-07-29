@@ -256,6 +256,7 @@ def initialize_state() -> None:
         "buffer_preview": None,
         "buffer_preview_attempted": False,
         "buffer_export_result": None,
+        "buffer_api_result": None,
         "buffer_export_records": [],
         "buffer_export_status": "idle",
         "buffer_start_date": buffer_start,
@@ -328,6 +329,7 @@ def reset_buffer_workspace(
     st.session_state["buffer_preview"] = None
     st.session_state["buffer_preview_attempted"] = False
     st.session_state["buffer_export_result"] = None
+    st.session_state["buffer_api_result"] = None
     st.session_state["buffer_export_records"] = records
     st.session_state["buffer_export_status"] = "idle"
     st.session_state["buffer_start_date"] = start
@@ -349,6 +351,7 @@ def invalidate_plan_outputs() -> None:
     st.session_state["buffer_preview"] = None
     st.session_state["buffer_preview_attempted"] = False
     st.session_state["buffer_export_result"] = None
+    st.session_state["buffer_api_result"] = None
     st.session_state["buffer_export_status"] = "idle"
     st.session_state["buffer_warnings_acknowledged"] = False
     clear_buffer_selection_widgets()
@@ -1515,9 +1518,10 @@ def render_plan_report(plan: dict[str, Any]) -> None:
         f"Modules {', '.join(plan['sourceModules'])}"
     )
     st.caption(metadata)
-    st.subheader("Risks and Data Limitations")
-    for risk in plan["risksAndLimitations"]:
-        st.warning(risk)
+    if plan.get("risksAndLimitations"):
+        st.subheader("Risks and Data Limitations")
+        for risk in plan["risksAndLimitations"]:
+            st.warning(risk)
     if plan.get("report"):
         render_consulting_report(plan["report"])
     else:
@@ -1664,7 +1668,7 @@ def render_plan_report(plan: dict[str, Any]) -> None:
             "Approve at least one item. Handoff files do not indicate publication."
         ),
     ):
-        st.session_state["active_stage"] = "Buffer Handoff"
+        st.session_state["_pending_active_stage"] = "Buffer Handoff"
         st.rerun()
     if controls[1].button(
         "Approve Current Plan",
@@ -1811,6 +1815,94 @@ def render_plan() -> None:
 
 def buffer_handoff_payload() -> dict[str, Any]:
     return BUFFER_SERVICE.handoff_payload(dict(st.session_state))
+
+
+def buffer_api_configuration() -> Any:
+    configuration = st.session_state.get("configuration")
+    return getattr(configuration, "buffer", None)
+
+
+def exportable_selected_posts(
+    preview: dict[str, Any],
+) -> list[dict[str, Any]]:
+    posts: list[dict[str, Any]] = []
+    selected = set(st.session_state["buffer_selected_item_ids"])
+    for review in preview["reviews"]:
+        item = review["contentItem"]
+        blocking = any(issue["blocksExport"] for issue in review["issues"])
+        if (
+            item["itemId"] not in selected
+            or not review["inDateRange"]
+            or not review["channelIncluded"]
+            or blocking
+        ):
+            continue
+        try:
+            scheduled_at = (
+                datetime.fromisoformat(
+                    f"{item['date']}T{item['scheduledTime']}"
+                )
+                .replace(tzinfo=ZoneInfo(item["timeZone"]))
+                .isoformat()
+            )
+        except (KeyError, ValueError):
+            scheduled_at = None
+        posts.append(
+            {
+                "itemId": item["itemId"],
+                "text": item.get("postText") or item.get("topic", ""),
+                "scheduledAt": scheduled_at,
+                "mediaUrls": list(item.get("mediaUrls") or []),
+                "linkUrl": item.get("linkUrl"),
+            }
+        )
+    return posts
+
+
+def schedule_posts_via_buffer_api(preview: dict[str, Any]) -> None:
+    configuration = buffer_api_configuration()
+    if configuration is None:
+        st.session_state["buffer_api_result"] = {
+            "success": False,
+            "message": "Configure the Buffer API in Settings first.",
+            "results": [],
+        }
+        return
+    posts = exportable_selected_posts(preview)
+    with st.spinner("Scheduling posts via the Buffer API"):
+        st.session_state["buffer_api_result"] = BUFFER_SERVICE.schedule_posts(
+            configuration, posts
+        )
+
+
+def render_buffer_api_result(preview: dict[str, Any]) -> None:
+    result = st.session_state.get("buffer_api_result")
+    if not result:
+        return
+    if result["success"]:
+        st.success(result["message"])
+    else:
+        st.error(result["message"])
+    topics = {
+        review["contentItem"]["itemId"]: review["contentItem"].get(
+            "topic", review["contentItem"]["itemId"]
+        )
+        for review in preview["reviews"]
+    }
+    for item_result in result["results"]:
+        label = topics.get(item_result["itemId"], item_result["itemId"])
+        detail = f"**{label}:** {item_result['message']}"
+        if item_result.get("updateId"):
+            detail += f" (Buffer update {item_result['updateId']})"
+        if item_result["success"]:
+            st.write(f"- ✅ {detail}")
+        else:
+            st.write(f"- ❌ {detail}")
+    if result["success"] and result["results"]:
+        st.info(
+            "Posts are queued in Buffer. Review the queue in Buffer before "
+            "publication."
+        )
 
 
 def refresh_buffer_preview(
@@ -2409,7 +2501,8 @@ def render_buffer_handoff() -> None:
         "buffer_warnings_acknowledged"
     ]:
         st.caption("Handoff is unavailable until warnings are acknowledged.")
-    if st.button(
+    handoff_actions = st.columns(2)
+    if handoff_actions[0].button(
         "Create Buffer Handoff Files",
         type="primary",
         disabled=export_disabled,
@@ -2421,7 +2514,25 @@ def render_buffer_handoff() -> None:
     ):
         export_buffer_handoff(st.session_state["plan"])
         st.rerun()
+    buffer_configuration = buffer_api_configuration()
+    if handoff_actions[1].button(
+        "Schedule via Buffer API",
+        type="primary",
+        disabled=export_disabled or buffer_configuration is None,
+        width="stretch",
+        help=(
+            "Sends approved in-range content directly to your configured "
+            "Buffer queue. Publishing still requires review in Buffer."
+        ),
+    ):
+        schedule_posts_via_buffer_api(preview)
+        st.rerun()
+    if buffer_configuration is None:
+        st.caption(
+            "Configure the Buffer API in Settings to schedule posts directly."
+        )
 
+    render_buffer_api_result(preview)
     render_buffer_result()
     records = st.session_state["buffer_export_records"]
     if records:
