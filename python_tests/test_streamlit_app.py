@@ -134,7 +134,7 @@ class StreamlitDemoTests(unittest.TestCase):
             )
         )
 
-        app = navigate(app, "Audience Insights")
+        app = navigate(app, "Audience & Content Insights")
         self.assertTrue(
             any(
                 "predefined demonstration rules" in info.value
@@ -167,13 +167,13 @@ class StreamlitDemoTests(unittest.TestCase):
 
         approval_steps = (
             (
-                "Audience Insights",
+                "Audience & Content Insights",
                 (
                     "approve-insight-audience-followers",
                     "approve-insight-audience-visitors",
+                    "approve-insight-content-performance",
                 ),
             ),
-            ("Content Insights", ("approve-insight-content-performance",)),
             (
                 "Campaign Strategy",
                 (

@@ -39,10 +39,8 @@ MODULE_IMPACTS = {
 }
 NAVIGATION = (
     "Data Intake",
-    "Data Quality",
     "Performance Metrics",
-    "Audience Insights",
-    "Content Insights",
+    "Audience & Content Insights",
     "Campaign Strategy",
     "30-Day Campaign Plan",
     "Buffer Handoff",
@@ -52,10 +50,8 @@ NAVIGATION = (
 )
 PIPELINE_STAGES = (
     "Data Intake",
-    "Data Quality",
     "Performance Metrics",
-    "Audience Insights",
-    "Content Insights",
+    "Audience & Content Insights",
     "Campaign Strategy",
     "30-Day Campaign Plan",
     "Buffer Handoff",
@@ -97,24 +93,16 @@ BUFFER_BULK_UPLOAD_URL = (
 )
 NEXT_STEPS = {
     "Data Intake": (
-        "Data Quality",
-        "Historical data ingested — AI verified it in seconds, "
-        "no manual spreadsheet review.",
-    ),
-    "Data Quality": (
         "Performance Metrics",
-        "Evidence base verified. Next, see the AI insight report.",
+        "Historical data ingested — AI verified it in seconds, "
+        "no manual spreadsheet review. Next, see the AI insight report.",
     ),
     "Performance Metrics": (
-        "Audience Insights",
+        "Audience & Content Insights",
         "KPIs computed automatically. Next, review AI-drafted audience "
-        "insights and approve the ones that stand.",
+        "and content insights and approve the ones that stand.",
     ),
-    "Audience Insights": (
-        "Content Insights",
-        "Your decisions are recorded. Next, review content insights.",
-    ),
-    "Content Insights": (
+    "Audience & Content Insights": (
         "Campaign Strategy",
         "Insights reviewed. Next, AI proposes the marketing strategy — "
         "your team approves it.",
@@ -465,7 +453,7 @@ def assign_analysis(result: dict[str, Any], mode: str) -> None:
     ]
     snapshot = result["snapshot"]
     st.session_state["_pending_active_stage"] = (
-        "Performance Metrics" if snapshot["canEnterInsights"] else "Data Quality"
+        "Performance Metrics" if snapshot["canEnterInsights"] else "Data Intake"
     )
 
 
@@ -600,23 +588,16 @@ def stage_status(stage: str) -> tuple[str, str]:
         return ("completed", "Complete") if analysis else ("running", "Current")
     if not snapshot:
         return "pending", "Pending"
-    if stage == "Data Quality":
-        return (
-            ("error", "Blocked")
-            if snapshot["quality"]["hasBlockingIssues"]
-            else ("completed", "Complete")
-        )
     if stage == "Performance Metrics":
         return "completed", "Complete"
-    if stage in {"Audience Insights", "Content Insights"}:
+    if stage == "Audience & Content Insights":
         if not snapshot["canEnterInsights"]:
             return "error", "Blocked"
-        category = "audience" if stage == "Audience Insights" else "content"
         bundle = strategy_bundle() or {}
         matches = [
             item
             for item in bundle.get("insights", [])
-            if item.get("category") == category
+            if item.get("category") in {"audience", "content"}
         ]
         if not matches:
             return "pending", "No evidence"
@@ -871,179 +852,94 @@ def render_ingestion() -> None:
         "One click loads the sample campaign — or bring your own LinkedIn "
         "exports. The co-pilot handles the rest.",
     )
-    left, right = st.columns([1, 2], gap="large")
-    with left:
-        with st.container(border=True):
-            st.subheader("Medical Device Sample Campaign")
-            st.write(
-                "A fictional campaign dataset with structured metrics, "
-                "recommendations, and review-ready outputs."
-            )
-            if st.button(
-                "Start with Sample Data",
-                type="primary",
-                width="stretch",
-                disabled=st.session_state["operation_in_progress"],
-            ):
-                run_synthetic_demo()
-                st.rerun()
-
     upload_generation = st.session_state["upload_generation"]
     uploaded_files: dict[str, Any] = {}
-    with right:
-        with st.container(border=True):
-            st.subheader("Upload LinkedIn Exports")
-            columns = st.columns(3)
-            for column, module in zip(columns, MODULES):
-                with column:
-                    uploaded = st.file_uploader(
-                        f"{MODULE_LABELS[module]} File",
-                        type=("xlsx", "xls", "csv"),
-                        key=f"upload-{module}-{upload_generation}",
-                        help=(
-                            "Drag and drop or browse for a file. The service "
-                            "validates file type, signature, size, and encryption."
-                        ),
-                    )
-                    if uploaded is not None:
-                        uploaded_files[module] = uploaded
-                        st.caption(
-                            f"{uploaded.name} · {format_size(uploaded.size)}"
-                        )
-                    else:
-                        st.caption(MODULE_IMPACTS[module])
-
-            missing = [
-                MODULE_LABELS[module]
-                for module in MODULES
-                if module not in uploaded_files
-            ]
-            if missing:
-                st.warning(
-                    "Missing "
-                    + ", ".join(missing)
-                    + ". Quality checks remain available, but campaign planning "
-                    "requires all three modules."
+    with st.container(border=True):
+        st.subheader("Upload LinkedIn Exports")
+        if st.button(
+            "Start with Sample Data",
+            type="primary",
+            width="stretch",
+            disabled=st.session_state["operation_in_progress"],
+            help=(
+                "A fictional campaign dataset with structured metrics, "
+                "recommendations, and review-ready outputs."
+            ),
+        ):
+            run_synthetic_demo()
+            st.rerun()
+        columns = st.columns(3)
+        for column, module in zip(columns, MODULES):
+            with column:
+                uploaded = st.file_uploader(
+                    f"{MODULE_LABELS[module]} File",
+                    type=("xlsx", "xls", "csv"),
+                    key=f"upload-{module}-{upload_generation}",
+                    help=(
+                        "Drag and drop or browse for a file. The service "
+                        "validates file type, signature, size, and encryption."
+                    ),
                 )
-            analyze_clicked = st.button(
-                "Process Data and Create Snapshot",
-                width="stretch",
-                disabled=(
-                    not uploaded_files
-                    or st.session_state["operation_in_progress"]
-                ),
-            )
-            if analyze_clicked:
-                payload_files: list[dict[str, Any]] = []
-                try:
-                    for module, uploaded in uploaded_files.items():
-                        content = uploaded.getvalue()
-                        try:
-                            payload_files.append(
-                                encode_upload(
-                                    slot=module,
-                                    name=uploaded.name,
-                                    mime_type=uploaded.type or "",
-                                    data=content,
-                                )
-                            )
-                        finally:
-                            content = b""
-                    result = call_bridge(
-                        "analyze_uploads",
-                        {"now": now_iso(), "files": payload_files},
-                        label="Validating files and calculating campaign metrics",
-                        timeout_seconds=60,
+                if uploaded is not None:
+                    uploaded_files[module] = uploaded
+                    st.caption(
+                        f"{uploaded.name} · {format_size(uploaded.size)}"
                     )
-                except BridgeClientError as reason:
-                    set_failure(reason.failure, "analyze_uploads")
-                    result = None
-                finally:
-                    payload_files.clear()
-                if result is not None:
-                    assign_analysis(result, "uploaded")
-                    st.rerun()
+                else:
+                    st.caption(MODULE_IMPACTS[module])
+
+        missing = [
+            MODULE_LABELS[module]
+            for module in MODULES
+            if module not in uploaded_files
+        ]
+        if missing:
+            st.warning(
+                "Missing "
+                + ", ".join(missing)
+                + ". Quality checks remain available, but campaign planning "
+                "requires all three modules."
+            )
+        analyze_clicked = st.button(
+            "Process Data and Create Snapshot",
+            width="stretch",
+            disabled=(
+                not uploaded_files
+                or st.session_state["operation_in_progress"]
+            ),
+        )
+        if analyze_clicked:
+            payload_files: list[dict[str, Any]] = []
+            try:
+                for module, uploaded in uploaded_files.items():
+                    content = uploaded.getvalue()
+                    try:
+                        payload_files.append(
+                            encode_upload(
+                                slot=module,
+                                name=uploaded.name,
+                                mime_type=uploaded.type or "",
+                                data=content,
+                            )
+                        )
+                    finally:
+                        content = b""
+                result = call_bridge(
+                    "analyze_uploads",
+                    {"now": now_iso(), "files": payload_files},
+                    label="Validating files and calculating campaign metrics",
+                    timeout_seconds=60,
+                )
+            except BridgeClientError as reason:
+                set_failure(reason.failure, "analyze_uploads")
+                result = None
+            finally:
+                payload_files.clear()
+            if result is not None:
+                assign_analysis(result, "uploaded")
+                st.rerun()
 
     render_parse_summaries()
-
-
-def render_quality() -> None:
-    snapshot = snapshot_data()
-    render_page_intro(
-        "Step 2 · Automated quality gate",
-        "Data Quality Review",
-        "The co-pilot checks the evidence base automatically, so every "
-        "recommendation rests on reliable data.",
-    )
-    if not snapshot:
-        st.info("Start with sample data or upload files in Data Intake.")
-        return
-
-    quality = snapshot["quality"]
-    cols = st.columns(4)
-    cols[0].metric("Blocking Issues", quality["blockingIssueCount"])
-    cols[1].metric("Warnings", quality["warningCount"])
-    cols[2].metric(
-        "Overlapping Period",
-        "Available" if quality["overlapPeriod"] else "Unavailable",
-    )
-    cols[3].metric(
-        "Planning Readiness",
-        "Ready" if snapshot["canEnterInsights"] else "Blocked",
-    )
-    if quality["hasBlockingIssues"]:
-        st.error(
-            "Blocking issues must be resolved before insights or campaign "
-            "planning can continue. Unavailable metrics are never fabricated."
-        )
-    elif quality["requiresWarningAcknowledgement"]:
-        st.warning(
-            "Review and acknowledge the non-blocking warnings before continuing."
-        )
-        st.checkbox(
-            "I have reviewed the data quality warnings and understand their impact",
-            key="quality_acknowledged",
-        )
-    else:
-        st.success("No blocking issues were found. Business coverage may still vary.")
-
-    issues = quality["issues"]
-    if issues:
-        st.dataframe(
-            [
-                {
-                    "severity": issue["severity"],
-                    "code": issue["code"],
-                    "module": issue["module"],
-                    "field": issue["field"] or "-",
-                    "message": issue["message"],
-                    "blocks": issue["blocksAnalysis"],
-                    "suggestedAction": issue["suggestedAction"],
-                }
-                for issue in issues
-            ],
-            hide_index=True,
-            width="stretch",
-        )
-    else:
-        st.info("No quality rules were triggered.")
-
-    st.markdown("### Module Coverage")
-    module_rows = []
-    for module in MODULES:
-        summary = quality["moduleSummaries"][module]
-        module_rows.append(
-            {
-                "Module": MODULE_LABELS[module],
-                "Present": "Yes" if summary["present"] else "No",
-                "Records": summary["totalRecords"],
-                "Duplicates": summary["duplicateRecords"],
-                "Reporting Period": period_text(summary["period"]),
-                "Error": summary["issueCount"]["error"],
-                "Warning": summary["issueCount"]["warning"],
-            }
-        )
-    st.dataframe(module_rows, hide_index=True, width="stretch")
 
 
 def render_metric_detail(metric: dict[str, Any]) -> None:
@@ -1106,7 +1002,7 @@ def render_series(
 def render_metrics() -> None:
     snapshot = snapshot_data()
     render_page_intro(
-        "Step 3 · AI insight report",
+        "Step 2 · AI insight report",
         "Performance Metrics",
         "Core commercial indicators, computed automatically — hours of "
         "reporting work delivered in seconds.",
@@ -1224,10 +1120,10 @@ def approval_controls(
         st.rerun()
 
 
-def render_insights(category: str, title: str) -> None:
+def render_insights() -> None:
     render_page_intro(
-        "Step 4 · Human approval",
-        title,
+        "Step 3 · Human approval",
+        "Audience & Content Insights",
         "AI drafts the insights; your team makes the call. Approve or reject "
         "each one — nothing moves forward without you.",
     )
@@ -1240,52 +1136,65 @@ def render_insights(category: str, title: str) -> None:
         st.error("Blocking data quality issues prevent insight review.")
         return
     if not warnings_are_acknowledged():
-        st.warning("Acknowledge the warnings in Data Quality before continuing.")
-        return
-
-    insights = [
-        item
-        for item in bundle["insights"]
-        if item["category"] == category
-    ]
-    if not insights:
-        missing = (
-            "Followers or Visitors profile and trend fields"
-            if category == "audience"
-            else "post-level Content performance fields"
+        st.warning(
+            "Review and acknowledge the non-blocking data quality warnings "
+            "before continuing."
         )
-        st.info(f"Additional data is required: {missing}.")
+        st.checkbox(
+            "I have reviewed the data quality warnings and understand their impact",
+            key="quality_acknowledged",
+        )
         return
 
     render_agent_mode_notice()
-    for insight in insights:
-        with st.container(border=True):
-            st.subheader(insight["title"])
-            st.caption(
-                f"{insight['approvalStatus']} · confidence "
-                f"{insight['confidence']} · {insight['insightId']}"
+    sections = (
+        ("audience", "Audience Insights"),
+        ("content", "Content Insights"),
+    )
+    for category, section_title in sections:
+        st.markdown(f"### {section_title}")
+        insights = [
+            item
+            for item in bundle["insights"]
+            if item["category"] == category
+        ]
+        if not insights:
+            missing = (
+                "Followers or Visitors profile and trend fields"
+                if category == "audience"
+                else "post-level Content performance fields"
             )
-            render_consulting_report(insight["report"])
-            if insight["limitations"]:
-                st.warning("; ".join(insight["limitations"]))
-            with st.expander("Review Supporting Evidence"):
-                for evidence in insight["evidence"]:
-                    st.markdown(
-                        f"`{evidence['metricId']}` · "
-                        f"{evidence['label']} · {evidence['formattedValue']}"
-                    )
-                    st.caption(
-                        f"{period_text(evidence['period'])} · "
-                        f"Sources {', '.join(evidence['sourceModules'])} · "
-                        f"Reliability {evidence['reliability']}"
-                    )
-            approval_controls(
-                item_id=insight["insightId"],
-                status=insight["approvalStatus"],
-                on_change=lambda status, insight_id=insight[
-                    "insightId"
-                ]: update_insight_status(insight_id, status),
-            )
+            st.info(f"Additional data is required: {missing}.")
+            continue
+
+        for insight in insights:
+            with st.container(border=True):
+                st.subheader(insight["title"])
+                st.caption(
+                    f"{insight['approvalStatus']} · confidence "
+                    f"{insight['confidence']} · {insight['insightId']}"
+                )
+                render_consulting_report(insight["report"])
+                if insight["limitations"]:
+                    st.warning("; ".join(insight["limitations"]))
+                with st.expander("Review Supporting Evidence"):
+                    for evidence in insight["evidence"]:
+                        st.markdown(
+                            f"`{evidence['metricId']}` · "
+                            f"{evidence['label']} · {evidence['formattedValue']}"
+                        )
+                        st.caption(
+                            f"{period_text(evidence['period'])} · "
+                            f"Sources {', '.join(evidence['sourceModules'])} · "
+                            f"Reliability {evidence['reliability']}"
+                        )
+                approval_controls(
+                    item_id=insight["insightId"],
+                    status=insight["approvalStatus"],
+                    on_change=lambda status, insight_id=insight[
+                        "insightId"
+                    ]: update_insight_status(insight_id, status),
+                )
 
 
 def update_strategy_status(strategy_id: str, status: str) -> None:
@@ -1305,7 +1214,7 @@ def update_strategy_status(strategy_id: str, status: str) -> None:
 
 def render_strategies() -> None:
     render_page_intro(
-        "Step 5 · Marketing strategy",
+        "Step 4 · Marketing strategy",
         "Campaign Strategy Review",
         "AI turns your approved insights into prioritized strategies. "
         "Approve to unlock campaign planning.",
@@ -1712,7 +1621,7 @@ def render_plan_report(plan: dict[str, Any]) -> None:
 
 def render_plan() -> None:
     render_page_intro(
-        "Step 6 · 30-day content plan",
+        "Step 5 · 30-day content plan",
         "Build a 30-Day Campaign from Approved Strategy",
         "AI drafts a month of LinkedIn-ready content from your approved "
         "strategy. Edit anything, then approve the plan.",
@@ -2410,7 +2319,7 @@ def render_buffer_result() -> None:
 
 def render_buffer_handoff() -> None:
     render_page_intro(
-        "Step 7 · Buffer queue",
+        "Step 6 · Buffer queue",
         "Buffer Queue",
         "Approved drafts move into a Buffer-ready queue. Publishing stays "
         "under human control — nothing goes live automatically.",
@@ -2783,14 +2692,10 @@ def render_current_stage() -> None:
     stage = st.session_state["active_stage"]
     if stage == "Data Intake":
         render_ingestion()
-    elif stage == "Data Quality":
-        render_quality()
     elif stage == "Performance Metrics":
         render_metrics()
-    elif stage == "Audience Insights":
-        render_insights("audience", "Audience Insights")
-    elif stage == "Content Insights":
-        render_insights("content", "Content Insights")
+    elif stage == "Audience & Content Insights":
+        render_insights()
     elif stage == "Campaign Strategy":
         render_strategies()
     elif stage == "30-Day Campaign Plan":
