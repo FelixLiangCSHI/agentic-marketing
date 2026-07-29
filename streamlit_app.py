@@ -652,17 +652,43 @@ def render_header() -> None:
     st.markdown(
         """
         <div class="demo-hero">
-          <div class="demo-hero__eyebrow">Evidence-grounded marketing workspace</div>
+          <div class="demo-hero__eyebrow">LinkedIn growth advisory workspace</div>
           <h1>LinkedIn Marketing AI Agent</h1>
-          <p>本地解析聚合导出，由程序计算全部数字；Mock Agent 只解释证据并生成可审阅计划。</p>
-        </div>
-        <div class="privacy-panel" role="note" aria-label="隐私和产品边界">
-          <strong>隐私边界：</strong>
-          上传文件仅传给本机短生命周期 Node Bridge，默认不写磁盘、数据库或分析日志。
-          本 Demo 不是 LinkedIn 官方产品；请确保你有权处理所上传数据。
+          <p>从数据审阅到执行交接的增长咨询工作台：所有数字由本地程序计算，建议均可回溯至证据并由团队审批。</p>
         </div>
         """,
         unsafe_allow_html=True,
+    )
+    analysis = analysis_data()
+    snapshot = snapshot_data()
+    plan = st.session_state.get("plan")
+    if not analysis:
+        data_status, decision_status = "等待数据", "尚未开始"
+        next_step = "选择示例或上传"
+    elif not snapshot or snapshot["quality"]["hasBlockingIssues"]:
+        data_status, decision_status = "需要处理", "数据质量待解决"
+        next_step = "审阅数据质量"
+    elif can_use_insights():
+        data_status, decision_status = "已验证", "可进入决策"
+        next_step = "审阅洞察与策略"
+    else:
+        data_status, decision_status = "已载入", "等待风险确认"
+        next_step = "确认质量提示"
+    delivery_status = (
+        "计划已确认"
+        if plan and plan.get("status") == "user_confirmed"
+        else "计划待生成"
+    )
+    context = st.columns(4)
+    context[0].metric("当前工作阶段", st.session_state["active_stage"])
+    context[1].metric("数据状态", data_status)
+    context[2].metric("决策就绪度", decision_status)
+    context[3].metric("下一项交付", delivery_status)
+    st.caption(f"建议下一步：{next_step}。每个阶段均保留人工审核和可追溯边界。")
+    st.info(
+        "隐私边界：上传文件仅传给本机短生命周期 Node Bridge，默认不写磁盘、数据库或分析日志。"
+        "本 Demo 不是 LinkedIn 官方产品；请确保你有权处理所上传数据。",
+        icon=":material/verified_user:",
     )
     if st.session_state.get("_reset_notice"):
         st.success(st.session_state.pop("_reset_notice"))
@@ -670,7 +696,8 @@ def render_header() -> None:
 
 def render_sidebar() -> None:
     with st.sidebar:
-        st.markdown("### 项目控制")
+        st.subheader("项目控制")
+        st.caption("定义本次增长咨询项目的工作范围。")
         st.text_input(
             "项目标识",
             key="project_id",
@@ -690,7 +717,8 @@ def render_sidebar() -> None:
             st.caption("状态：等待选择演示路径")
 
         st.divider()
-        st.markdown("### 分析阶段")
+        st.subheader("决策路径")
+        st.caption("按顺序完成数据、判断、计划与交付。")
         for stage in PIPELINE_STAGES:
             status, text = stage_status(stage)
             st.markdown(
@@ -704,14 +732,16 @@ def render_sidebar() -> None:
             )
 
         st.divider()
+        st.subheader("工作区")
         st.radio(
-            "工作区导航",
+            "选择工作区",
             NAVIGATION,
             key="active_stage",
             help="可使用方向键切换页面。",
         )
 
         st.divider()
+        st.subheader("会话管理")
         if st.button(
             "重新开始 Synthetic Demo",
             width="stretch",
