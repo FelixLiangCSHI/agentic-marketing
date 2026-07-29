@@ -135,8 +135,13 @@ def _render_validation_results(results: list[ConnectionResult]) -> None:
 @st.dialog("Workspace Configuration", width="large", dismissible=False)
 def render_configuration_dialog(workflow: ConfigurationWorkflow) -> None:
     step = int(st.session_state["configuration_wizard_step"])
-    st.caption(f"Step {step} of 4")
+    st.caption("WORKSPACE CONFIGURATION")
     st.subheader(STEP_TITLES[step])
+    st.progress(step / 4, text=f"Step {step} of 4")
+    st.write(
+        "Configure the service endpoint and credential used by this workspace. "
+        "Credentials remain masked after they are saved."
+    )
 
     if step == 1:
         _service_fields(
@@ -220,11 +225,12 @@ def _masked_credential(credential: str) -> str:
 
 
 def render_settings() -> None:
-    st.markdown(
-        '<span class="section-kicker">Local configuration</span>',
-        unsafe_allow_html=True,
+    st.caption("LOCAL CONFIGURATION")
+    st.header("Settings", divider="blue")
+    st.write(
+        "Review service connectivity and manage the credentials available to this "
+        "workspace."
     )
-    st.header("Settings")
     configuration = st.session_state.get("configuration")
     if not isinstance(configuration, ApplicationConfiguration):
         st.info("Complete the first-run configuration wizard.")
@@ -243,17 +249,23 @@ def render_settings() -> None:
                 "Credential": _masked_credential(service.credential),
             }
         )
-    st.dataframe(rows, hide_index=True, width="stretch")
-    st.caption(
-        "Credentials remain hidden and are not requested again unless you choose "
-        "to edit this configuration. Saved credential values are never returned "
-        "to the form."
-    )
-    if st.button("Edit Configuration", type="primary"):
-        st.session_state["configuration_editing"] = True
-        st.session_state["configuration_wizard_step"] = 1
-        st.session_state["configuration_validation_results"] = []
-        st.session_state["configuration_draft"] = _configuration_draft(
-            configuration
+    with st.container(border=True):
+        st.subheader("Connected Services")
+        st.dataframe(rows, hide_index=True, width="stretch")
+        st.caption(
+            "Credentials remain hidden and are not requested again unless you "
+            "choose to edit this configuration. Saved credential values are never "
+            "returned to the form."
         )
-        st.rerun()
+        if st.button(
+            "Edit Configuration",
+            type="primary",
+            icon=":material/settings:",
+        ):
+            st.session_state["configuration_editing"] = True
+            st.session_state["configuration_wizard_step"] = 1
+            st.session_state["configuration_validation_results"] = []
+            st.session_state["configuration_draft"] = _configuration_draft(
+                configuration
+            )
+            st.rerun()
