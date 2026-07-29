@@ -106,10 +106,32 @@ class BufferService:
                 "message": f"Could not load Buffer profiles: {error}",
                 "results": [],
             }
+        if isinstance(profiles, dict):
+            for key in ("profiles", "data", "channels"):
+                nested = profiles.get(key)
+                if isinstance(nested, list):
+                    profiles = nested
+                    break
         if not isinstance(profiles, list):
+            detail = None
+            if isinstance(profiles, dict):
+                detail = (
+                    profiles.get("error")
+                    or profiles.get("error_description")
+                    or profiles.get("message")
+                )
+            message = (
+                f"Buffer rejected the profiles request: {detail}"
+                if detail
+                else (
+                    "Unexpected Buffer profiles response. Check that the "
+                    "endpoint and access token are valid Buffer API "
+                    "credentials."
+                )
+            )
             return {
                 "success": False,
-                "message": "The Buffer profiles response was not a list.",
+                "message": message,
                 "results": [],
             }
         profile_ids = [

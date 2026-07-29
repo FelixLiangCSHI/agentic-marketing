@@ -2297,18 +2297,20 @@ def render_buffer_summary(preview: dict[str, Any]) -> None:
         )
     )
     for issue in preview["globalIssues"]:
+        if issue["severity"] == "info":
+            continue
         message = f"{issue['code']}: {issue['message']} {issue['suggestedAction']}"
         if issue["severity"] == "error":
             st.error(message)
-        elif issue["severity"] == "warning":
-            st.warning(message)
         else:
-            st.info(message)
+            st.warning(message)
     st.caption(
         "Current Buffer guidance lists a per-channel queue and upload limit of "
         f"{preview['guidance']['freePlan']['queueCapacityPerChannel']} items. "
         f"Guidance reviewed {preview['guidance']['reviewedAt']}; verify current "
-        "Buffer plan limits before import."
+        "Buffer plan limits before import. Buffer CSVs carry no time-zone "
+        f"column, so confirm the Buffer channel time zone is {preview['timeZone']} "
+        "and verify times in preview."
     )
 
 
