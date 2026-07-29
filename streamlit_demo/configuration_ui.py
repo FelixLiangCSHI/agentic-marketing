@@ -224,48 +224,29 @@ def _masked_credential(credential: str) -> str:
     return "Configured" if credential else "Not configured"
 
 
-def render_settings() -> None:
-    st.caption("LOCAL CONFIGURATION")
-    st.header("Settings", divider="gray")
-    st.write(
-        "Review service connectivity and manage the credentials available to this "
-        "workspace."
+def begin_configuration_editing() -> None:
+    st.session_state["configuration_editing"] = True
+    st.session_state["configuration_wizard_step"] = 1
+    st.session_state["configuration_validation_results"] = []
+    st.session_state["configuration_draft"] = _configuration_draft(
+        st.session_state.get("configuration")
     )
-    configuration = st.session_state.get("configuration")
-    if not isinstance(configuration, ApplicationConfiguration):
-        st.info("Complete the first-run configuration wizard.")
-        return
 
-    rows: list[dict[str, Any]] = []
-    for label, service in (
-        ("AI Insight Service", configuration.ai_insight),
-        ("AI 30-day Plan Service", configuration.ai_plan),
-        ("Buffer", configuration.buffer),
-    ):
-        rows.append(
-            {
-                "Service": label,
-                "Endpoint": service.endpoint,
-                "Credential": _masked_credential(service.credential),
-            }
+
+def configured_service_rows(
+    configuration: ApplicationConfiguration | None,
+) -> list[dict[str, Any]]:
+    if not isinstance(configuration, ApplicationConfiguration):
+        return []
+    return [
+        {
+            "Service": label,
+            "Endpoint": service.endpoint,
+            "Credential": _masked_credential(service.credential),
+        }
+        for label, service in (
+            ("AI Insight Service", configuration.ai_insight),
+            ("AI 30-day Plan Service", configuration.ai_plan),
+            ("Buffer", configuration.buffer),
         )
-    with st.container(border=True):
-        st.subheader("Connected Services")
-        st.dataframe(rows, hide_index=True, width="stretch")
-        st.caption(
-            "Credentials remain hidden and are not requested again unless you "
-            "choose to edit this configuration. Saved credential values are never "
-            "returned to the form."
-        )
-        if st.button(
-            "Edit Configuration",
-            type="primary",
-            icon=":material/settings:",
-        ):
-            st.session_state["configuration_editing"] = True
-            st.session_state["configuration_wizard_step"] = 1
-            st.session_state["configuration_validation_results"] = []
-            st.session_state["configuration_draft"] = _configuration_draft(
-                configuration
-            )
-            st.rerun()
+    ]

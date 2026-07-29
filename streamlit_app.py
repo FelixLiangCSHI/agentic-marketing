@@ -21,12 +21,19 @@ from streamlit_demo.buffer_service import (
 )
 from streamlit_demo.configuration_ui import (
     configuration_dialog_required,
+    configured_service_rows,
     initialize_configuration_state,
     render_configuration_dialog,
-    render_settings,
 )
-from streamlit_demo.data_models import ServiceConfiguration
+from streamlit_demo.data_models import ApplicationConfiguration, ServiceConfiguration
 from streamlit_demo.pdf_export import as_pdf_artifact
+from streamlit_demo.ui_components import (
+    inject_global_styles,
+    render_app_header,
+    render_floating_copilot,
+    render_journey_stepper,
+    render_settings_panel,
+)
 from streamlit_demo.workflow import ConfigurationWorkflow
 
 
@@ -51,7 +58,6 @@ NAVIGATION = (
     "Buffer Handoff",
     "Campaign Evidence",
     "Reports & Exports",
-    "Settings",
 )
 PIPELINE_STAGES = (
     "Data Intake",
@@ -289,9 +295,15 @@ def initialize_state() -> None:
             "Healthcare professionals, clinical KOLs, hospital procurement teams, "
             "and regulatory stakeholders"
         ),
+        "copilot_open": False,
+        "brand_voice": "Clinical & evidence-led",
+        "compliance_mode": "Strict (medical device)",
+        "app_theme": "System",
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
+    if st.session_state["active_stage"] not in NAVIGATION:
+        st.session_state["active_stage"] = "Data Intake"
 
 
 def clear_buffer_selection_widgets() -> None:
@@ -652,15 +664,48 @@ def stage_status(stage: str) -> tuple[str, str]:
     return "pending", "Pending"
 
 
+def settings_connection_rows() -> list[tuple[str, bool, str, str]]:
+    configuration = st.session_state.get("configuration")
+    configured = isinstance(configuration, ApplicationConfiguration)
+    linkedin_ready = analysis_data() is not None
+    buffer_ready = configured and bool(
+        resolve_buffer_api_key(configuration.buffer.credential)
+    )
+    ai_ready = configured and bool(
+        configuration.ai_insight.endpoint and configuration.ai_plan.endpoint
+    )
+    return [
+        (
+            "LinkedIn data",
+            linkedin_ready,
+            "Imported" if linkedin_ready else "Awaiting import",
+            "Historical exports uploaded through Data Intake.",
+        ),
+        (
+            "Buffer",
+            buffer_ready,
+            "Connected" if buffer_ready else "Not configured",
+            "Used for the human-controlled publishing handoff.",
+        ),
+        (
+            "AI model / API",
+            ai_ready,
+            "Configured" if ai_ready else "Not configured",
+            "Insight and 30-day plan drafting services.",
+        ),
+    ]
+
+
 def render_header() -> None:
-    masthead, briefing_date = st.columns([4, 1], vertical_alignment="bottom")
-    with masthead:
-        st.caption("AI MARKETING CO-PILOT · HUMAN-IN-THE-LOOP")
-        st.title("LinkedIn Campaign Workspace")
-    with briefing_date:
-        st.caption(
-            f"Prepared {local_today().strftime('%d %B %Y')}"
-        )
+    render_app_header(
+        "AI MARKETING CO-PILOT · HUMAN-IN-THE-LOOP",
+        "LinkedIn Campaign Workspace",
+        f"Prepared {local_today().strftime('%d %B %Y')}",
+        lambda: render_settings_panel(
+            settings_connection_rows(),
+            configured_service_rows(st.session_state.get("configuration")),
+        ),
+    )
     st.caption(
         "Historical Data → AI Insight Report → Marketing Strategy → "
         "Human Approval → 30-Day Content Plan → Human Approval → "
@@ -711,33 +756,21 @@ def render_sidebar() -> None:
         st.title("Marketing Co-Pilot")
         st.caption("AI ACCELERATES · HUMANS APPROVE")
 
-        st.subheader("Campaign Journey")
-        stage_texts = {
-            stage: stage_status(stage)[1] for stage in PIPELINE_STAGES
+        stage_states = {
+            stage: stage_status(stage) for stage in PIPELINE_STAGES
         }
         completed = sum(
-            text in {"Complete", "Reviewed", "Approved"}
-            or text.endswith("handed off")
-            for text in stage_texts.values()
+            status == "completed" for status, _ in stage_states.values()
         )
-        st.progress(
-            completed / len(PIPELINE_STAGES),
-            text=f"{completed} of {len(PIPELINE_STAGES)} steps complete",
-        )
-        extra_captions = {
-            "Campaign Evidence": "Ask the co-pilot",
-            "Reports & Exports": "Executive deliverables",
-            "Settings": "",
-        }
-        st.radio(
-            "Navigate to",
+        render_journey_stepper(
             NAVIGATION,
-            key="active_stage",
-            label_visibility="collapsed",
-            captions=[
-                stage_texts.get(stage, extra_captions.get(stage, ""))
-                for stage in NAVIGATION
-            ],
+            stage_states,
+            {
+                "Campaign Evidence": "Ask the co-pilot",
+                "Reports & Exports": "Executive deliverables",
+            },
+            completed,
+            len(PIPELINE_STAGES),
         )
 
         st.divider()
@@ -2720,17 +2753,77 @@ def render_current_stage() -> None:
         render_chat()
     elif stage == "Reports & Exports":
         render_exports()
-    elif stage == "Settings":
-        render_settings()
     render_next_step(stage)
+
+
+COPILOT_GUIDANCE = {
+    "Data Intake": (
+        "Import the LinkedIn follower, visitor, and content exports. The AI "
+        "verifies the evidence base before insights are generated.",
+        (("Explain current insights", "Audience & Content Insights"),),
+    ),
+    "Performance Metrics": (
+        "KPIs are computed automatically from the imported data. Review them, "
+        "then move to the AI-drafted insights.",
+        (("Explain current insights", "Audience & Content Insights"),),
+    ),
+    "Audience & Content Insights": (
+        "Review the most important audience and content findings, approve the "
+        "insights that stand, then let the AI propose the strategy.",
+        (("Generate strategy", "Campaign Strategy"),),
+    ),
+    "Campaign Strategy": (
+        "The next approval action is yours: confirm or reject each proposed "
+        "strategy so the AI can draft the 30-day plan from approved input.",
+        (("Build 30-day plan", "30-Day Campaign Plan"),),
+    ),
+    "30-Day Campaign Plan": (
+        "Reviewer feedback and approved strategies shape the 30-day plan. "
+        "Approve the plan to unlock LinkedIn drafts and the Buffer handoff.",
+        (
+            ("Review approved feedback", "Campaign Evidence"),
+            ("Prepare Buffer handoff", "Buffer Handoff"),
+        ),
+    ),
+    "Buffer Handoff": (
+        "Drafts use approved terminology and pass compliance checks before the "
+        "handoff. Publishing stays under human control in Buffer.",
+        (("Review approved feedback", "Campaign Evidence"),),
+    ),
+    "Campaign Evidence": (
+        "Every answer cites campaign evidence. Use the quick questions to "
+        "review metrics, trends, and plan recommendations.",
+        (("Prepare Buffer handoff", "Buffer Handoff"),),
+    ),
+    "Reports & Exports": (
+        "Download the campaign story — analysis, approved decisions, and the "
+        "content calendar — in decision-ready formats.",
+        (("Review approved feedback", "Campaign Evidence"),),
+    ),
+}
+
+
+def copilot_navigate(target_stage: str) -> None:
+    st.session_state["_pending_active_stage"] = target_stage
+    st.rerun()
+
+
+def render_copilot() -> None:
+    stage = st.session_state["active_stage"]
+    message, actions = COPILOT_GUIDANCE.get(
+        stage, (NEXT_STEPS.get(stage, ("", ""))[1], ())
+    )
+    render_floating_copilot(stage, message, actions, copilot_navigate)
 
 
 initialize_state()
 initialize_configuration_state(CONFIGURATION_WORKFLOW)
 process_pending_actions()
+inject_global_styles()
 render_header()
 render_sidebar()
 render_last_status()
 render_current_stage()
+render_copilot()
 if configuration_dialog_required():
     render_configuration_dialog(CONFIGURATION_WORKFLOW)
