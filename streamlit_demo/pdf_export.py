@@ -26,7 +26,6 @@ _FONT_REGISTERED = False
 
 _ACCENT = colors.HexColor("#1F4E79")
 _MUTED = colors.HexColor("#555555")
-_CODE_COLOR = colors.HexColor("#0B5CAD")
 
 _TITLE_STYLE = ParagraphStyle(
     "title",
