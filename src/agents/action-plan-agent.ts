@@ -257,28 +257,22 @@ function ownerPlaceholder(preferences: ActionPlanPreferences): string {
 
 function contentFormats(preferences: ActionPlanPreferences): string[] {
   const resources = preferences.contentResources.join(" ").toLowerCase();
-  const formats = ["Short text post", "Document carousel"];
-  if (resources.includes("video")) {
-    formats.push("Short video");
-  }
-  if (
-    resources.includes("design") ||
-    resources.includes("design") ||
-    resources.includes("image")
-  ) {
+  const formats = ["Short text post"];
+  if (resources.includes("design") || resources.includes("image")) {
     formats.push("Text with image");
   }
   return formats;
 }
 
 function mediaRequirement(contentFormat: string): string | null {
-  if (contentFormat.includes("carousel")) {
+  const format = contentFormat.toLowerCase();
+  if (format.includes("carousel")) {
     return "Prepare carousel assets that can be separated into individual images.";
   }
-  if (contentFormat.includes("video")) {
+  if (format.includes("video")) {
     return "Prepare the reviewed video file for manual publishing.";
   }
-  if (contentFormat.includes("image")) {
+  if (format.includes("image")) {
     return "Prepare one relevant image with a public direct link.";
   }
   return null;
@@ -1230,7 +1224,7 @@ export function generateActionPlan(
         ? "Team size is not specified; owner fields remain unassigned."
         : `Confirmed team size: ${input.preferences.teamSize}. Named owners remain to be assigned.`,
       input.preferences.contentResources.length === 0
-        ? "No content-resource inventory is available; the plan uses text posts and document carousels."
+        ? "No content-resource inventory is available; the plan uses Buffer-compatible text posts."
         : `Available content resources: ${input.preferences.contentResources.join(", ")}.`,
       `Maximum weekly publishing volume: ${input.preferences.postsPerWeek}; time zone: ${input.preferences.timeZone}.`,
     ],

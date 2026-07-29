@@ -230,8 +230,23 @@ class StreamlitDemoTests(unittest.TestCase):
         preview = state["buffer_preview"]
         self.assertIsNotNone(preview)
         self.assertGreater(preview["summary"]["exportableCount"], 0)
-        self.assertGreater(preview["summary"]["blockingErrorCount"], 0)
+        self.assertEqual(preview["summary"]["blockingErrorCount"], 0)
         self.assertGreater(preview["summary"]["warningCount"], 0)
+        self.assertFalse(
+            any(
+                issue["code"] == "UNSUPPORTED_BULK_POST_TYPE"
+                for review in preview["reviews"]
+                for issue in review["issues"]
+            )
+        )
+        format_control = next(
+            item for item in app.selectbox if item.label == "Content Format"
+        )
+        app = format_control.set_value("Document Carousel").run(timeout=60)
+        app = click_label(app, "Save and Revalidate", timeout=90)
+        preview = app.session_state.filtered_state["buffer_preview"]
+        self.assertIsNotNone(preview)
+        self.assertGreater(preview["summary"]["blockingErrorCount"], 0)
         blocked_review = next(
             review
             for review in preview["reviews"]

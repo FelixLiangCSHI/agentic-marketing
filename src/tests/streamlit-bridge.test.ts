@@ -264,7 +264,9 @@ test("Buffer bridge previews partial eligibility and exports per channel without
     const { analysis, plan } = await confirmedBridgePlan();
     const contentCalendar = plan.contentCalendar as Array<{
       itemId: string;
+      contentFormat: string;
     }>;
+    contentCalendar[0].contentFormat = "Document carousel";
     const handoff = {
       dateRange: { start: "2026-07-28", end: "2026-08-10" },
       timeZone: "Asia/Shanghai",
