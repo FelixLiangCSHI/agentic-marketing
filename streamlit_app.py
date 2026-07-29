@@ -21,6 +21,7 @@ from streamlit_demo.configuration_ui import (
     render_configuration_dialog,
     render_settings,
 )
+from streamlit_demo.pdf_export import as_pdf_artifact
 from streamlit_demo.workflow import ConfigurationWorkflow
 
 
@@ -2740,6 +2741,8 @@ def render_exports() -> None:
     for column, (key, label) in zip(columns, definitions):
         artifact = artifacts[key]
         disabled = key == "calendarCsv" and not artifact["content"]
+        if key in ("markdown", "structuredJson") and not disabled:
+            artifact = as_pdf_artifact(artifact)
         clicked = column.download_button(
             label,
             data=artifact["content"],

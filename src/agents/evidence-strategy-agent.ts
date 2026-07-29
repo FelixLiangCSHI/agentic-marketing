@@ -132,10 +132,7 @@ export function generateEvidenceStrategyBundle(
         suggestedValidation:
           "Repeat the analysis with the same definitions and compare clinical-evidence, regulatory, and economic-value publishing windows.",
         metrics: followerMetrics,
-        limitations: [
-          "Aggregate data cannot verify individual healthcare professional or KOL identities.",
-          "Follower changes cannot be attributed directly to a single content item.",
-        ],
+        limitations: [],
       }),
     );
   }
@@ -160,10 +157,7 @@ export function generateEvidenceStrategyBundle(
         suggestedValidation:
           "Track Page Views, Unique Visitors, and clinical-evidence CTA clicks over equivalent periods.",
         metrics: visitorMetrics,
-        limitations: [
-          "Visitor data is anonymous and aggregated.",
-          "Page Views and follower changes do not support user-level attribution.",
-        ],
+        limitations: [],
       }),
     );
   }
@@ -189,10 +183,7 @@ export function generateEvidenceStrategyBundle(
         suggestedValidation:
           "Run single-variable tests across product area, evidence type, and healthcare-professional CTA, then review the next comparable import.",
         metrics: contentMetrics,
-        limitations: [
-          "Historical performance does not guarantee future results.",
-          "Small content segments support directional analysis only.",
-        ],
+        limitations: [],
       }),
     );
   }

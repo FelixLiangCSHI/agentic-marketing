@@ -409,9 +409,10 @@ function itemIssues(
       );
     }
   }
+  const normalizedFormat = item.contentFormat.toLowerCase();
   if (
-    item.contentFormat.includes("carousel") ||
-    item.contentFormat.includes("video")
+    normalizedFormat.includes("carousel") ||
+    normalizedFormat.includes("video")
   ) {
     issues.push(
       issue(

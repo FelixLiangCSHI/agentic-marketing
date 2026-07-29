@@ -366,23 +366,21 @@ function ownerPlaceholder(preferences) {
 }
 function contentFormats(preferences) {
   const resources = preferences.contentResources.join(" ").toLowerCase();
-  const formats = ["Short text post", "Document carousel"];
-  if (resources.includes("video")) {
-    formats.push("Short video");
-  }
-  if (resources.includes("design") || resources.includes("design") || resources.includes("image")) {
+  const formats = ["Short text post"];
+  if (resources.includes("design") || resources.includes("image")) {
     formats.push("Text with image");
   }
   return formats;
 }
 function mediaRequirement(contentFormat) {
-  if (contentFormat.includes("carousel")) {
+  const format = contentFormat.toLowerCase();
+  if (format.includes("carousel")) {
     return "Prepare carousel assets that can be separated into individual images.";
   }
-  if (contentFormat.includes("video")) {
+  if (format.includes("video")) {
     return "Prepare the reviewed video file for manual publishing.";
   }
-  if (contentFormat.includes("image")) {
+  if (format.includes("image")) {
     return "Prepare one relevant image with a public direct link.";
   }
   return null;
@@ -1040,7 +1038,7 @@ function generateActionPlan(input, now = /* @__PURE__ */ new Date()) {
     },
     assumptions: [
       input.preferences.teamSize === null ? "Team size is not specified; owner fields remain unassigned." : `Confirmed team size: ${input.preferences.teamSize}. Named owners remain to be assigned.`,
-      input.preferences.contentResources.length === 0 ? "No content-resource inventory is available; the plan uses text posts and document carousels." : `Available content resources: ${input.preferences.contentResources.join(", ")}.`,
+      input.preferences.contentResources.length === 0 ? "No content-resource inventory is available; the plan uses Buffer-compatible text posts." : `Available content resources: ${input.preferences.contentResources.join(", ")}.`,
       `Maximum weekly publishing volume: ${input.preferences.postsPerWeek}; time zone: ${input.preferences.timeZone}.`
     ],
     risksAndLimitations: [],
@@ -1602,10 +1600,7 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
         possibleMeaning: "The aggregate result establishes a direction for healthcare professional and KOL reach; it does not verify stakeholder role or procurement intent.",
         suggestedValidation: "Repeat the analysis with the same definitions and compare clinical-evidence, regulatory, and economic-value publishing windows.",
         metrics: followerMetrics,
-        limitations: [
-          "Aggregate data cannot verify individual healthcare professional or KOL identities.",
-          "Follower changes cannot be attributed directly to a single content item."
-        ]
+        limitations: []
       })
     );
   }
@@ -1627,10 +1622,7 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
         possibleMeaning: "The result quantifies aggregate page traffic without identifying healthcare professionals, hospital procurement teams, or evaluation intent.",
         suggestedValidation: "Track Page Views, Unique Visitors, and clinical-evidence CTA clicks over equivalent periods.",
         metrics: visitorMetrics,
-        limitations: [
-          "Visitor data is anonymous and aggregated.",
-          "Page Views and follower changes do not support user-level attribution."
-        ]
+        limitations: []
       })
     );
   }
@@ -1653,10 +1645,7 @@ function generateEvidenceStrategyBundle(snapshot, now = /* @__PURE__ */ new Date
         possibleMeaning: "Current content performance provides an experiment baseline, not a forecast of future results.",
         suggestedValidation: "Run single-variable tests across product area, evidence type, and healthcare-professional CTA, then review the next comparable import.",
         metrics: contentMetrics,
-        limitations: [
-          "Historical performance does not guarantee future results.",
-          "Small content segments support directional analysis only."
-        ]
+        limitations: []
       })
     );
   }
@@ -3947,7 +3936,8 @@ function itemIssues(item, options, now, previouslyExportedIds) {
       );
     }
   }
-  if (item.contentFormat.includes("carousel") || item.contentFormat.includes("video")) {
+  const normalizedFormat = item.contentFormat.toLowerCase();
+  if (normalizedFormat.includes("carousel") || normalizedFormat.includes("video")) {
     issues.push(
       issue2(
         "UNSUPPORTED_BULK_POST_TYPE",
