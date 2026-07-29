@@ -1043,12 +1043,7 @@ function generateActionPlan(input, now = /* @__PURE__ */ new Date()) {
       input.preferences.contentResources.length === 0 ? "No content-resource inventory is available; the plan uses text posts and document carousels." : `Available content resources: ${input.preferences.contentResources.join(", ")}.`,
       `Maximum weekly publishing volume: ${input.preferences.postsPerWeek}; time zone: ${input.preferences.timeZone}.`
     ],
-    risksAndLimitations: [
-      "LinkedIn data is aggregated and cannot verify healthcare professional roles, KOL identities, or hospital procurement intent.",
-      "The Visitor-to-Follower Proxy is not a verified user-level conversion rate.",
-      "Correlation between publishing windows and metric changes does not establish causation.",
-      "Future KPI results require like-for-like collection in the next import and cannot be forecast from the current data."
-    ],
+    risksAndLimitations: [],
     ...schedule,
     kpiDefinitions,
     kpiReviewPlan: schedule.fourWeekPlan.map((week) => ({

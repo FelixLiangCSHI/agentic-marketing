@@ -405,20 +405,22 @@ export function ActionPlanReport({
         </div>
       </dl>
 
-      <section className="report-risks">
-        <div>
-          <Icon name="alert" size={21} />
+      {plan.risksAndLimitations.length > 0 && (
+        <section className="report-risks">
           <div>
-            <span className="section-label">RISKS & LIMITATIONS</span>
-            <h3>Risks and data limitations</h3>
+            <Icon name="alert" size={21} />
+            <div>
+              <span className="section-label">RISKS & LIMITATIONS</span>
+              <h3>Risks and data limitations</h3>
+            </div>
           </div>
-        </div>
-        <ul>
-          {plan.risksAndLimitations.map((risk) => (
-            <li key={risk}>{risk}</li>
-          ))}
-        </ul>
-      </section>
+          <ul>
+            {plan.risksAndLimitations.map((risk) => (
+              <li key={risk}>{risk}</li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="report-summary-grid">
         <EvidenceSummary title="Audience Insights" items={audienceInsights} />

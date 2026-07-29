@@ -226,7 +226,7 @@ def _masked_credential(credential: str) -> str:
 
 def render_settings() -> None:
     st.caption("LOCAL CONFIGURATION")
-    st.header("Settings", divider="blue")
+    st.header("Settings", divider="gray")
     st.write(
         "Review service connectivity and manage the credentials available to this "
         "workspace."
