@@ -101,127 +101,10 @@ CONFIGURATION_WORKFLOW = ConfigurationWorkflow()
 
 st.set_page_config(
     page_title=APP_TITLE,
-    page_icon="L",
+    page_icon=":material/analytics:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-st.markdown(
-    """
-    <style>
-    :root {
-      --brand: #0a66c2;
-      --ink: #172033;
-      --muted: #5f6b7a;
-      --line: #d9e2ec;
-      --surface: #ffffff;
-      --soft: #edf4fb;
-      --success: #147d64;
-      --warning: #946200;
-      --danger: #b42318;
-    }
-    .stApp { background: #f4f7fa; color: var(--ink); }
-    .block-container { max-width: 1480px; padding-top: 1.25rem; }
-    .demo-hero {
-      background: linear-gradient(135deg, #102a43 0%, #0a66c2 100%);
-      border-radius: 18px;
-      color: white;
-      padding: 1.5rem 1.75rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 12px 32px rgba(16, 42, 67, .14);
-    }
-    .demo-hero__eyebrow {
-      font-size: .75rem;
-      font-weight: 700;
-      letter-spacing: .12em;
-      opacity: .78;
-      text-transform: uppercase;
-    }
-    .demo-hero h1 { color: white; font-size: 2rem; margin: .25rem 0; }
-    .demo-hero p { margin: 0; max-width: 850px; opacity: .9; }
-    .privacy-panel {
-      background: #eff8ff;
-      border: 1px solid #b9dcff;
-      border-radius: 12px;
-      color: #163a5f;
-      padding: .9rem 1rem;
-      margin-bottom: 1rem;
-    }
-    .privacy-panel strong { color: #0b4f8a; }
-    .status-row {
-      align-items: center;
-      border-bottom: 1px solid #e6edf3;
-      display: flex;
-      font-size: .86rem;
-      justify-content: space-between;
-      padding: .45rem 0;
-    }
-    .status-label { color: #334e68; font-weight: 600; }
-    .status-text { color: #52606d; font-size: .78rem; }
-    .status-text--completed { color: var(--success); }
-    .status-text--running { color: var(--brand); }
-    .status-text--error { color: var(--danger); }
-    .section-kicker {
-      color: var(--brand);
-      font-size: .75rem;
-      font-weight: 750;
-      letter-spacing: .09em;
-      text-transform: uppercase;
-    }
-    div[data-testid="stMetric"] {
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: .8rem 1rem;
-    }
-    div[data-testid="stExpander"] {
-      background: white;
-      border-color: var(--line);
-      border-radius: 10px;
-    }
-    div[data-testid="stFileUploader"] {
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: .4rem .7rem;
-    }
-    div[data-testid="stChatMessage"] {
-      border: 1px solid #e1e8ef;
-      border-radius: 12px;
-      padding: .4rem .65rem;
-    }
-    .evidence-tag {
-      background: #e8f3ff;
-      border-radius: 999px;
-      color: #07599f;
-      display: inline-block;
-      font-family: monospace;
-      font-size: .72rem;
-      margin: .1rem .2rem .1rem 0;
-      padding: .18rem .45rem;
-    }
-    .mock-badge {
-      background: #fff4ce;
-      border: 1px solid #f0cf6a;
-      border-radius: 999px;
-      color: #714f00;
-      display: inline-block;
-      font-size: .75rem;
-      font-weight: 700;
-      padding: .18rem .55rem;
-    }
-    @media (max-width: 760px) {
-      .block-container { padding-left: .8rem; padding-right: .8rem; }
-      .demo-hero { border-radius: 12px; padding: 1.1rem; }
-      .demo-hero h1 { font-size: 1.45rem; }
-      div[data-testid="stHorizontalBlock"] { gap: .5rem; }
-      div[data-testid="stDataFrame"] { max-width: calc(100vw - 2rem); }
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -258,23 +141,50 @@ def consulting_report(
     }
 
 
+def render_page_intro(kicker: str, title: str, description: str = "") -> None:
+    st.caption(kicker.upper())
+    st.header(title, divider="blue")
+    if description:
+        st.write(description)
+
+
+def render_list(items: list[str]) -> None:
+    st.write(
+        "\n".join(f"- {item}" for item in items)
+        if items
+        else "No material finding is available."
+    )
+
+
 def render_consulting_report(report: dict[str, Any]) -> None:
-    st.subheader("Executive Summary")
-    st.write(report["executiveSummary"])
-    for heading, key in (
-        ("Key Findings", "keyFindings"),
-        ("Business Implications", "businessImplications"),
-        ("Recommendations", "recommendations"),
-    ):
-        st.subheader(heading)
-        items = report.get(key, [])
-        st.write("\n".join(f"- {item}" for item in items) if items else "No material finding is available.")
-    st.subheader("Confidence Level")
-    st.write(report["confidenceLevel"])
-    for heading, key in (("Evidence", "evidence"), ("Observed Trends", "observedTrends")):
-        st.subheader(heading)
-        items = report.get(key, [])
-        st.write("\n".join(f"- {item}" for item in items) if items else "No material finding is available.")
+    with st.container(border=True):
+        st.caption("EXECUTIVE VIEW")
+        st.subheader("Executive Summary")
+        st.write(report["executiveSummary"])
+        st.metric("Confidence Level", report["confidenceLevel"])
+
+    findings_tab, implications_tab, evidence_tab = st.tabs(
+        ["Findings & Actions", "Business Implications", "Evidence Base"]
+    )
+    with findings_tab:
+        findings, recommendations = st.columns(2, gap="large")
+        with findings:
+            st.subheader("Key Findings")
+            render_list(report.get("keyFindings", []))
+        with recommendations:
+            st.subheader("Recommendations")
+            render_list(report.get("recommendations", []))
+    with implications_tab:
+        st.subheader("Business Implications")
+        render_list(report.get("businessImplications", []))
+    with evidence_tab:
+        evidence, trends = st.columns(2, gap="large")
+        with evidence:
+            st.subheader("Evidence")
+            render_list(report.get("evidence", []))
+        with trends:
+            st.subheader("Observed Trends")
+            render_list(report.get("observedTrends", []))
 
 
 def initialize_state() -> None:
@@ -719,22 +629,48 @@ def stage_status(stage: str) -> tuple[str, str]:
 
 
 def render_header() -> None:
-    st.markdown(
-        """
-        <div class="demo-hero">
-          <div class="demo-hero__eyebrow">Medical Device Marketing Operations</div>
-          <h1>LinkedIn Campaign Workspace</h1>
-          <p>Plan, review, and prepare evidence-informed LinkedIn campaigns for
-          regulated medical device audiences.</p>
-        </div>
-        <div class="privacy-panel" role="note" aria-label="Data handling notice">
-          <strong>Data handling:</strong>
-          Uploaded files are processed within the current session and are not
-          written to application storage. Do not upload patient data, protected
-          health information, or non-public clinical data.
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.caption("MEDICAL DEVICE MARKETING OPERATIONS")
+    st.title("LinkedIn Campaign Workspace")
+    st.write(
+        "An evidence-led advisory workspace for planning, reviewing, and preparing "
+        "LinkedIn campaigns for regulated medical device audiences."
+    )
+    snapshot = snapshot_data()
+    plan = st.session_state.get("plan")
+    summary_columns = st.columns(3, gap="medium")
+    with summary_columns[0]:
+        with st.container(border=True):
+            st.metric(
+                "Data Readiness",
+                (
+                    "Ready"
+                    if snapshot and snapshot["canEnterInsights"]
+                    else "Action required" if snapshot else "Not assessed"
+                ),
+            )
+    with summary_columns[1]:
+        with st.container(border=True):
+            insight_count, strategy_count = approved_counts()
+            st.metric(
+                "Approved Decisions",
+                insight_count + strategy_count,
+                help="Approved insights and strategies",
+            )
+    with summary_columns[2]:
+        with st.container(border=True):
+            st.metric(
+                "Campaign Plan",
+                (
+                    "Approved"
+                    if plan and plan.get("status") == "user_confirmed"
+                    else "Draft" if plan else "Not started"
+                ),
+            )
+    st.info(
+        "**Data handling:** Uploaded files are processed only in the current "
+        "session. Do not upload patient data, protected health information, or "
+        "non-public clinical data.",
+        icon=":material/shield:",
     )
     if st.session_state.get("_reset_notice"):
         st.success(st.session_state.pop("_reset_notice"))
@@ -744,7 +680,8 @@ def render_header() -> None:
 
 def render_sidebar() -> None:
     with st.sidebar:
-        st.markdown("### Campaign Workspace")
+        st.title("Campaign Advisory")
+        st.caption("EVIDENCE-TO-EXECUTION WORKSPACE")
         st.text_input(
             "Campaign ID",
             key="project_id",
@@ -753,33 +690,50 @@ def render_sidebar() -> None:
         )
         mode = st.session_state.get("mode")
         if mode == "mock":
-            st.markdown(
-                '<span class="mock-badge">SAMPLE DATA</span>',
-                unsafe_allow_html=True,
+            st.warning(
+                "Sample data · Demonstration mode",
+                icon=":material/science:",
             )
         elif mode == "uploaded":
-            st.caption("Data mode: Uploaded dataset · Session-only processing")
-            st.caption("Recommendation mode: Structured demonstration rules")
+            st.success(
+                "Uploaded dataset · Session-only",
+                icon=":material/check_circle:",
+            )
+            st.caption("Recommendations use structured demonstration rules.")
         else:
-            st.caption("Status: Select a data intake path")
+            st.info("Select a data intake path.", icon=":material/upload_file:")
 
         st.divider()
-        st.markdown("### Campaign Workflow")
+        st.subheader("Engagement Progress")
+        stage_rows = []
         for stage in PIPELINE_STAGES:
             status, text = stage_status(stage)
-            st.markdown(
-                (
-                    '<div class="status-row">'
-                    f'<span class="status-label">{stage}</span>'
-                    f'<span class="status-text status-text--{status}">{text}</span>'
-                    "</div>"
-                ),
-                unsafe_allow_html=True,
+            stage_rows.append(
+                {
+                    "Workstream": stage,
+                    "Status": text,
+                }
             )
+        completed = sum(
+            row["Status"] in {"Complete", "Reviewed", "Approved"}
+            or row["Status"].endswith("handed off")
+            for row in stage_rows
+        )
+        st.progress(
+            completed / len(PIPELINE_STAGES),
+            text=f"{completed} of {len(PIPELINE_STAGES)} workstreams complete",
+        )
+        st.dataframe(
+            stage_rows,
+            hide_index=True,
+            width="stretch",
+            height=318,
+        )
 
         st.divider()
+        st.subheader("Workspace")
         st.radio(
-            "Workspace navigation",
+            "Navigate to",
             NAVIGATION,
             key="active_stage",
             help="Use the arrow keys to move between workflow pages.",
@@ -894,11 +848,11 @@ def render_parse_summaries() -> None:
 
 
 def render_ingestion() -> None:
-    st.markdown('<span class="section-kicker">Data intake</span>', unsafe_allow_html=True)
-    st.header("Select a Data Intake Path")
-    st.write(
+    render_page_intro(
+        "Data intake",
+        "Select a Data Intake Path",
         "Use fictional sample data for a guided campaign workflow, or upload "
-        "LinkedIn XLSX, XLS, or CSV exports up to 10 MB per file."
+        "LinkedIn XLSX, XLS, or CSV exports up to 10 MB per file.",
     )
     left, right = st.columns([1, 2], gap="large")
     with left:
@@ -998,8 +952,12 @@ def render_ingestion() -> None:
 
 def render_quality() -> None:
     snapshot = snapshot_data()
-    st.markdown('<span class="section-kicker">Data quality</span>', unsafe_allow_html=True)
-    st.header("Data Quality Review")
+    render_page_intro(
+        "Data quality",
+        "Data Quality Review",
+        "Assess evidence coverage, material limitations, and readiness before "
+        "moving into strategic interpretation.",
+    )
     if not snapshot:
         st.info("Start with sample data or upload files in Data Intake.")
         return
@@ -1130,8 +1088,12 @@ def render_series(
 
 def render_metrics() -> None:
     snapshot = snapshot_data()
-    st.markdown('<span class="section-kicker">Deterministic metrics</span>', unsafe_allow_html=True)
-    st.header("Performance Metrics")
+    render_page_intro(
+        "Deterministic metrics",
+        "Performance Metrics",
+        "Review the core commercial indicators, reporting periods, and reliability "
+        "levels calculated from the current analysis snapshot.",
+    )
     if not snapshot:
         st.info("No analysis snapshot is available.")
         return
@@ -1246,8 +1208,12 @@ def approval_controls(
 
 
 def render_insights(category: str, title: str) -> None:
-    st.markdown('<span class="section-kicker">Evidence insights</span>', unsafe_allow_html=True)
-    st.header(title)
+    render_page_intro(
+        "Evidence insights",
+        title,
+        "Evaluate each evidence-backed interpretation and record a clear management "
+        "decision before strategy development.",
+    )
     snapshot = snapshot_data()
     bundle = strategy_bundle()
     if not snapshot or not bundle:
@@ -1321,8 +1287,12 @@ def update_strategy_status(strategy_id: str, status: str) -> None:
 
 
 def render_strategies() -> None:
-    st.markdown('<span class="section-kicker">Approved strategy gate</span>', unsafe_allow_html=True)
-    st.header("Campaign Strategy Review")
+    render_page_intro(
+        "Approved strategy gate",
+        "Campaign Strategy Review",
+        "Translate approved insights into prioritized campaign choices, actions, "
+        "and measurable objectives.",
+    )
     snapshot = snapshot_data()
     bundle = strategy_bundle()
     if not snapshot or not bundle:
@@ -1519,8 +1489,12 @@ def render_plan_editor(plan: dict[str, Any]) -> None:
 
 def render_plan_report(plan: dict[str, Any]) -> None:
     st.divider()
-    st.markdown('<span class="section-kicker">Management report</span>', unsafe_allow_html=True)
-    st.header("30-Day Campaign Execution Report")
+    render_page_intro(
+        "Management report",
+        "30-Day Campaign Execution Report",
+        "A decision-ready view of the approved campaign, execution priorities, "
+        "assumptions, and risks.",
+    )
     metadata = (
         f"Created {plan['generatedAt']} · Updated {plan['updatedAt']} · "
         f"Analysis {period_text(plan['analysisPeriod'])} · "
@@ -1719,8 +1693,12 @@ def render_plan_report(plan: dict[str, Any]) -> None:
 
 
 def render_plan() -> None:
-    st.markdown('<span class="section-kicker">Campaign planning</span>', unsafe_allow_html=True)
-    st.header("Build a 30-Day Campaign from Approved Strategy")
+    render_page_intro(
+        "Campaign planning",
+        "Build a 30-Day Campaign from Approved Strategy",
+        "Convert management-approved recommendations into an accountable four-week "
+        "execution plan.",
+    )
     snapshot = snapshot_data()
     if not snapshot:
         st.info("Complete the analysis first.")
@@ -2310,12 +2288,10 @@ def render_buffer_result() -> None:
     )
     for index, step in enumerate(steps, start=1):
         st.write(f"{index}. {step}")
-    st.markdown(
-        (
-            f'<a href="{BUFFER_BULK_UPLOAD_URL}" target="_blank" '
-            'rel="noopener noreferrer">Open Buffer bulk upload guidance</a>'
-        ),
-        unsafe_allow_html=True,
+    st.link_button(
+        "Open Buffer Bulk Upload Guidance",
+        BUFFER_BULK_UPLOAD_URL,
+        icon=":material/open_in_new:",
     )
     st.info(
         "This demonstration does not access Buffer accounts or store credentials. "
@@ -2325,13 +2301,13 @@ def render_buffer_result() -> None:
 
 
 def render_buffer_handoff() -> None:
-    st.markdown(
-        '<span class="section-kicker">Human-reviewed handoff</span>',
-        unsafe_allow_html=True,
+    render_page_intro(
+        "Human-reviewed handoff",
+        "Buffer Connection",
+        "Prepare approved campaign content for controlled review and manual "
+        "scheduling in Buffer.",
     )
-    st.header("Buffer Connection")
     st.caption("Mock / Demo · Local simulation only · No network or API calls")
-    st.write("Prepare approved campaign content for review and scheduling in Buffer.")
     st.warning(
         "The workflow creates CSV files for manual import and does not connect "
         "directly to Buffer. Validate the latest template before use."
@@ -2545,8 +2521,12 @@ def submit_question(question: str) -> None:
 
 
 def render_chat() -> None:
-    st.markdown('<span class="section-kicker">Campaign evidence</span>', unsafe_allow_html=True)
-    st.header("Campaign Evidence Review")
+    render_page_intro(
+        "Campaign evidence",
+        "Campaign Evidence Review",
+        "Interrogate current metrics, limitations, and recommendations while "
+        "maintaining a traceable evidence base.",
+    )
     if not snapshot_data():
         st.info("Complete the data analysis first.")
         return
@@ -2579,8 +2559,12 @@ def render_chat() -> None:
 
 
 def render_exports() -> None:
-    st.markdown('<span class="section-kicker">Safe exports</span>', unsafe_allow_html=True)
-    st.header("Reports and Exports")
+    render_page_intro(
+        "Safe exports",
+        "Reports and Exports",
+        "Package the approved analysis and campaign plan into decision-ready "
+        "artifacts without exposing source files or raw cells.",
+    )
     snapshot = snapshot_data()
     bundle = strategy_bundle()
     if not snapshot or not bundle:
