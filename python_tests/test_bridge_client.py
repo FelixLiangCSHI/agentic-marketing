@@ -24,12 +24,11 @@ class BridgeClientTests(unittest.TestCase):
         self.assertEqual(health["runtime"], "short-lived-node-process")
         self.assertFalse(health["rawFilePersistence"])
 
-    def test_uses_committed_bundle_without_node_modules_at_runtime(self) -> None:
+    def test_runs_source_bridge_via_tsx(self) -> None:
         self.assertEqual(
             Path(self.client.command[-1]).resolve(),
-            (ROOT / "dist" / "streamlit-bridge.cjs").resolve(),
+            (ROOT / "scripts" / "streamlit-bridge.ts").resolve(),
         )
-        self.assertNotIn("node_modules", self.client.command[-1])
 
     def test_synthetic_analysis_is_complete_and_deterministic(self) -> None:
         first = self.client.call(

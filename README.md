@@ -59,9 +59,8 @@ python3 -m venv .venv
 
 打开 <http://localhost:8501>。Streamlit 每次操作会启动一个短生命周期 Node Bridge。
 
-运行时优先使用已提交的 `dist/streamlit-bridge.cjs` 单文件 Bridge。
-`npm install` 用于开发、测试和在 TypeScript 核心变化后重新生成该文件；Streamlit
-Community Cloud 不需要在启动时安装 npm 包。
+Bridge 通过 `node_modules` 中的 `tsx` 直接运行 `scripts/streamlit-bridge.ts`，
+因此启动 Streamlit 前必须先在项目目录执行 `npm install`。
 
 ### Next.js 工程界面
 
@@ -108,59 +107,11 @@ npm start
 | AI / LLM | 2 | 首次配置向导 / Settings | 洞察、计划和聊天继续使用确定性 Mock，不执行外部模型请求 |
 | LinkedIn | 0 | 无 | 只读取用户上传的分析导出，不调用 LinkedIn API |
 | Buffer | 1 | 首次配置向导 / Settings / `BUFFER_API_KEY` | 验证连接、生成 CSV 人工交接，并可经官方 GraphQL API（`https://api.buffer.com`）动态发现组织与 LinkedIn 渠道后创建草稿/排期帖 |
-| GitHub | 0 | 无 | 应用代码不调用 GitHub API；部署时的平台 GitHub 授权由 Streamlit 管理 |
-| Streamlit secrets | 1 | Cloud Secrets / 环境变量 | 代码读取 `st.secrets["BUFFER_API_KEY"]`（或 `BUFFER_API_KEY` 环境变量）作为 Buffer API Key；不缓存、不记录、不回显 |
+| GitHub | 0 | 无 | 应用代码不调用 GitHub API |
+| Streamlit secrets | 1 | `.streamlit/secrets.toml` / 环境变量 | 代码读取 `st.secrets["BUFFER_API_KEY"]`（或 `BUFFER_API_KEY` 环境变量）作为 Buffer API Key；不缓存、不记录、不回显 |
 
 `.streamlit/secrets.toml` 不是当前启动条件。若以后接入真实 LLM 或 Buffer OAuth，
 必须改用服务端密钥存储、权限隔离和轮换，不能把 Key 提交到 Git。
-
-## 部署到 Streamlit Community Cloud
-
-当前仓库已经具备直接从 GitHub 创建 **Streamlit Demo App** 所需的文件：
-
-- `streamlit_app.py`：Cloud 入口；
-- `requirements.txt`：固定 Python 依赖；
-- `packages.txt`：要求 Community Cloud 通过 Debian `apt-get` 安装 `nodejs`；
-- `dist/streamlit-bridge.cjs`：已捆绑 TypeScript 分析核心与工作簿读取器，
-  Cloud 运行时不依赖 `node_modules`、`tsx` 或 `npm install`；
-- `.streamlit/config.toml`：上传大小、主题和遥测配置。
-
-Streamlit 官方说明：Python 依赖从 `requirements.txt` 安装，非 Python 系统依赖从
-根目录 `packages.txt` 安装。Community Cloud 当前基于 Debian Linux：
-
-- [App dependencies](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies)
-- [Deploy](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy)
-- [Secrets management](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/secrets-management)
-
-### 推送前
-
-```powershell
-npm ci
-npm run build:streamlit-bridge
-npm test
-git add .
-git commit -m "Prepare Streamlit Community Cloud demo"
-git push
-```
-
-不要提交 `Data/`、`data/`、`.env*` 或 `.streamlit/secrets.toml`。每次修改
-Bridge 使用的 TypeScript 核心后，都应重新运行 `npm run build:streamlit-bridge`
-并提交更新后的 `dist/streamlit-bridge.cjs`。
-
-### 在 Community Cloud 创建 App
-
-1. 将仓库推送到 GitHub，并让 Streamlit Community Cloud 获得该仓库访问权限。
-2. 在 <https://share.streamlit.io> 选择 **Create app**。
-3. 选择仓库和分支，Main file path 填 `streamlit_app.py`。
-4. Advanced settings 使用 Python **3.12**。
-5. Secrets 保持空白；当前应用不需要任何 Key。
-6. 创建 App，构建日志应显示安装 `requirements.txt` 和 `packages.txt`。
-7. 打开 App 后先执行 Synthetic Demo，再用脱敏 fixture 验证上传路径。
-
-GitHub 私有仓库的访问授权属于 Streamlit 平台配置，不是在应用中填写 GitHub
-Personal Access Token。此部署适合可重置的交互 Demo；Community Cloud 重启、
-休眠或会话结束后状态会丢失。项目仍不具备生产级登录、持久化、后台任务、
-审计存储或发布 SLA。
 
 ## 使用流程
 
@@ -189,7 +140,7 @@ Personal Access Token。此部署适合可重置的交互 Demo；Community Cloud
 streamlit_app.py
   -> streamlit_demo/bridge_client.py
     -> 短生命周期 Node 子进程
-      -> dist/streamlit-bridge.cjs（由 src/streamlit/bridge.ts 构建）
+      -> scripts/streamlit-bridge.ts（由 tsx 运行）
         -> 现有解析、Snapshot、策略、计划、聊天和导出纯逻辑
 ```
 
@@ -499,9 +450,7 @@ Streamlit 和 Bridge 对以下状态使用稳定错误代码和恢复提示：
 streamlit_app.py             # Streamlit 演示主界面
 streamlit_demo/              # 无状态 Bridge 客户端和上传内存编码
 scripts/                     # Node Bridge stdin/stdout 启动器
-dist/                        # 可提交的 Streamlit Cloud 单文件 Node Bridge
 python_tests/                # Bridge 与 Streamlit AppTest
-packages.txt                 # Streamlit Cloud Debian 系统依赖
 src/
   agents/                 # 审批证据、Action Plan 与证据聊天纯逻辑
   app/                    # 页面、错误/加载状态、解析 Route Handler
@@ -587,6 +536,4 @@ npm test
 - 计划不会自动发布内容，也不连接 LinkedIn API、CRM、网站分析或项目管理工具。
 - 聊天目前使用规则意图识别，不提供开放域问答或多轮语义记忆。
 - Streamlit 的“取消当前阶段”在当前同步 Mock 中表示丢弃计划草稿并保留上游数据；尚不提供对外部模型流式请求的中途终止。
-- 支持部署为 Streamlit Community Cloud 可重置 Demo，但不提供生产级登录、持久化、
-  后台任务、长期服务端会话或 SLA。
 - 验收时 `npm audit --omit=dev` 与 `pip-audit` 均为 0；完整 `npm audit` 仍报告 ESLint 9 工具链中旧 Minimatch/brace-expansion 的开发期 glob DoS 公告。该链不进入应用运行依赖，也不处理上传内容；直接强制新版会破坏现有 ESLint 插件的 CommonJS API，后续应随 Next/ESLint 插件升级移除。

@@ -1,4 +1,3 @@
-import "./node12-compat";
 
 import {
   BRIDGE_PROTOCOL_VERSION,

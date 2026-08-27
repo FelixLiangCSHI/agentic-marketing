@@ -174,20 +174,12 @@ class BridgeClient:
         ).resolve()
         self.node_executable = resolve_node_executable(node_executable)
         self.default_timeout_seconds = default_timeout_seconds
-        self.bundled_bridge = (
-            self.repo_root / "dist" / "streamlit-bridge.cjs"
-        )
         self.tsx_cli = self.repo_root / "node_modules" / "tsx" / "dist" / "cli.mjs"
         self.source_bridge = (
             self.repo_root / "scripts" / "streamlit-bridge.ts"
         )
 
-        if self.bundled_bridge.is_file():
-            self.command = [
-                str(self.node_executable),
-                str(self.bundled_bridge),
-            ]
-        elif self.tsx_cli.is_file() and self.source_bridge.is_file():
+        if self.tsx_cli.is_file() and self.source_bridge.is_file():
             self.command = [
                 str(self.node_executable),
                 str(self.tsx_cli),
@@ -196,10 +188,9 @@ class BridgeClient:
         else:
             raise _failure(
                 "BRIDGE_UNAVAILABLE",
-                "找不到已构建的 Node Bridge。",
-                "请确认 dist/streamlit-bridge.cjs 已包含在部署中，"
-                "或在项目目录运行 npm install 和 "
-                "npm run build:streamlit-bridge。",
+                "找不到可运行的 Node Bridge。",
+                "请在项目目录运行 npm install 以安装 tsx，"
+                "并确认 scripts/streamlit-bridge.ts 存在。",
                 retryable=False,
             )
 
