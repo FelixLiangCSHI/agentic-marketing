@@ -4,14 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build:streamlit-bridge": "esbuild scripts/streamlit-bridge.ts --bundle --platform=node --target=node12 --format=cjs --charset=utf8 --legal-comments=eof --outfile=dist/streamlit-bridge.cjs",
-    "prebuild": "npm run build:streamlit-bridge",
     "build": "next build",
     "start": "next start",
     "streamlit:bridge": "tsx scripts/streamlit-bridge.ts",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "pretest": "npm run build:streamlit-bridge",
     "test": "tsx --test src/tests/run-tests.ts"
   },
   "dependencies": {
@@ -24,7 +21,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "esbuild": "0.28.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "tsx": "^4.23.1",
