@@ -11,7 +11,7 @@ from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Path, Request
+from fastapi import APIRouter, Depends, Path, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import create_engine
@@ -31,7 +31,7 @@ from dmt_api.contracts import (
 from dmt_api.errors import error_response
 from dmt_api.identity.auth import get_principal, require_roles
 from dmt_api.identity.provider import Principal
-from dmt_api.identity.roles import Role
+from dmt_api.identity.roles import APPROVER_ROLES, Role
 from dmt_api.persistence import UnitOfWork, create_session_factory
 from dmt_api.persistence.domain import ApprovalRequest
 from dmt_api.persistence.errors import (
@@ -81,6 +81,8 @@ class BindingModel(BaseModel):
     budget_limit: str = Field(default="0", max_length=32)
     valid_from: str = Field(default="", max_length=64)
     valid_until: str = Field(default="", max_length=64)
+    tool_name: str = Field(default="", max_length=128)
+    agent_type: str = Field(default="", max_length=32)
 
     def to_binding(self) -> ApprovalBinding:
         return ApprovalBinding(**self.model_dump())
@@ -149,10 +151,22 @@ class RevokeRequest(BaseModel):
 
 @router.get("")
 def list_approvals(
+    run_id: Identifier | None = Query(default=None),
     principal: Principal = Depends(_VIEWER),
     uow: UnitOfWork = Depends(get_uow),
 ) -> list[ApprovalView]:
-    return [_view(request) for request in uow.approvals.list_recent()]
+    privileged = bool(principal.roles & {Role.ADMIN, Role.AUDITOR})
+    approver_types = frozenset(
+        approval_type
+        for approval_type, roles in APPROVER_ROLES.items()
+        if principal.roles & roles
+    )
+    requests = uow.approvals.list_recent(
+        run_id=run_id,
+        requester_id=None if privileged else principal.subject,
+        approver_approval_types=frozenset() if privileged else approver_types,
+    )
+    return [_view(request) for request in requests]
 
 
 @router.post("", status_code=201, response_model=None)

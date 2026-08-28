@@ -42,6 +42,8 @@ class ApprovalBinding:
     budget_limit: str = "0"
     valid_from: str = ""
     valid_until: str = ""
+    tool_name: str = ""
+    agent_type: str = ""
 
     def canonical_hash(self) -> str:
         canonical = json.dumps(asdict(self), sort_keys=True, separators=(",", ":"))
@@ -84,6 +86,8 @@ class ApprovalService:
             token_id=_new_id("tok"),
             binding=asdict(binding),
             binding_hash=binding.canonical_hash(),
+            tool_name=binding.tool_name,
+            agent_type=binding.agent_type,
         )
 
     def decide(
@@ -132,6 +136,8 @@ class ApprovalService:
                 consumed_by=consumed_by,
                 now=self._now(),
                 expected_binding_hash=binding.canonical_hash(),
+                expected_tool_name=binding.tool_name,
+                expected_agent_type=binding.agent_type,
             )
         except BindingMismatchError:
             self._uow.commit()

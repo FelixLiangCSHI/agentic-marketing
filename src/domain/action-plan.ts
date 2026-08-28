@@ -180,7 +180,8 @@ export type ActionPlanValidationCode =
   | "DATE_CONFLICT"
   | "KPI_REFERENCE_INVALID"
   | "STRATEGY_REFERENCE_INVALID"
-  | "EXPERIMENT_INCOMPLETE";
+  | "EXPERIMENT_INCOMPLETE"
+  | "UNSUPPORTED_NUMERIC_CLAIM";
 
 export interface ActionPlanValidationIssue {
   code: ActionPlanValidationCode;

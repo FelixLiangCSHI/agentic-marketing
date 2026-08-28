@@ -17,6 +17,9 @@ from tests.db.helpers import create_run
 GROUP_MAPPING: dict[str, frozenset[Role]] = {
     "grp-content": frozenset({Role.CONTENT_CREATOR, Role.REQUESTER}),
     "grp-medical": frozenset({Role.MEDICAL_REVIEWER}),
+    "grp-campaign": frozenset({Role.CAMPAIGN_OPERATOR}),
+    "grp-campaign-approver": frozenset({Role.CAMPAIGN_APPROVER}),
+    "grp-audit": frozenset({Role.AUDITOR}),
 }
 
 
@@ -104,3 +107,41 @@ def test_full_flow_request_decide_and_deny_matrix(
     assert listing.status_code == 200
     assert body["approval_token"] not in listing.text
     assert [item["approval_id"] for item in listing.json()] == [approval_id]
+
+
+def test_list_approvals_is_scoped_to_requester_or_approver_role(
+    client: TestClient,
+    idp: FakeIdentityProvider,
+    migrated_engine: Engine,
+) -> None:
+    create_run(migrated_engine, run_id="run-1", requester_id="alice")
+    create_run(migrated_engine, run_id="run-2", requester_id="carl")
+    alice = idp.issue_session("alice", "Alice", groups=("grp-content",))
+    carl = idp.issue_session("carl", "Carl", groups=("grp-campaign",))
+    mona = idp.issue_session("mona", "Mona", groups=("grp-medical",))
+    auditor = idp.issue_session("audrey", "Audrey", groups=("grp-audit",))
+
+    content = client.post("/api/v1/approvals", json=CREATE_BODY, headers=bearer(alice))
+    campaign_body = {
+        **CREATE_BODY,
+        "run_id": "run-2",
+        "approval_type": "campaign_activation",
+        "binding": {**CREATE_BODY["binding"], "scope": "campaign/c-1"},
+    }
+    campaign = client.post("/api/v1/approvals", json=campaign_body, headers=bearer(carl))
+    assert content.status_code == 201
+    assert campaign.status_code == 201
+    content_id = content.json()["approval"]["approval_id"]
+    campaign_id = campaign.json()["approval"]["approval_id"]
+
+    medical_listing = client.get("/api/v1/approvals", headers=bearer(mona))
+    assert medical_listing.status_code == 200
+    assert [item["approval_id"] for item in medical_listing.json()] == [content_id]
+
+    requester_listing = client.get("/api/v1/approvals", headers=bearer(carl))
+    assert requester_listing.status_code == 200
+    assert [item["approval_id"] for item in requester_listing.json()] == [campaign_id]
+
+    run_listing = client.get("/api/v1/approvals?run_id=run-1", headers=bearer(auditor))
+    assert run_listing.status_code == 200
+    assert [item["approval_id"] for item in run_listing.json()] == [content_id]

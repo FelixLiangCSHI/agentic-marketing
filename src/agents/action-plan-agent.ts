@@ -782,6 +782,106 @@ export function normalizeActionPlan(value: unknown): ActionPlan | null {
   return isActionPlanShape(migrated) ? migrated : null;
 }
 
+// 受控事实（ADR-005）：模型文案中的量化断言（百分比、倍数、≥4 位数字）
+// 必须能追溯到确定性输入（Snapshot 指标、已批准的洞察/策略等），
+// 不允许模型自创数值结论。
+const NUMERIC_CLAIM_PATTERN =
+  /\d[\d,]*(?:\.\d+)?\s*%|\b\d[\d,]*(?:\.\d+)?\s*[x×](?![\w-])|\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b|\b\d{4,}(?:\.\d+)?\b/gi;
+
+function normalizeClaimToken(token: string): string {
+  return token.toLowerCase().replace(/[\s,]/g, "");
+}
+
+function extractNumericClaims(text: string): string[] {
+  return [...text.matchAll(NUMERIC_CLAIM_PATTERN)].map(([token]) =>
+    normalizeClaimToken(token),
+  );
+}
+
+function supportedClaimTokens(input: ActionPlanInput): ReadonlySet<string> {
+  return new Set(extractNumericClaims(JSON.stringify(input)));
+}
+
+function unsupportedNumericClaimIssues(
+  plan: ActionPlan,
+  input: ActionPlanInput,
+): ActionPlanValidationIssue[] {
+  const supported = supportedClaimTokens(input);
+  const proseFields: Array<{ path: string; text: string }> = [
+    ...plan.contentCalendar.flatMap((item) => [
+      { path: `plan.contentCalendar.${item.itemId}.topic`, text: item.topic },
+      {
+        path: `plan.contentCalendar.${item.itemId}.coreMessage`,
+        text: item.coreMessage,
+      },
+      {
+        path: `plan.contentCalendar.${item.itemId}.postText`,
+        text: item.postText,
+      },
+      {
+        path: `plan.contentCalendar.${item.itemId}.callToAction`,
+        text: item.callToAction,
+      },
+      ...(item.experiment
+        ? [
+            {
+              path: `plan.contentCalendar.${item.itemId}.experiment.hypothesis`,
+              text: item.experiment.hypothesis,
+            },
+            {
+              path: `plan.contentCalendar.${item.itemId}.experiment.successCriteria`,
+              text: item.experiment.successCriteria,
+            },
+          ]
+        : []),
+    ]),
+    ...plan.fourWeekPlan.flatMap((week) => [
+      {
+        path: `plan.fourWeekPlan.${week.weekNumber}.objective`,
+        text: week.objective,
+      },
+      {
+        path: `plan.fourWeekPlan.${week.weekNumber}.reviewAction`,
+        text: week.reviewAction,
+      },
+      ...week.tasks.map((task) => ({
+        path: `plan.fourWeekPlan.${week.weekNumber}.tasks.${task.taskId}.title`,
+        text: task.title,
+      })),
+    ]),
+    ...plan.kpiReviewPlan.flatMap((review) => [
+      {
+        path: `plan.kpiReviewPlan.${review.reviewId}.action`,
+        text: review.action,
+      },
+      {
+        path: `plan.kpiReviewPlan.${review.reviewId}.comparisonRule`,
+        text: review.comparisonRule,
+      },
+    ]),
+  ];
+  // 计划自身的日期（如年份）属于结构性事实，不视为模型自创数值。
+  const structuralTokens = new Set(
+    extractNumericClaims(
+      [plan.startDate, plan.endDate, plan.snapshotId].join(" "),
+    ),
+  );
+
+  const issues: ActionPlanValidationIssue[] = [];
+  for (const field of proseFields) {
+    for (const claim of extractNumericClaims(field.text)) {
+      if (!supported.has(claim) && !structuralTokens.has(claim)) {
+        issues.push({
+          code: "UNSUPPORTED_NUMERIC_CLAIM",
+          path: field.path,
+          message: `The plan text asserts "${claim}", which is not traceable to snapshot metrics or approved inputs.`,
+        });
+      }
+    }
+  }
+  return issues;
+}
+
 export function validateActionPlan(
   plan: unknown,
   input: ActionPlanInput,
@@ -1121,6 +1221,8 @@ export function validateActionPlan(
       });
     }
   }
+
+  issues.push(...unsupportedNumericClaimIssues(plan, input));
 
   return { valid: issues.length === 0, issues };
 }

@@ -5,6 +5,9 @@ import test from "node:test";
 
 import {
   CONTRACT_NAMES,
+  ContractValidationError,
+  parseContract,
+  tryParseContract,
   validateContract,
   type ContractName,
 } from "../../packages/domain-contracts/src/validate";
@@ -66,4 +69,27 @@ test("unknown fields are rejected by every contract", () => {
       `${contract} must reject unknown fields per contract rules`,
     );
   }
+});
+
+test("parseContract returns a typed document for a golden fixture", () => {
+  const [entry] = loadFixtures("golden", "run.v1");
+  const run = parseContract("run.v1", entry.document);
+
+  assert.equal(run.schema_version, "1.0");
+  assert.equal(typeof run.run_id, "string");
+});
+
+test("parseContract throws ContractValidationError for invalid documents", () => {
+  const [entry] = loadFixtures("invalid", "run.v1");
+
+  assert.throws(
+    () => parseContract("run.v1", entry.document),
+    (error: unknown) =>
+      error instanceof ContractValidationError &&
+      error.contract === "run.v1" &&
+      error.issues.length > 0,
+  );
+
+  const result = tryParseContract("run.v1", entry.document);
+  assert.equal(result.ok, false);
 });

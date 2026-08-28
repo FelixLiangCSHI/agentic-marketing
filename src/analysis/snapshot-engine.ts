@@ -39,10 +39,13 @@ export function analysisInputFromParseResults(
   results: Partial<Record<LinkedInModule, FileParseResult>>,
   inputMode: AnalysisInput["inputMode"],
 ): AnalysisInput {
+  // 受控事实（ADR-005）：只吸收通过 sheet 级门控的记录，
+  // 避免无效 sheet 的数据混入确定性指标。
   const allRecords = LINKEDIN_MODULES.flatMap(
     (module) =>
-      results[module]?.workbook.sheets.flatMap((sheet) => sheet.records) ??
-      [],
+      results[module]?.workbook.sheets
+        .filter((sheet) => sheet.canProceed)
+        .flatMap((sheet) => sheet.records) ?? [],
   );
   return {
     inputMode,

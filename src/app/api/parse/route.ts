@@ -79,6 +79,46 @@ function stableError(
   return { code, message, retryable };
 }
 
+async function readBodyWithLimit(
+  body: ReadableStream<Uint8Array> | null,
+  limitBytes: number,
+): Promise<Uint8Array> {
+  if (body === null) {
+    return new Uint8Array(0);
+  }
+
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      totalBytes += value.byteLength;
+      if (totalBytes > limitBytes) {
+        throw stableError(
+          "REQUEST_TOO_LARGE",
+          "The upload exceeds the size limit. Select a smaller file.",
+        );
+      }
+      chunks.push(value);
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+
+  const combined = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    combined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return combined;
+}
+
 function parseModule(
   value: FormDataEntryValue | null,
   fieldName: string,
@@ -188,23 +228,53 @@ function isParseError(value: unknown): value is ParseError {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const contentLength = Number(request.headers.get("content-length"));
+  const contentLengthHeader = request.headers.get("content-length");
 
-  if (
-    Number.isFinite(contentLength) &&
-    contentLength > MAX_REQUEST_SIZE_BYTES
-  ) {
+  if (contentLengthHeader !== null) {
+    const contentLength = Number(contentLengthHeader);
+    // 非法 Content-Length 一律 fail-closed，不进入缓冲。
+    if (!Number.isFinite(contentLength) || contentLength < 0) {
+      return failure(
+        stableError(
+          "REQUEST_TOO_LARGE",
+          "The upload request size could not be determined. Select the file again.",
+        ),
+      );
+    }
+    if (contentLength > MAX_REQUEST_SIZE_BYTES) {
+      return failure(
+        stableError(
+          "REQUEST_TOO_LARGE",
+          "The upload exceeds the size limit. Select a smaller file.",
+        ),
+      );
+    }
+  }
+
+  // Content-Length 缺失（multipart 常见）时不直接缓冲整个请求体：
+  // 流式读取并施加字节上限，超限立即中止，避免超大请求 DoS。
+  let bodyBytes: Uint8Array;
+  try {
+    bodyBytes = await readBodyWithLimit(request.body, MAX_REQUEST_SIZE_BYTES);
+  } catch (reason) {
+    if (isParseError(reason)) {
+      return failure(reason);
+    }
     return failure(
       stableError(
-        "REQUEST_TOO_LARGE",
-        "The upload exceeds the size limit. Select a smaller file.",
+        "PARSE_FAILED",
+        "The upload request could not be read. Select the file again.",
       ),
     );
   }
 
   let formData: FormData;
   try {
-    formData = await request.formData();
+    formData = await new Request(request.url, {
+      method: "POST",
+      headers: { "content-type": request.headers.get("content-type") ?? "" },
+      body: bodyBytes.buffer as ArrayBuffer,
+    }).formData();
   } catch {
     return failure(
       stableError(

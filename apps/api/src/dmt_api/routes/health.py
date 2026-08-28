@@ -6,8 +6,10 @@ configuration; it must never call paid or external APIs.
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
 from dmt_api.errors import error_response
 from dmt_api.settings import Settings
@@ -21,8 +23,19 @@ def live() -> dict[str, str]:
 
 
 @router.get("/ready")
-def ready() -> JSONResponse:
+def ready(request: Request) -> JSONResponse:
     settings = Settings.from_env()
+    checks = {
+        "config": "ok",
+        "mode": settings.mode,
+        "environment": settings.environment,
+        "database": "not_configured",
+        "identity_provider": (
+            "configured"
+            if getattr(request.app.state, "identity_provider", None) is not None
+            else "not_configured"
+        ),
+    }
     if not settings.is_ready:
         return error_response(
             503,
@@ -31,14 +44,27 @@ def ready() -> JSONResponse:
             retryable=True,
             details={"problems": list(settings.problems)},
         )
+    database_url = getattr(request.app.state, "database_url", None)
+    if database_url:
+        try:
+            engine = create_engine(database_url)
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            engine.dispose()
+            checks["database"] = "ok"
+        except SQLAlchemyError:
+            checks["database"] = "unavailable"
+            return error_response(
+                503,
+                "not_ready",
+                "local dependency check failed",
+                retryable=True,
+                details={"checks": checks},
+            )
     return JSONResponse(
         status_code=200,
         content={
             "status": "ready",
-            "checks": {
-                "config": "ok",
-                "mode": settings.mode,
-                "environment": settings.environment,
-            },
+            "checks": checks,
         },
     )

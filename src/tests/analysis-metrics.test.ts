@@ -310,3 +310,45 @@ test("does not calculate period change across an irregular series", () => {
     true,
   );
 });
+
+test("demographic ranking never mixes count and percentage units", () => {
+  const metrics = calculateFollowersMetrics([
+    followerRecord(2, {
+      demographicDimension: "Industry",
+      demographicValue: "Healthcare",
+      demographicCount: 120,
+    }),
+    followerRecord(3, {
+      demographicDimension: "Industry",
+      demographicValue: "Technology",
+      demographicPercentage: 0.9,
+    }),
+  ]);
+  const industry = metrics.demographicTopN.find(
+    (ranking) => ranking.label === "Industry Top 5",
+  );
+
+  // 维度内存在 count 时按 count 排名；仅有 percentage 的记录被排除而不是混加。
+  assert.equal(industry?.items.length, 1);
+  assert.equal(industry?.items[0].label, "Healthcare");
+  assert.equal(industry?.items[0].value, 120);
+  assert.equal(
+    industry?.reliabilityReasons.some((reason) =>
+      reason.includes("excluded"),
+    ),
+    true,
+  );
+});
+
+test("period change granularity ignores records without page views", () => {
+  const metrics = calculateVisitorsMetrics([
+    visitorRecord(2, { date: "2026-01-01", pageViews: 100 }),
+    visitorRecord(3, { date: "2026-01-08", pageViews: 150 }),
+    // 稀疏的无关记录（仅 uniqueVisitors）不得改变环比的粒度判断。
+    visitorRecord(4, { date: "2026-01-09", uniqueVisitors: 10 }),
+    visitorRecord(5, { date: "2026-01-12", uniqueVisitors: 12 }),
+    visitorRecord(6, { date: "2026-01-13", uniqueVisitors: 9 }),
+  ]);
+
+  assert.equal(metrics.periodOverPeriodChange.value, 0.5);
+});
