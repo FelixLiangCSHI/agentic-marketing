@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agentic-marketing.local/schemas/product-change.v1.schema.json",
+  "title": "ProductChange",
+  "description": "Single incremental change event returned by the product change feed. Revocation/deletion events must make related index entries unrecallable downstream.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "change_id",
+    "cursor",
+    "change_type",
+    "entity_type",
+    "entity_id",
+    "product_id",
+    "tenant",
+    "source_version",
+    "content_hash",
+    "occurred_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "change_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "cursor": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+    "change_type": {
+      "type": "string",
+      "enum": ["CREATED", "UPDATED", "REVOKED", "DELETED"]
+    },
+    "entity_type": { "type": "string", "enum": ["document", "claim"] },
+    "entity_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "product_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "tenant": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "source_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "content_hash": {
+      "type": ["string", "null"],
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "occurred_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    }
+  }
+}

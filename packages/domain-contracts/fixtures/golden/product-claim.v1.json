@@ -1,0 +1,46 @@
+[
+  {
+    "name": "product_claim_approved",
+    "document": {
+      "schema_version": "1.0",
+      "claim_id": "claim-0001",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "market": "US",
+      "locale": "en-US",
+      "claim_text": "Product Alpha reduced symptom score by 30% versus placebo in Study X.",
+      "source_id": "doc-alpha-label",
+      "source_version": "2.1.0",
+      "approval_status": "APPROVED",
+      "approved_by": "emp-1001",
+      "effective_from": "2026-01-01T00:00:00Z",
+      "expires_at": "2027-01-01T00:00:00Z",
+      "revoked_at": null,
+      "classification": "internal",
+      "content_hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "name": "product_claim_revoked_history_record",
+    "document": {
+      "schema_version": "1.0",
+      "claim_id": "claim-0002",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "market": "US",
+      "locale": "en-US",
+      "claim_text": "Outdated efficacy claim.",
+      "source_id": "doc-alpha-old",
+      "source_version": "1.0.0",
+      "approval_status": "REVOKED",
+      "approved_by": "emp-1001",
+      "effective_from": "2025-01-01T00:00:00Z",
+      "expires_at": null,
+      "revoked_at": "2026-01-01T00:00:00Z",
+      "classification": "internal",
+      "content_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  }
+]

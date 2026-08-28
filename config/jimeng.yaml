@@ -1,0 +1,115 @@
+# config/jimeng.yaml — non-sensitive structure only (parent-plan template).
+# Only the procurement/security-approved OFFICIAL enterprise API is allowed:
+# browser cookies, captured tokens, reverse-engineered endpoints and
+# third-party proxies are forbidden and fail validation. CN and global
+# tenants must never mix endpoints, credentials or quotas. Real modes are
+# BLOCKED until the official vendor/region/tenant/auth/model and data
+# retention/training policies are confirmed.
+schema_version: "1.0"
+provider: "jimeng"
+enabled: false
+mode: "mock" # mock | sandbox | live
+
+tenant:
+  variant_env: "JIMENG_TENANT_VARIANT" # volcengine_cn | byteplus_global | approved_enterprise_gateway
+  region_env: "JIMENG_REGION"
+  project_env: "JIMENG_PROJECT_ID"
+
+endpoint: "${JIMENG_API_ENDPOINT}"
+operations:
+  create_path_env: "JIMENG_CREATE_PATH"
+  status_path_env: "JIMENG_STATUS_PATH"
+  result_path_env: "JIMENG_RESULT_PATH"
+
+auth_method:
+  type_env: "JIMENG_AUTH_METHOD" # vendor_signed_request | bearer, must match issued official docs
+  access_key_id_secret_ref_env: "JIMENG_ACCESS_KEY_ID_SECRET_REF"
+  secret_access_key_secret_ref_env: "JIMENG_SECRET_ACCESS_KEY_SECRET_REF"
+  bearer_token_secret_ref_env: "JIMENG_BEARER_TOKEN_SECRET_REF"
+  session_token_secret_ref_env: "JIMENG_SESSION_TOKEN_SECRET_REF"
+  send_from_server_only: true
+  browser_cookie_auth_forbidden: true
+
+model:
+  model_id_env: "JIMENG_MODEL_ID"
+  capability: "image_generation"
+  output_formats: ["png", "jpeg", "webp"]
+  max_images_per_request_env: "JIMENG_MAX_IMAGES_PER_REQUEST"
+
+async_job:
+  enabled: true
+  poll_interval_ms: 3000
+  max_poll_interval_ms: 15000
+  max_duration_ms: 600000
+  persist_job_id: true
+  resume_after_worker_restart: true
+  callback_webhook_enabled: false
+
+timeouts:
+  connect_ms: 3000
+  create_request_ms: 30000
+  status_request_ms: 15000
+  download_ms: 60000
+
+rate_limit:
+  requests_per_minute_env: "JIMENG_RPM"
+  jobs_per_day_env: "JIMENG_JOBS_PER_DAY"
+  max_concurrency_env: "JIMENG_MAX_CONCURRENCY"
+  local_queue: true
+  fail_when_quota_unknown_in_live: true
+
+retry_strategy:
+  policy: "exponential_backoff_with_jitter"
+  max_attempts: 5
+  initial_delay_ms: 1000
+  max_delay_ms: 30000
+  multiplier: 2.0
+  honor_retry_after: true
+  retry_http_statuses: [408, 429, 500, 502, 503, 504]
+  do_not_retry_http_statuses: [400, 401, 403, 404, 409, 422]
+  reconcile_job_before_retry_create: true
+  idempotency_key: "run_id_node_id_input_hash"
+
+network:
+  proxy_url_env: "DMT_HTTPS_PROXY"
+  allowed_fqdns_env: "JIMENG_ALLOWED_FQDNS"
+  direct_internet_egress_allowed: false
+  tls_verify: true
+  webhook_required: false
+
+storage:
+  import_result_to_object_store: true
+  result_bucket_ref_env: "DMT_GENERATED_ASSET_BUCKET_REF"
+  verify_mime: true
+  malware_scan: true
+  preserve_provider_response_hash: true
+  provider_url_max_ttl_seconds: 900
+
+cost_control:
+  per_run_budget_env: "JIMENG_PER_RUN_BUDGET"
+  daily_budget_env: "JIMENG_DAILY_BUDGET"
+  max_assets_per_run_env: "JIMENG_MAX_ASSETS_PER_RUN"
+  alert_at_percent: 80
+  stop_at_percent: 100
+
+data_handling:
+  allowed_classifications: ["internal", "confidential-approved-for-provider"]
+  redact_pii: true
+  log_prompt: false
+  log_result_url: false
+  provider_training_opt_out_required: true
+  retention_policy_must_be_approved: true
+
+mock:
+  fixture_dir: "tests/fixtures/jimeng"
+  deterministic_seed: 20260907
+  create_latency_ms: 50
+  complete_after_polls: 2
+  validate_request_schema: true
+  generated_asset_fixture: "tests/fixtures/jimeng/generated/sample-approved.png"
+  fault_injection:
+    enabled_env: "JIMENG_MOCK_FAULTS_ENABLED"
+    timeout_rate_env: "JIMENG_MOCK_TIMEOUT_RATE"
+    rate_limit_rate_env: "JIMENG_MOCK_429_RATE"
+    failed_job_rate_env: "JIMENG_MOCK_FAILED_JOB_RATE"
+    malformed_result_rate_env: "JIMENG_MOCK_MALFORMED_RATE"

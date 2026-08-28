@@ -1,0 +1,34 @@
+[
+  {
+    "name": "product_change_document_updated",
+    "document": {
+      "schema_version": "1.0",
+      "change_id": "chg-0001",
+      "cursor": "cursor-000001",
+      "change_type": "UPDATED",
+      "entity_type": "document",
+      "entity_id": "doc-alpha-label",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "source_version": "2.1.0",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "occurred_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "name": "product_change_claim_revoked",
+    "document": {
+      "schema_version": "1.0",
+      "change_id": "chg-0002",
+      "cursor": "cursor-000002",
+      "change_type": "REVOKED",
+      "entity_type": "claim",
+      "entity_id": "claim-0002",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "source_version": "1.0.0",
+      "content_hash": null,
+      "occurred_at": "2026-01-02T00:00:00Z"
+    }
+  }
+]

@@ -1,0 +1,222 @@
+[
+  {
+    "schema_version": "1.0",
+    "skill_id": "skill-brand-core",
+    "version": "1.2.0",
+    "agent": "content",
+    "kind": "brand",
+    "owner": "emp-skill-owner",
+    "tenant": "tenant-cshi",
+    "markets": [
+      "US",
+      "CN"
+    ],
+    "locales": [
+      "en-US",
+      "de-DE",
+      "zh-CN"
+    ],
+    "channels": [
+      "linkedin",
+      "google_ads"
+    ],
+    "approval_status": "APPROVED",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "expires_at": null,
+    "revoked_at": null,
+    "guidance": "Brand voice: confident, evidence-led, no hype.",
+    "content_hash": "sha256:9aec948d7d458e96890d3d25c738d221f30ee6169ea86fc380d1d71b39eb71fb",
+    "tone": "confident, professional",
+    "banned_phrases": [],
+    "required_disclosures": [],
+    "max_headline_chars": null
+  },
+  {
+    "schema_version": "1.0",
+    "skill_id": "skill-medical-us",
+    "version": "2.0.0",
+    "agent": "content",
+    "kind": "medical",
+    "owner": "emp-skill-owner",
+    "tenant": "tenant-cshi",
+    "markets": [
+      "US",
+      "CN"
+    ],
+    "locales": [
+      "en-US",
+      "zh-CN"
+    ],
+    "channels": [
+      "linkedin",
+      "google_ads"
+    ],
+    "approval_status": "APPROVED",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "expires_at": null,
+    "revoked_at": null,
+    "guidance": "Medical guardrails: no cure claims, cite approved sources only.",
+    "content_hash": "sha256:17bdf8eae79e75ec184f3ded7ae84298d6ef2a1d712c2d1e91cf13d9f3512129",
+    "tone": null,
+    "banned_phrases": [
+      "cure",
+      "100% effective",
+      "guaranteed results"
+    ],
+    "required_disclosures": [
+      "Consult your physician before use."
+    ],
+    "max_headline_chars": null
+  },
+  {
+    "schema_version": "1.0",
+    "skill_id": "skill-medical-de-expired",
+    "version": "1.0.0",
+    "agent": "content",
+    "kind": "medical",
+    "owner": "emp-skill-owner",
+    "tenant": "tenant-cshi",
+    "markets": [
+      "US"
+    ],
+    "locales": [
+      "de-DE"
+    ],
+    "channels": [
+      "linkedin"
+    ],
+    "approval_status": "APPROVED",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "expires_at": "2026-05-01T00:00:00Z",
+    "revoked_at": null,
+    "guidance": "Expired German medical guardrails.",
+    "content_hash": "sha256:67d6003d131a61e8c6caac4c59e2fb9331c82c097f47b5c9c21027420365de26",
+    "tone": null,
+    "banned_phrases": [
+      "heilung"
+    ],
+    "required_disclosures": [
+      "Konsultieren Sie Ihren Arzt."
+    ],
+    "max_headline_chars": null
+  },
+  {
+    "schema_version": "1.0",
+    "skill_id": "skill-market-us",
+    "version": "1.1.0",
+    "agent": "content",
+    "kind": "market",
+    "owner": "emp-skill-owner",
+    "tenant": "tenant-cshi",
+    "markets": [
+      "US"
+    ],
+    "locales": [
+      "en-US",
+      "de-DE"
+    ],
+    "channels": [
+      "linkedin",
+      "google_ads"
+    ],
+    "approval_status": "APPROVED",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "expires_at": null,
+    "revoked_at": null,
+    "guidance": "US market rules: FDA-consistent phrasing only.",
+    "content_hash": "sha256:8865a2038326f8cabc97fc6c8f85436e4e75af5070a202282e50899f42b0d88b",
+    "tone": null,
+    "banned_phrases": [],
+    "required_disclosures": [
+      "US residents only."
+    ],
+    "max_headline_chars": null
+  },
+  {
+    "schema_version": "1.0",
+    "skill_id": "skill-market-cn-revoked",
+    "version": "1.0.0",
+    "agent": "content",
+    "kind": "market",
+    "owner": "emp-skill-owner",
+    "tenant": "tenant-cshi",
+    "markets": [
+      "CN"
+    ],
+    "locales": [
+      "zh-CN"
+    ],
+    "channels": [
+      "linkedin"
+    ],
+    "approval_status": "REVOKED",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "expires_at": null,
+    "revoked_at": "2026-04-01T00:00:00Z",
+    "guidance": "Revoked CN market rules.",
+    "content_hash": "sha256:8b3322f682110a896903d63de2a322d81cb0e233390029ad528b175475d40213",
+    "tone": null,
+    "banned_phrases": [],
+    "required_disclosures": [],
+    "max_headline_chars": null
+  },
+  {
+    "schema_version": "1.0",
+    "skill_id": "skill-channel-linkedin",
+    "version": "1.0.0",
+    "agent": "content",
+    "kind": "channel",
+    "owner": "emp-skill-owner",
+    "tenant": "tenant-cshi",
+    "markets": [
+      "US",
+      "CN"
+    ],
+    "locales": [
+      "en-US",
+      "de-DE",
+      "zh-CN"
+    ],
+    "channels": [
+      "linkedin"
+    ],
+    "approval_status": "APPROVED",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "expires_at": null,
+    "revoked_at": null,
+    "guidance": "LinkedIn constraints: professional feed placement.",
+    "content_hash": "sha256:540f3081cd01ce88b0ad664dba6cbf2fea5ae2747290098edce006f9c35f50fb",
+    "tone": null,
+    "banned_phrases": [],
+    "required_disclosures": [],
+    "max_headline_chars": 150
+  },
+  {
+    "schema_version": "1.0",
+    "skill_id": "skill-channel-googleads-draft",
+    "version": "0.1.0",
+    "agent": "content",
+    "kind": "channel",
+    "owner": "emp-skill-owner",
+    "tenant": "tenant-cshi",
+    "markets": [
+      "US"
+    ],
+    "locales": [
+      "en-US"
+    ],
+    "channels": [
+      "google_ads"
+    ],
+    "approval_status": "DRAFT",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "expires_at": null,
+    "revoked_at": null,
+    "guidance": "Draft Google Ads constraints pending channel owner approval.",
+    "content_hash": "sha256:4c10afb0b1701256b49ee2be5c42c42cbebd28a99dedb93f44256511d2180afa",
+    "tone": null,
+    "banned_phrases": [],
+    "required_disclosures": [],
+    "max_headline_chars": 30
+  }
+]

@@ -1,0 +1,76 @@
+# config/deepseek.yaml — non-sensitive structure only (parent-plan template).
+# Endpoint/model/quota/proxy come from environment variables; the API key is
+# only ever a secretref:// reference resolved through the Secret Resolver.
+# Real modes (sandbox/live) are BLOCKED until enterprise LLM approval,
+# data-handling review and DEV quota are recorded.
+schema_version: "1.0"
+provider: "deepseek"
+enabled: false
+mode: "mock" # mock | sandbox | live
+
+endpoint: "${DEEPSEEK_API_ENDPOINT}"
+api_path: "/chat/completions"
+
+auth_method:
+  type: "bearer"
+  api_key_secret_ref_env: "DEEPSEEK_API_KEY_SECRET_REF"
+  send_from_server_only: true
+
+models:
+  chat_model_env: "DEEPSEEK_CHAT_MODEL"
+  temperature: 0.2
+  max_output_tokens_env: "DEEPSEEK_MAX_OUTPUT_TOKENS"
+
+timeouts:
+  connect_ms: 3000
+  request_ms: 60000
+  total_workflow_ms: 90000
+
+rate_limit:
+  requests_per_minute_env: "DEEPSEEK_RPM"
+  tokens_per_minute_env: "DEEPSEEK_TPM"
+  max_concurrency_env: "DEEPSEEK_MAX_CONCURRENCY"
+  local_queue: true
+  fail_when_quota_unknown_in_live: true
+
+retry_strategy:
+  policy: "exponential_backoff_with_jitter"
+  max_attempts: 4
+  initial_delay_ms: 500
+  max_delay_ms: 8000
+  multiplier: 2.0
+  honor_retry_after: true
+  retry_http_statuses: [408, 429, 500, 502, 503, 504]
+  do_not_retry_http_statuses: [400, 401, 403, 404, 409, 422]
+  retry_requires_same_request_hash: true
+
+network:
+  proxy_url_env: "DMT_HTTPS_PROXY"
+  allowed_fqdns_env: "DEEPSEEK_ALLOWED_FQDNS"
+  direct_internet_egress_allowed: false
+  tls_verify: true
+
+cost_control:
+  per_run_budget_env: "DEEPSEEK_PER_RUN_BUDGET"
+  daily_budget_env: "DEEPSEEK_DAILY_BUDGET"
+  stop_at_percent: 100
+  alert_at_percent: 80
+
+data_handling:
+  allowed_classifications: ["internal", "confidential-approved-for-provider"]
+  redact_pii: true
+  log_request_body: false
+  log_response_body: false
+  record_prompt_version: true
+  record_model_version: true
+
+mock:
+  fixture_dir: "tests/fixtures/deepseek"
+  deterministic_seed: 20260907
+  latency_ms: 50
+  validate_request_schema: true
+  fault_injection:
+    enabled_env: "DEEPSEEK_MOCK_FAULTS_ENABLED"
+    timeout_rate_env: "DEEPSEEK_MOCK_TIMEOUT_RATE"
+    rate_limit_rate_env: "DEEPSEEK_MOCK_429_RATE"
+    server_error_rate_env: "DEEPSEEK_MOCK_5XX_RATE"

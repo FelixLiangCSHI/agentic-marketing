@@ -84,6 +84,99 @@ jobs:
       - run: python -m pytest
       - run: python -m mypy
 
+  # Phase 02 / Subphase 01：批准 Product 只读 Adapter（仅合成 fixtures，无真实 Product API）。
+  product-rag:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/product-rag
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m pytest
+      - run: python -m mypy
+
+  # Phase 02 / Subphase 03：Skill Registry + LangGraph Content Workflow（Fake Model/Media/Reviewer）。
+  content-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/content-workflow[dev]"
+      - run: python -m pytest
+        working-directory: packages/content-workflow
+      - run: python -m mypy
+        working-directory: packages/content-workflow
+
+  # Phase 02 / Subphase 04：DeepSeek Connector（确定性 Mock、错误标准化、限流与费用门禁；无外部 HTTP）。
+  deepseek-connector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/infra-core" -e "packages/content-workflow" -e "connectors/llm/deepseek[dev]"
+      - run: python -m pytest
+        working-directory: connectors/llm/deepseek
+      - run: python -m mypy
+        working-directory: connectors/llm/deepseek
+      - run: python -m mypy tests
+        working-directory: connectors/llm/deepseek
+
+  # Phase 02 / Subphase 05：即梦官方企业媒体 Connector（异步 Job、持久队列轮询、对象存储导入；确定性 Mock，无外部 HTTP）。
+  jimeng-connector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/infra-core" -e "packages/content-workflow" -e "connectors/jimeng[dev]"
+      - run: python -m pytest
+        working-directory: connectors/jimeng
+      - run: python -m mypy
+        working-directory: connectors/jimeng
+      - run: python -m mypy tests scripts
+        working-directory: connectors/jimeng
+
+  # Phase 02 / Subphase 06：确定性合规规则 + Critic + 评测门（规则失败不可被模型覆盖）。
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/infra-core" -e "packages/content-workflow" -e "packages/compliance[dev]"
+      - run: python -m pytest
+        working-directory: packages/compliance
+      - run: python -m mypy
+        working-directory: packages/compliance
+      - run: python -m mypy tests
+        working-directory: packages/compliance
+
+  # Phase 02 / Subphase 07：不可变 ApprovedContentPackage Builder（只有合法审批、完整引用、有效资产和稳定 hash 才能创建）。
+  content-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/infra-core" -e "packages/content-workflow" -e "packages/compliance" -e "packages/content-package[dev]"
+      - run: python -m pytest
+        working-directory: packages/content-package
+      - run: python -m mypy
+        working-directory: packages/content-package
+      - run: python -m mypy tests
+        working-directory: packages/content-package
+
   # 双语言契约门禁：TypeScript 与 Python 对同一批 golden/invalid fixture 结论必须一致。
   contract:
     runs-on: ubuntu-latest
@@ -147,7 +240,7 @@ jobs:
       - run: python3 scripts/check_no_secrets.py
       - run: npm audit --audit-level=high
       - run: |
-          python -m pip install -e "apps/api[dev]" -e "packages/harness-core[dev]" -e "packages/infra-core[dev]"
+          python -m pip install -e "apps/api[dev]" -e "packages/harness-core[dev]" -e "packages/infra-core[dev]" -e "packages/product-rag[dev]" -e "packages/content-workflow[dev]" -e "connectors/llm/deepseek[dev]"
           python -m pip install pip-audit
           python -m pip_audit --skip-editable
       # 无回归例外：eslint 已在 web job 执行；此处仅安全扫描。

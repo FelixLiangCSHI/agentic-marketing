@@ -1,0 +1,37 @@
+[project]
+name = "dmt-compliance"
+version = "0.1.0"
+description = "Deterministic compliance rules + model Critic + eval harness (Phase 02 / Subphase 06). Rules cannot be overridden by models; humans remain the approval authority."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+]
+
+# 本包还依赖同仓库的 product-rag 与 content-workflow（本地路径安装）：
+#   python3 -m pip install -e "packages/product-rag" -e "packages/content-workflow" -e "packages/compliance[dev]"
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+dmt_compliance = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src:tests"
+packages = ["dmt_compliance"]
+strict = true

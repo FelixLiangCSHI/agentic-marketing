@@ -1,0 +1,66 @@
+[
+  {
+    "name": "product_change_missing_cursor",
+    "document": {
+      "schema_version": "1.0",
+      "change_id": "chg-0001",
+      "change_type": "UPDATED",
+      "entity_type": "document",
+      "entity_id": "doc-alpha-label",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "source_version": "2.1.0",
+      "content_hash": null,
+      "occurred_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "name": "product_change_unknown_field",
+    "document": {
+      "schema_version": "1.0",
+      "change_id": "chg-0001",
+      "cursor": "cursor-000001",
+      "change_type": "UPDATED",
+      "entity_type": "document",
+      "entity_id": "doc-alpha-label",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "source_version": "2.1.0",
+      "content_hash": null,
+      "occurred_at": "2026-01-01T00:00:00Z",
+      "sql": "select 1"
+    }
+  },
+  {
+    "name": "product_change_bad_change_type",
+    "document": {
+      "schema_version": "1.0",
+      "change_id": "chg-0001",
+      "cursor": "cursor-000001",
+      "change_type": "MUTATED",
+      "entity_type": "document",
+      "entity_id": "doc-alpha-label",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "source_version": "2.1.0",
+      "content_hash": null,
+      "occurred_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "name": "product_change_bad_entity_type",
+    "document": {
+      "schema_version": "1.0",
+      "change_id": "chg-0001",
+      "cursor": "cursor-000001",
+      "change_type": "UPDATED",
+      "entity_type": "memory",
+      "entity_id": "doc-alpha-label",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "source_version": "2.1.0",
+      "content_hash": null,
+      "occurred_at": "2026-01-01T00:00:00Z"
+    }
+  }
+]

@@ -1,0 +1,40 @@
+[project]
+name = "jimeng-connector"
+version = "0.1.0"
+description = "Official enterprise Jimeng media connector (Phase 02 / Subphase 05): async jobs, durable polling, object-store import, deterministic mock. No cookies, reverse-engineered APIs or third-party proxies. Real calls only in approved DEV remote jobs."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+  "PyYAML>=6.0",
+  # Local path dependencies (installed with `pip install -e` from repo root):
+  #   packages/infra-core       -> secret resolver, clock, queue, object store
+  #   packages/content-workflow -> MediaGenerator protocol + node contracts
+  #   packages/product-rag      -> shared identifier types
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+  "types-PyYAML",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+jimeng_connector = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src"
+packages = ["jimeng_connector"]
+strict = true

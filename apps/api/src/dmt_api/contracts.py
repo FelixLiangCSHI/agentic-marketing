@@ -83,6 +83,12 @@ ActivationStatus = Literal[
     "DRAFT", "PENDING_APPROVAL", "APPROVED", "DISPATCHED", "FAILED", "CANCELLED"
 ]
 PackageStatus = Literal["APPROVED", "SUPERSEDED", "REVOKED"]
+Market = Literal["US", "CN"]
+MediaType = Literal["image"]
+ProductApprovalStatus = Literal["APPROVED", "DRAFT", "REVOKED"]
+Classification = Literal["internal", "confidential-approved-for-provider"]
+ProductChangeType = Literal["CREATED", "UPDATED", "REVOKED", "DELETED"]
+ProductEntityType = Literal["document", "claim"]
 
 
 class _ContractModel(BaseModel):
@@ -228,6 +234,110 @@ class ConnectorErrorV1(_ContractModel):
     occurred_at: DateTimeUtc
 
 
+def _require_unique(field_name: str, value: list[str]) -> list[str]:
+    if len(set(value)) != len(value):
+        raise ValueError(f"{field_name} entries must be unique")
+    return value
+
+
+class ContentRequestV1(_ContractModel):
+    """Frozen Content Agent input contract (Phase 02 / Subphase 01).
+
+    ``user_prompt``, ``campaign_context`` and attachment references are
+    untrusted data: they are validated for shape only and must never be
+    executed as instructions. The Content Agent receives no campaign
+    account, budget or channel write credential fields by design.
+    """
+
+    request_id: Identifier
+    tenant: Identifier
+    business_unit: Identifier
+    product_ids: Annotated[list[Identifier], Field(min_length=1, max_length=16)]
+    market: Market
+    locale: Locale
+    target_audience: Annotated[
+        list[Annotated[StrictStr, Field(min_length=1, max_length=200)]],
+        Field(min_length=1, max_length=16),
+    ]
+    target_channels: Annotated[list[Channel], Field(min_length=1)]
+    objective: Annotated[StrictStr, Field(min_length=1, max_length=2000)]
+    campaign_context: Annotated[StrictStr, Field(max_length=4000)] | None = None
+    user_prompt: Annotated[StrictStr, Field(max_length=8000)] | None = None
+    attachment_artifact_ids: Annotated[
+        list[Identifier], Field(max_length=16)
+    ] = Field(default_factory=list)
+    requested_media_types: list[MediaType]
+    deadline: DateTimeUtc | None = None
+    created_at: DateTimeUtc
+
+    @field_validator(
+        "product_ids",
+        "target_audience",
+        "target_channels",
+        "attachment_artifact_ids",
+        "requested_media_types",
+    )
+    @classmethod
+    def _unique_lists(cls, value: list[str], info: Any) -> list[str]:
+        return _require_unique(str(info.field_name), value)
+
+
+class ProductDocumentV1(_ContractModel):
+    """Approved product source document. ``content`` is untrusted free text."""
+
+    source_id: Identifier
+    source_version: SemVer
+    product_id: Identifier
+    tenant: Identifier
+    market: Market
+    locale: Locale
+    approval_status: ProductApprovalStatus
+    approved_by: Identifier | None
+    effective_from: DateTimeUtc
+    expires_at: DateTimeUtc | None
+    revoked_at: DateTimeUtc | None
+    classification: Classification
+    content_hash: Sha256Hash
+    content: Annotated[StrictStr, Field(max_length=100000)]
+    updated_at: DateTimeUtc
+
+
+class ProductClaimV1(_ContractModel):
+    """Approved product claim bound to its source document."""
+
+    claim_id: Identifier
+    product_id: Identifier
+    tenant: Identifier
+    market: Market
+    locale: Locale
+    claim_text: Annotated[StrictStr, Field(min_length=1, max_length=4000)]
+    source_id: Identifier
+    source_version: SemVer
+    approval_status: ProductApprovalStatus
+    approved_by: Identifier | None
+    effective_from: DateTimeUtc
+    expires_at: DateTimeUtc | None
+    revoked_at: DateTimeUtc | None
+    classification: Classification
+    content_hash: Sha256Hash
+    updated_at: DateTimeUtc
+
+
+class ProductChangeV1(_ContractModel):
+    """Single incremental product change feed event."""
+
+    change_id: Identifier
+    cursor: Annotated[StrictStr, Field(pattern=r"^[A-Za-z0-9_-]{1,128}$")]
+    change_type: ProductChangeType
+    entity_type: ProductEntityType
+    entity_id: Identifier
+    product_id: Identifier
+    tenant: Identifier
+    source_version: SemVer
+    content_hash: Sha256Hash | None
+    occurred_at: DateTimeUtc
+
+
 CONTRACT_MODELS: dict[str, type[BaseModel]] = {
     "run.v1": RunV1,
     "run-event.v1": RunEventV1,
@@ -237,6 +347,10 @@ CONTRACT_MODELS: dict[str, type[BaseModel]] = {
     "approved-content-package.v1": ApprovedContentPackageV1,
     "activation-request.v1": ActivationRequestV1,
     "connector-error.v1": ConnectorErrorV1,
+    "content-request.v1": ContentRequestV1,
+    "product-document.v1": ProductDocumentV1,
+    "product-claim.v1": ProductClaimV1,
+    "product-change.v1": ProductChangeV1,
 }
 
 

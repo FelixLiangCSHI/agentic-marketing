@@ -204,3 +204,108 @@ export interface ConnectorErrorV1 {
   details: Record<string, unknown> | null;
   occurred_at: string;
 }
+
+export const MARKETS = ["US", "CN"] as const;
+export type Market = (typeof MARKETS)[number];
+
+export const MEDIA_TYPES = ["image"] as const;
+export type MediaType = (typeof MEDIA_TYPES)[number];
+
+export const PRODUCT_APPROVAL_STATUSES = [
+  "APPROVED",
+  "DRAFT",
+  "REVOKED",
+] as const;
+export type ProductApprovalStatus =
+  (typeof PRODUCT_APPROVAL_STATUSES)[number];
+
+export const CLASSIFICATIONS = [
+  "internal",
+  "confidential-approved-for-provider",
+] as const;
+export type Classification = (typeof CLASSIFICATIONS)[number];
+
+export const PRODUCT_CHANGE_TYPES = [
+  "CREATED",
+  "UPDATED",
+  "REVOKED",
+  "DELETED",
+] as const;
+export type ProductChangeType = (typeof PRODUCT_CHANGE_TYPES)[number];
+
+export const PRODUCT_ENTITY_TYPES = ["document", "claim"] as const;
+export type ProductEntityType = (typeof PRODUCT_ENTITY_TYPES)[number];
+
+export interface ContentRequestV1 {
+  schema_version: "1.0";
+  request_id: string;
+  tenant: string;
+  business_unit: string;
+  product_ids: string[];
+  market: Market;
+  locale: string;
+  target_audience: string[];
+  target_channels: Channel[];
+  objective: string;
+  campaign_context?: string | null;
+  user_prompt?: string | null;
+  attachment_artifact_ids?: string[];
+  requested_media_types: MediaType[];
+  deadline?: string | null;
+  created_at: string;
+}
+
+export interface ProductDocumentV1 {
+  schema_version: "1.0";
+  source_id: string;
+  source_version: string;
+  product_id: string;
+  tenant: string;
+  market: Market;
+  locale: string;
+  approval_status: ProductApprovalStatus;
+  approved_by: string | null;
+  effective_from: string;
+  expires_at: string | null;
+  revoked_at: string | null;
+  classification: Classification;
+  content_hash: string;
+  /** Untrusted free text: data only, never instructions. */
+  content: string;
+  updated_at: string;
+}
+
+export interface ProductClaimV1 {
+  schema_version: "1.0";
+  claim_id: string;
+  product_id: string;
+  tenant: string;
+  market: Market;
+  locale: string;
+  /** Untrusted free text: data only, never instructions. */
+  claim_text: string;
+  source_id: string;
+  source_version: string;
+  approval_status: ProductApprovalStatus;
+  approved_by: string | null;
+  effective_from: string;
+  expires_at: string | null;
+  revoked_at: string | null;
+  classification: Classification;
+  content_hash: string;
+  updated_at: string;
+}
+
+export interface ProductChangeV1 {
+  schema_version: "1.0";
+  change_id: string;
+  cursor: string;
+  change_type: ProductChangeType;
+  entity_type: ProductEntityType;
+  entity_id: string;
+  product_id: string;
+  tenant: string;
+  source_version: string;
+  content_hash: string | null;
+  occurred_at: string;
+}
