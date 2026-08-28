@@ -1,0 +1,67 @@
+[
+  {
+    "schema_version": "1.0",
+    "change_id": "chg-0001",
+    "cursor": "cursor-000001",
+    "change_type": "CREATED",
+    "entity_type": "document",
+    "entity_id": "doc-alpha-label",
+    "product_id": "product-alpha",
+    "tenant": "tenant-cshi",
+    "source_version": "2.1.0",
+    "content_hash": "sha256:da42cd5528629d38ef8bf3bd7cc72108a19337c8be8858cc0d1e7daa8dcbbd92",
+    "occurred_at": "2026-01-01T00:00:00Z"
+  },
+  {
+    "schema_version": "1.0",
+    "change_id": "chg-0002",
+    "cursor": "cursor-000002",
+    "change_type": "UPDATED",
+    "entity_type": "document",
+    "entity_id": "doc-alpha-dosing",
+    "product_id": "product-alpha",
+    "tenant": "tenant-cshi",
+    "source_version": "1.0.0",
+    "content_hash": "sha256:05b5b0e3c65673317bbbcbbc64ccc8dec9e1f2ca1f33ff5faeb4fddd91fd5e1d",
+    "occurred_at": "2026-02-01T00:00:00Z"
+  },
+  {
+    "schema_version": "1.0",
+    "change_id": "chg-0003",
+    "cursor": "cursor-000003",
+    "change_type": "REVOKED",
+    "entity_type": "document",
+    "entity_id": "doc-alpha-revoked",
+    "product_id": "product-alpha",
+    "tenant": "tenant-cshi",
+    "source_version": "1.1.0",
+    "content_hash": null,
+    "occurred_at": "2026-03-01T00:00:00Z"
+  },
+  {
+    "schema_version": "1.0",
+    "change_id": "chg-0004",
+    "cursor": "cursor-000004",
+    "change_type": "REVOKED",
+    "entity_type": "claim",
+    "entity_id": "claim-alpha-revoked",
+    "product_id": "product-alpha",
+    "tenant": "tenant-cshi",
+    "source_version": "1.1.0",
+    "content_hash": null,
+    "occurred_at": "2026-03-01T00:00:00Z"
+  },
+  {
+    "schema_version": "1.0",
+    "change_id": "chg-9001",
+    "cursor": "cursor-900001",
+    "change_type": "CREATED",
+    "entity_type": "document",
+    "entity_id": "doc-other-tenant",
+    "product_id": "product-alpha",
+    "tenant": "tenant-other",
+    "source_version": "1.0.0",
+    "content_hash": "sha256:d2b8b4123c547cab52467db5470c7854aaec1bae1f34717011ff859f8349d149",
+    "occurred_at": "2026-01-01T00:00:00Z"
+  }
+]
