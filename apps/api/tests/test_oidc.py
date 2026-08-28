@@ -57,6 +57,7 @@ def claims(**overrides: Any) -> dict[str, Any]:
         "name": "Alice",
         "exp": int((_NOW + timedelta(minutes=5)).timestamp()),
         "nbf": int((_NOW - timedelta(minutes=5)).timestamp()),
+        "iat": int((_NOW - timedelta(minutes=1)).timestamp()),
         "groups": ["grp-content"],
     }
     base.update(overrides)
@@ -108,6 +109,21 @@ class TestOidcValidation:
     def test_not_yet_valid_token_is_rejected(self) -> None:
         provider, _verifier = make_provider(
             {"tok": claims(nbf=int((_NOW + timedelta(minutes=1)).timestamp()))}
+        )
+        with pytest.raises(AuthenticationError):
+            provider.authenticate("tok")
+
+    @pytest.mark.parametrize("claim_name", ["exp", "nbf", "iat"])
+    def test_malformed_numeric_date_claims_are_rejected(
+        self, claim_name: str
+    ) -> None:
+        provider, _verifier = make_provider({"tok": claims(**{claim_name: "bad"})})
+        with pytest.raises(AuthenticationError):
+            provider.authenticate("tok")
+
+    def test_future_issued_at_is_rejected(self) -> None:
+        provider, _verifier = make_provider(
+            {"tok": claims(iat=int((_NOW + timedelta(minutes=5)).timestamp()))}
         )
         with pytest.raises(AuthenticationError):
             provider.authenticate("tok")

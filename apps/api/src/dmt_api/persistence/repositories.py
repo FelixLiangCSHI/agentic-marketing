@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import func, select, update
+from sqlalchemy import false, func, or_, select, update
 from sqlalchemy.orm import Session, aliased
 
 from dmt_api.persistence.domain import (
@@ -141,6 +141,7 @@ class _BaseRepository:
         payload: dict[str, Any],
         occurred_at: datetime,
     ) -> RunEventRow:
+        self._locked_run(run_id)
         next_sequence = self._session.execute(
             select(func.coalesce(func.max(RunEventRow.sequence) + 1, 0)).where(
                 RunEventRow.run_id == run_id
@@ -346,6 +347,13 @@ class TaskRepository(_BaseRepository):
         task = self._session.get(TaskRow, task_id, with_for_update=True)
         if task is None:
             raise NotFoundError(f"task {task_id!r} does not exist")
+        depends_on = self._session.get(TaskRow, depends_on_task_id, with_for_update=True)
+        if depends_on is None:
+            raise NotFoundError(f"task {depends_on_task_id!r} does not exist")
+        if depends_on.run_id != task.run_id:
+            raise DependencyCycleError(
+                f"dependency {task_id!r} -> {depends_on_task_id!r} crosses run boundaries"
+            )
         # Serialize DAG writes per run so concurrent inserts cannot sneak a
         # cycle past the reachability check.
         self._locked_run(task.run_id)
@@ -550,6 +558,8 @@ class ApprovalRepository(_BaseRepository):
         token_id: str,
         binding: dict[str, Any] | None = None,
         binding_hash: str = "",
+        tool_name: str = "",
+        agent_type: str = "",
     ) -> tuple[ApprovalRequest, str]:
         """Create a PENDING approval request and issue its single-use token.
 
@@ -568,6 +578,8 @@ class ApprovalRepository(_BaseRepository):
             policy_version=policy_version,
             binding=binding or {},
             binding_hash=binding_hash,
+            tool_name=tool_name,
+            agent_type=agent_type,
             requested_at=requested_at,
             decided_at=None,
             expires_at=expires_at,
@@ -678,6 +690,8 @@ class ApprovalRepository(_BaseRepository):
         consumed_by: str,
         now: datetime,
         expected_binding_hash: str,
+        expected_tool_name: str = "",
+        expected_agent_type: str = "",
     ) -> ApprovalToken:
         """Consume a token only for an APPROVED request with a matching binding.
 
@@ -705,7 +719,11 @@ class ApprovalRepository(_BaseRepository):
             raise TokenConsumptionError(
                 "approval token is not backed by an APPROVED request"
             )
-        if approval.binding_hash != expected_binding_hash:
+        if (
+            approval.binding_hash != expected_binding_hash
+            or approval.tool_name != expected_tool_name
+            or approval.agent_type != expected_agent_type
+        ):
             token_row.revoked_at = now
             token_row.revoked_reason = "binding_mismatch"
             self._append_audit(
@@ -762,11 +780,30 @@ class ApprovalRepository(_BaseRepository):
         self._session.flush()
         return _approval_to_domain(row)
 
-    def list_recent(self, *, limit: int = 100) -> list[ApprovalRequest]:
+    def list_recent(
+        self,
+        *,
+        limit: int = 100,
+        run_id: str | None = None,
+        requester_id: str | None = None,
+        approver_approval_types: frozenset[str] = frozenset(),
+    ) -> list[ApprovalRequest]:
+        stmt = select(ApprovalRequestRow)
+        if run_id is not None:
+            stmt = stmt.where(ApprovalRequestRow.run_id == run_id)
+        scope_predicates = []
+        if requester_id is not None:
+            scope_predicates.append(ApprovalRequestRow.requester_id == requester_id)
+        if approver_approval_types:
+            scope_predicates.append(
+                ApprovalRequestRow.approval_type.in_(approver_approval_types)
+            )
+        if scope_predicates:
+            stmt = stmt.where(or_(*scope_predicates))
+        elif requester_id is not None:
+            stmt = stmt.where(false())
         rows = self._session.scalars(
-            select(ApprovalRequestRow)
-            .order_by(ApprovalRequestRow.requested_at.desc())
-            .limit(limit)
+            stmt.order_by(ApprovalRequestRow.requested_at.desc()).limit(limit)
         ).all()
         return [_approval_to_domain(row) for row in rows]
 

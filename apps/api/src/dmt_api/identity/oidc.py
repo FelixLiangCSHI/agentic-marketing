@@ -15,6 +15,7 @@ enterprise SSO app is delivered.
 from __future__ import annotations
 
 import secrets
+from math import isfinite
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -48,6 +49,18 @@ class OidcConfig:
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _numeric_date(claims: Mapping[str, Any], name: str) -> float | None:
+    value = claims.get(name)
+    if value is None:
+        return None
+    if type(value) not in (int, float):
+        raise AuthenticationError(f"token {name} claim is malformed")
+    numeric = float(value)
+    if not isfinite(numeric):
+        raise AuthenticationError(f"token {name} claim is malformed")
+    return numeric
 
 
 @dataclass
@@ -103,12 +116,15 @@ class EnterpriseIdentityProvider:
             raise AuthenticationError("token subject is missing")
         now = self.clock().timestamp()
         skew = self.config.clock_skew_seconds
-        exp = claims.get("exp")
-        if not isinstance(exp, (int, float)) or now > float(exp) + skew:
+        exp = _numeric_date(claims, "exp")
+        if exp is None or now > exp + skew:
             raise AuthenticationError("token is expired or has no expiry")
-        nbf = claims.get("nbf")
-        if nbf is not None and now < float(nbf) - skew:
+        nbf = _numeric_date(claims, "nbf")
+        if nbf is not None and now < nbf - skew:
             raise AuthenticationError("token is not yet valid")
+        iat = _numeric_date(claims, "iat")
+        if iat is not None and iat > now + skew:
+            raise AuthenticationError("token was issued in the future")
 
     def _principal_from_claims(self, claims: Mapping[str, Any]) -> Principal:
         raw_groups = claims.get(self.config.group_claim, [])

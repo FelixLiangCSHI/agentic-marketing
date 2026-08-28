@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
 import pytest
@@ -39,6 +40,30 @@ def test_legal_transition_appends_event_with_next_sequence(migrated_engine: Engi
         events = uow.run_events.for_run("run-1")
     assert [e.sequence for e in events] == [0, 1]
     assert events[1].payload["to_status"] == "PLANNING"
+
+
+def test_concurrent_run_event_appends_have_unique_sequences(
+    migrated_engine: Engine,
+) -> None:
+    create_run(migrated_engine)
+
+    def create_task(task_id: str) -> None:
+        with make_uow(migrated_engine) as uow:
+            uow.tasks.create(
+                task_id=task_id,
+                run_id="run-1",
+                task_type="demo.step",
+                max_attempts=3,
+                actor_id="system",
+                created_at=NOW,
+            )
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(create_task, [f"t-{i}" for i in range(8)]))
+
+    with make_uow(migrated_engine) as uow:
+        events = uow.run_events.for_run("run-1")
+    assert [event.sequence for event in events] == list(range(9))
 
 
 @pytest.mark.parametrize(

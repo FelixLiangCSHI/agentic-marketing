@@ -310,3 +310,32 @@ test("does not calculate period change across an irregular series", () => {
     true,
   );
 });
+
+test("demographic ranking never mixes count and percentage units", () => {
+  const metrics = calculateFollowersMetrics([
+    followerRecord(2, {
+      demographicDimension: "Industry",
+      demographicValue: "Healthcare",
+      demographicCount: 120,
+    }),
+    followerRecord(3, {
+      demographicDimension: "Industry",
+      demographicValue: "Technology",
+      demographicPercentage: 0.9,
+    }),
+  ]);
+  const industry = metrics.demographicTopN.find(
+    (ranking) => ranking.label === "Industry Top 5",
+  );
+
+  // 维度内存在 count 时按 count 排名；仅有 percentage 的记录被排除而不是混加。
+  assert.equal(industry?.items.length, 1);
+  assert.equal(industry?.items[0].label, "Healthcare");
+  assert.equal(industry?.items[0].value, 120);
+  assert.equal(
+    industry?.reliabilityReasons.some((reason) =>
+      reason.includes("excluded"),
+    ),
+    true,
+  );
+});

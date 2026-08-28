@@ -204,6 +204,8 @@ class ApprovalRequestRow(Base):
     policy_version: Mapped[str] = mapped_column(Text, nullable=False)
     binding: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     binding_hash: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    tool_name: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    agent_type: Mapped[str] = mapped_column(Text, nullable=False, default="")
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

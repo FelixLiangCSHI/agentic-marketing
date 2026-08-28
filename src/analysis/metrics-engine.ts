@@ -304,15 +304,26 @@ function demographicTopN(
     const dimensionRecords = demographic.filter(
       (record) => record.demographicDimension === dimension,
     );
+    // 单一计量单位：维度内只要存在 count 就按 count 排名，
+    // 仅有 percentage 的记录被显式排除，避免 count/percentage 混加。
+    const dimensionUnit = dimensionRecords.some(
+      (record) => record.demographicCount !== null,
+    )
+      ? "count"
+      : "percentage";
     const groups = new Map<
       string,
       { value: number; records: (FollowersRecord | VisitorsRecord)[] }
     >();
+    let excludedRecords = 0;
     for (const record of dimensionRecords) {
       const key = record.demographicValue as string;
       const metricValue =
-        record.demographicCount ?? record.demographicPercentage;
+        dimensionUnit === "count"
+          ? record.demographicCount
+          : record.demographicPercentage;
       if (metricValue === null) {
+        excludedRecords += 1;
         continue;
       }
       const group = groups.get(key) ?? { value: 0, records: [] };
@@ -331,16 +342,14 @@ function demographicTopN(
         value: group.value,
         records: group.records,
       })),
-      dimensionRecords.some((record) => record.demographicCount !== null)
-        ? "count"
-        : "percentage",
+      dimensionUnit,
       ["demographicValue", "demographicCount", "demographicPercentage"],
     );
     return {
       metricId: `${module}.demographic.${dimension}`,
       label: `${dimension} Top ${topN}`,
       formula:
-        "Group by demographicDimension / demographicValue and sum available counts; use percentage when counts are absent",
+        "Group by demographicDimension / demographicValue and rank by a single unit: sum counts when any count exists (percentage-only records excluded), otherwise sum percentages",
       period,
       sourceModules: [module],
       items,
@@ -350,10 +359,16 @@ function demographicTopN(
           : dimensionRecords.length < MIN_GROUP_SAMPLE
             ? "directional"
             : "reliable",
-      reliabilityReasons:
-        dimensionRecords.length < MIN_GROUP_SAMPLE
+      reliabilityReasons: [
+        ...(dimensionRecords.length < MIN_GROUP_SAMPLE
           ? [`${dimension} has only ${dimensionRecords.length} audience records.`]
-          : ["Audience segment sample size meets the current rule."],
+          : ["Audience segment sample size meets the current rule."]),
+        ...(excludedRecords > 0
+          ? [
+              `${excludedRecords} record(s) excluded from the ${dimensionUnit} ranking because they only carry the other unit.`,
+            ]
+          : []),
+      ],
     };
   });
 }

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { analysisInputFromParseResults } from "@/analysis/snapshot-engine";
 import { getMappingOverrideKey } from "@/data-processing/field-aliases";
 import {
   SpreadsheetParseException,
@@ -224,4 +225,43 @@ test("returns no module for an unrecognizable table", () => {
     ),
     true,
   );
+});
+
+test("analysis input only ingests records from sheets that can proceed", () => {
+  const bytes = workbookBytes([
+    {
+      name: "New followers",
+      rows: [
+        ["Date", "Organic followers", "Total followers"],
+        ["2026-02-01", 28, 30],
+      ],
+    },
+    {
+      name: "Visitors",
+      rows: [
+        ["Date", "Total page views", "Total unique visitors"],
+        ["2026-02-01", 90, 40],
+      ],
+    },
+  ]);
+  const result = parseSpreadsheetBytes({
+    bytes,
+    fileName: "synthetic_followers.xlsx",
+    mimeType:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    format: "xlsx",
+    expectedModule: "followers",
+  });
+
+  // 第二个 sheet 识别为 visitors，与上传槽位不符：有记录但不可进入分析。
+  const mismatched = result.workbook.sheets[1];
+  assert.equal(mismatched.canProceed, false);
+  assert.equal(mismatched.records.length > 0, true);
+
+  const input = analysisInputFromParseResults(
+    { followers: result },
+    "uploaded",
+  );
+  assert.equal(input.records.followers.length, 1);
+  assert.equal(input.records.visitors.length, 0);
 });

@@ -46,6 +46,8 @@ def binding(**overrides: Any) -> ApprovalBinding:
         "budget_limit": "0",
         "valid_from": _NOW.isoformat(),
         "valid_until": _LATER.isoformat(),
+        "tool_name": "content.publish",
+        "agent_type": "content",
     }
     values.update(overrides)
     return ApprovalBinding(**values)
@@ -219,6 +221,16 @@ class TestTokenLifecycle:
         with pytest.raises(BindingMismatchError):
             consume(migrated_engine, token, the_binding=changed)
         # the failed attempt burned the token: even the original input is rejected
+        with pytest.raises(TokenConsumptionError):
+            consume(migrated_engine, token)
+
+    def test_tool_or_agent_change_invalidates_the_old_token(
+        self, migrated_engine: Engine
+    ) -> None:
+        _, token = self._approved_token(migrated_engine)
+        changed = binding(tool_name="content.schedule")
+        with pytest.raises(BindingMismatchError):
+            consume(migrated_engine, token, the_binding=changed)
         with pytest.raises(TokenConsumptionError):
             consume(migrated_engine, token)
 

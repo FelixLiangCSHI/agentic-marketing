@@ -51,6 +51,18 @@ def test_cycle_is_rejected_at_write_time(migrated_engine: Engine) -> None:
         assert uow.tasks.dependencies("t-1") == []
 
 
+def test_cross_run_dependency_is_rejected(migrated_engine: Engine) -> None:
+    create_run(migrated_engine, run_id="run-1")
+    create_run(migrated_engine, run_id="run-2")
+    _create_task(migrated_engine, "t-1", run_id="run-1")
+    _create_task(migrated_engine, "t-2", run_id="run-2")
+    with pytest.raises(DependencyCycleError):
+        with make_uow(migrated_engine) as uow:
+            uow.tasks.add_dependency("t-1", "t-2")
+    with make_uow(migrated_engine) as uow:
+        assert uow.tasks.dependencies("t-1") == []
+
+
 def test_task_status_machine_rejects_illegal_jumps(migrated_engine: Engine) -> None:
     create_run(migrated_engine)
     _create_task(migrated_engine, "t-1")

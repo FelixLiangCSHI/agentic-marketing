@@ -64,15 +64,6 @@
 
 | # | 问题 | 位置 | 优先级 |
 |---|---|---|---|
-| 1 | 审批令牌持久化消费未绑定 `tool_name`/`agent_type`（与 Fake verifier 语义分裂，影响 ADR-003） | `apps/api/src/dmt_api/persistence/repositories.py` | High |
-| 2 | `list_approvals` 无 tenant/run/requester 作用域过滤 | `apps/api/src/dmt_api/routes/approvals.py` | High |
-| 3 | Task 依赖可跨 run 引用，破坏 run 隔离 | `apps/api/src/dmt_api/persistence/repositories.py` | High |
-| 4 | run-event 序号用 `max(sequence)+1`，并发下撞唯一约束 | 同上 | High |
-| 5 | workbook 级 `canProceed` 用 `some(...)`，无效 sheet 数据可混入确定性指标（ADR-005） | `src/server/parsing/spreadsheet-parser.ts` + `src/analysis/snapshot-engine.ts` | High |
-| 6 | 人口统计排名混用 count / percentage 单位 | `src/analysis/metrics-engine.ts` | High |
-| 7 | 上传缺失 `Content-Length` 时先缓冲后校验，存在 DoS 面 | `src/app/api/parse/route.ts` | Medium |
-| 8 | `/ready` 未检查 DB 等本地依赖（检查逻辑可先写好，真实验证见 §1.4） | `apps/api/src/dmt_api/routes/health.py` | Medium |
-| 9 | OIDC `nbf` 畸形值抛裸异常变 500 | `apps/api/src/dmt_api/identity/oidc.py` | Medium |
 | 10 | 模型输出文案可夹带未受支持的数值断言（ADR-005 治理） | `src/agents/action-plan-agent.ts` | Medium |
 | 11 | 环比访客变化的粒度推断基于全部记录而非可比记录 | `src/analysis/metrics-engine.ts` | Medium |
 | 12 | domain-contracts TS 类型未编码 schema 约束（pattern/min-max 等） | `packages/domain-contracts/src/types.ts` | Low |
