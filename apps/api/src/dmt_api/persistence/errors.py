@@ -29,3 +29,7 @@ class TokenConsumptionError(PersistenceError):
 
 class SeparationOfDutiesError(PersistenceError):
     """Requester and approver must be different identities."""
+
+
+class BindingMismatchError(PersistenceError):
+    """The approval token was minted for a different input binding."""

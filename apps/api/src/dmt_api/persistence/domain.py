@@ -73,6 +73,8 @@ class ApprovalRequest:
     status: str
     input_artifact_hash: str
     policy_version: str
+    binding: dict[str, Any]
+    binding_hash: str
     requested_at: datetime
     decided_at: datetime | None
     expires_at: datetime
@@ -96,6 +98,8 @@ class ApprovalToken:
     expires_at: datetime
     consumed_at: datetime | None
     consumed_by: str | None
+    revoked_at: datetime | None
+    revoked_reason: str | None
 
 
 @dataclass(frozen=True, slots=True)

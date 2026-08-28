@@ -202,6 +202,8 @@ class ApprovalRequestRow(Base):
     status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
     input_artifact_hash: Mapped[str] = mapped_column(Text, nullable=False)
     policy_version: Mapped[str] = mapped_column(Text, nullable=False)
+    binding: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    binding_hash: Mapped[str] = mapped_column(Text, nullable=False, default="")
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -242,6 +244,8 @@ class ApprovalTokenRow(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     consumed_by: Mapped[str | None] = mapped_column(Text, nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class AuditEventRow(Base):

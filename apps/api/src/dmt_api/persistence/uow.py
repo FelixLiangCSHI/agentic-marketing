@@ -51,6 +51,17 @@ class UnitOfWork:
         self.outbox = OutboxRepository(session)
         return self
 
+    def commit(self) -> None:
+        """Explicitly commit the current transaction.
+
+        Used for fail-closed security events (e.g. burning a token on a
+        binding mismatch) that must persist even though the operation itself
+        finishes by raising a typed error.
+        """
+        session = self._session
+        assert session is not None
+        session.commit()
+
     def __exit__(
         self,
         exc_type: type[BaseException] | None,

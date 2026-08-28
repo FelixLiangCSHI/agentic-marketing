@@ -28,6 +28,7 @@ from dmt_api.persistence.domain import (
     Task,
 )
 from dmt_api.persistence.errors import (
+    BindingMismatchError,
     DependencyCycleError,
     LeaseConflictError,
     NotFoundError,
@@ -107,6 +108,8 @@ def _approval_to_domain(row: ApprovalRequestRow) -> ApprovalRequest:
         status=row.status,
         input_artifact_hash=row.input_artifact_hash,
         policy_version=row.policy_version,
+        binding=dict(row.binding),
+        binding_hash=row.binding_hash,
         requested_at=row.requested_at,
         decided_at=row.decided_at,
         expires_at=row.expires_at,
@@ -122,6 +125,8 @@ def _token_to_domain(row: ApprovalTokenRow) -> ApprovalToken:
         expires_at=row.expires_at,
         consumed_at=row.consumed_at,
         consumed_by=row.consumed_by,
+        revoked_at=row.revoked_at,
+        revoked_reason=row.revoked_reason,
     )
 
 
@@ -543,6 +548,8 @@ class ApprovalRepository(_BaseRepository):
         requested_at: datetime,
         expires_at: datetime,
         token_id: str,
+        binding: dict[str, Any] | None = None,
+        binding_hash: str = "",
     ) -> tuple[ApprovalRequest, str]:
         """Create a PENDING approval request and issue its single-use token.
 
@@ -559,6 +566,8 @@ class ApprovalRepository(_BaseRepository):
             status="PENDING",
             input_artifact_hash=input_artifact_hash,
             policy_version=policy_version,
+            binding=binding or {},
+            binding_hash=binding_hash,
             requested_at=requested_at,
             decided_at=None,
             expires_at=expires_at,
@@ -643,6 +652,7 @@ class ApprovalRepository(_BaseRepository):
             .where(
                 ApprovalTokenRow.token_hash == _hash_token(token_plaintext),
                 ApprovalTokenRow.consumed_at.is_(None),
+                ApprovalTokenRow.revoked_at.is_(None),
                 ApprovalTokenRow.expires_at > now,
             )
             .values(consumed_at=now, consumed_by=consumed_by)
@@ -660,6 +670,105 @@ class ApprovalRepository(_BaseRepository):
         )
         self._session.flush()
         return _token_to_domain(row)
+
+    def consume_token_bound(
+        self,
+        token_plaintext: str,
+        *,
+        consumed_by: str,
+        now: datetime,
+        expected_binding_hash: str,
+    ) -> ApprovalToken:
+        """Consume a token only for an APPROVED request with a matching binding.
+
+        A binding mismatch burns the token (revokes it) so it can never be
+        replayed against the original input either.
+        """
+        token_row = self._session.scalars(
+            select(ApprovalTokenRow)
+            .where(ApprovalTokenRow.token_hash == _hash_token(token_plaintext))
+            .with_for_update()
+        ).one_or_none()
+        if (
+            token_row is None
+            or token_row.consumed_at is not None
+            or token_row.revoked_at is not None
+            or token_row.expires_at <= now
+        ):
+            raise TokenConsumptionError(
+                "approval token is unknown, expired, revoked, or already consumed"
+            )
+        approval = self._session.get(
+            ApprovalRequestRow, token_row.approval_id, with_for_update=True
+        )
+        if approval is None or approval.status != "APPROVED":
+            raise TokenConsumptionError(
+                "approval token is not backed by an APPROVED request"
+            )
+        if approval.binding_hash != expected_binding_hash:
+            token_row.revoked_at = now
+            token_row.revoked_reason = "binding_mismatch"
+            self._append_audit(
+                consumed_by,
+                "approval.token_revoked",
+                "approval_token",
+                token_row.token_id,
+                approval.run_id,
+                {"approval_id": approval.approval_id, "reason": "binding_mismatch"},
+                now,
+            )
+            self._session.flush()
+            raise BindingMismatchError(
+                "approval token was minted for a different input binding; token revoked"
+            )
+        token_row.consumed_at = now
+        token_row.consumed_by = consumed_by
+        payload = {"approval_id": approval.approval_id, "token_id": token_row.token_id}
+        self._append_audit(
+            consumed_by, "approval.token_consumed", "approval_token",
+            token_row.token_id, approval.run_id, payload, now,
+        )
+        self._session.flush()
+        return _token_to_domain(token_row)
+
+    def revoke_request(
+        self, approval_id: str, *, actor_id: str, reason: str, now: datetime
+    ) -> ApprovalRequest:
+        """Revoke a request and burn its token (e.g. incident or input change)."""
+        row = self._session.get(ApprovalRequestRow, approval_id, with_for_update=True)
+        if row is None:
+            raise NotFoundError(f"approval {approval_id!r} does not exist")
+        ensure_transition(
+            APPROVAL_TRANSITIONS, f"approval {approval_id}", row.status, "REVOKED"
+        )
+        row.status = "REVOKED"
+        row.decided_at = now
+        row.version += 1
+        token_row = self._session.scalars(
+            select(ApprovalTokenRow)
+            .where(ApprovalTokenRow.approval_id == approval_id)
+            .with_for_update()
+        ).one_or_none()
+        if token_row is not None and token_row.revoked_at is None:
+            token_row.revoked_at = now
+            token_row.revoked_reason = reason
+        payload = {"approval_id": approval_id, "reason": reason}
+        self._append_run_event(row.run_id, "APPROVAL_DECIDED", payload, now)
+        self._append_audit(
+            actor_id, "approval.revoked", "approval", approval_id, row.run_id,
+            payload, now,
+        )
+        self._append_outbox("approval", approval_id, "APPROVAL_DECIDED", payload, now)
+        self._session.flush()
+        return _approval_to_domain(row)
+
+    def list_recent(self, *, limit: int = 100) -> list[ApprovalRequest]:
+        rows = self._session.scalars(
+            select(ApprovalRequestRow)
+            .order_by(ApprovalRequestRow.requested_at.desc())
+            .limit(limit)
+        ).all()
+        return [_approval_to_domain(row) for row in rows]
 
 
 class AuditRepository(_BaseRepository):

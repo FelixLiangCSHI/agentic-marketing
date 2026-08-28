@@ -71,15 +71,15 @@ def test_empty_to_head_to_down_one_to_head(migration_engine: Engine, database_ur
     for schema, expected in EXPECTED_TABLES.items():
         assert expected <= tables.get(schema, set()), f"missing tables in {schema}"
 
-    # head -> down one
-    command.downgrade(cfg, "-1")
+    # head -> base (roundtrip through every revision's downgrade)
+    command.downgrade(cfg, "base")
     tables_after_down = _tables(migration_engine)
     for schema, expected in EXPECTED_TABLES.items():
         assert not (expected & tables_after_down.get(schema, set())), (
             f"tables still present in {schema} after downgrade"
         )
 
-    # down one -> head again
+    # base -> head again
     command.upgrade(cfg, "head")
     tables_again = _tables(migration_engine)
     for schema, expected in EXPECTED_TABLES.items():
