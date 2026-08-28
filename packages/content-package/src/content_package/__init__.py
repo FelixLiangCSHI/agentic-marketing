@@ -1,0 +1,61 @@
+"""Immutable ApprovedContentPackage builder (Phase 02 / Subphase 07)."""
+
+from content_package.builder import (
+    AssetTamperedError,
+    ExpiredInputError,
+    MissingChannelVariantError,
+    NotApprovedError,
+    PackageBuildError,
+    PackageBuilder,
+    PackageInputs,
+    RevokedInputError,
+    StaleApprovalError,
+    UncitedClaimError,
+    consumable,
+    verify_package_integrity,
+)
+from content_package.contracts import (
+    SCHEMA_VERSION,
+    ApprovedContentPackageV1,
+    ClaimBindingV1,
+    PackageApprovalV1,
+    VersionBindingsV1,
+    canonical_content_hash,
+    package_id_for,
+)
+from content_package.store import (
+    DuplicateVersionError,
+    LedgerEntry,
+    PackageStore,
+    PackageStoreError,
+    UnknownPackageError,
+    lineage_key,
+)
+
+__all__ = [
+    "ApprovedContentPackageV1",
+    "AssetTamperedError",
+    "ClaimBindingV1",
+    "DuplicateVersionError",
+    "ExpiredInputError",
+    "LedgerEntry",
+    "MissingChannelVariantError",
+    "NotApprovedError",
+    "PackageApprovalV1",
+    "PackageBuildError",
+    "PackageBuilder",
+    "PackageInputs",
+    "PackageStore",
+    "PackageStoreError",
+    "RevokedInputError",
+    "SCHEMA_VERSION",
+    "StaleApprovalError",
+    "UncitedClaimError",
+    "UnknownPackageError",
+    "VersionBindingsV1",
+    "canonical_content_hash",
+    "consumable",
+    "lineage_key",
+    "package_id_for",
+    "verify_package_integrity",
+]

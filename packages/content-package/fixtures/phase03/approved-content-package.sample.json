@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "package_id": "acp_81a8e00b178d77410a419879",
+  "version": 1,
+  "status": "APPROVED",
+  "product_id": "product-alpha",
+  "market": "US",
+  "locale": "en-US",
+  "target_audience": [
+    "physicians"
+  ],
+  "channel_variants": [
+    [
+      "linkedin",
+      [
+        "cv-req-0001"
+      ]
+    ]
+  ],
+  "asset_uris": [
+    "object://local/tenant-cshi/content-agent-approved/run-0001/hero.png"
+  ],
+  "asset_hashes": [
+    "sha256:ae6c79d10f1fd410650790e63186ec108fa106325b52fbd88de21a43540e6f2c"
+  ],
+  "claims": [
+    {
+      "text": "Product Alpha is taken once daily.",
+      "source_id": "doc-alpha-pi",
+      "source_version": "1.0.0",
+      "source_excerpt_hash": "sha256:71124cbac7e31d60ddd88923ae435825b8db22dc9ef998b1107bfd3d8165e077",
+      "expires_at": "2027-01-01T00:00:00Z"
+    }
+  ],
+  "compliance_result_id": "cr-b2b22693f77ecab2cca9e0dc",
+  "versions": {
+    "policy_version": "1.0.0",
+    "prompt_version": "1.0.0",
+    "model_id": "fake-content-model-v1",
+    "workflow_version": "0.1.0",
+    "skill_versions": [
+      [
+        "copywriting",
+        "1.0.0"
+      ]
+    ]
+  },
+  "approvals": [
+    {
+      "track": "medical",
+      "approval_id": "rev-medical-0001",
+      "approved_by": "emp-medical",
+      "approved_at": "2026-05-30T12:00:00Z",
+      "artifact_hash": "sha256:08178ce6ccabc78a11414bc2c8aa94ec285cf735e3c284da8f738927efb17282"
+    },
+    {
+      "track": "marketing",
+      "approval_id": "rev-marketing-0001",
+      "approved_by": "emp-marketing",
+      "approved_at": "2026-05-30T12:00:00Z",
+      "artifact_hash": "sha256:08178ce6ccabc78a11414bc2c8aa94ec285cf735e3c284da8f738927efb17282"
+    }
+  ],
+  "approved_at": "2026-05-30T12:00:00Z",
+  "expires_at": "2027-01-01T00:00:00Z",
+  "content_hash": "sha256:08178ce6ccabc78a11414bc2c8aa94ec285cf735e3c284da8f738927efb17282"
+}
