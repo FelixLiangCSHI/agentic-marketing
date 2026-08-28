@@ -7,6 +7,9 @@ license = { text = "Proprietary" }
 dependencies = [
   "fastapi==0.141.1",
   "pydantic==2.13.4",
+  "sqlalchemy==2.0.52",
+  "alembic==1.19.1",
+  "psycopg[binary]==3.3.4",
 ]
 
 [project.optional-dependencies]
@@ -24,7 +27,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]
 
 [tool.mypy]
