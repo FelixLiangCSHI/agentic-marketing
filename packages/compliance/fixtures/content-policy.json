@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "content-policy-medical",
+  "policy_version": "1.0.0",
+  "markets": ["US", "CN"],
+  "banned_expressions": [
+    { "phrase": "miracle cure", "severity": "critical" },
+    { "phrase": "guaranteed results", "severity": "critical" },
+    { "phrase": "no side effects", "severity": "critical" },
+    { "phrase": "100% safe", "severity": "critical" },
+    { "phrase": "breakthrough", "severity": "major" },
+    { "phrase": "revolutionary", "severity": "major" }
+  ],
+  "competitor_names": ["CompetitorX", "RivalPharm", "OtherBrand"],
+  "comparison_markers": [
+    "better than",
+    "superior to",
+    "outperforms",
+    "more effective than",
+    "优于",
+    "胜过"
+  ],
+  "approval_claim_patterns": [
+    "fda approved",
+    "fda-approved",
+    "approved by the fda",
+    "ema approved",
+    "nmpa approved",
+    "officially certified",
+    "clinically approved by regulators"
+  ],
+  "speculation_markers": [
+    "probably",
+    "might be the best",
+    "we believe",
+    "is expected to cure"
+  ]
+}
