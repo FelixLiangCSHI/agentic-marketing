@@ -1,0 +1,42 @@
+# 受保护 DEV 部署流水线：仅定义，不在普通 PR 中执行。
+# - 手动触发 + GitHub Environment `dev` 的人工 Approval 门禁。
+# - 通过 OIDC 获取短期身份；GitHub 不保存长期 Token/Key，Secret 值仅在企业 Secret Manager。
+# - Fork 不得取得任何权限；非本仓库触发直接失败。
+# - 当前 DEV 基础设施尚未交付，部署步骤为 fail-closed 占位（P1-CP 系列 BLOCKED 项）。
+name: deploy-dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: "批准的分支或 Tag（仅允许已评审的引用）"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write # OIDC / Workload Identity 短期身份
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # 人工 Environment Approval 在 GitHub Environment `dev` 上配置（required reviewers）。
+    environment: dev
+    runs-on: ubuntu-latest
+    if: github.repository == 'FelixLiangCSHI/agentic-marketing' && github.event.repository.fork == false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_ref }}
+      - name: Guard — 普通 PR 不得到达此处
+        run: |
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "deploy-dev 只能人工触发"; exit 1
+          fi
+      - name: Deploy to DEV (fail-closed placeholder)
+        run: |
+          echo "::error::DEV 基础设施尚未交付（SSO/PostgreSQL/Queue/Object Store/Secret Manager/Gateway）。"
+          echo "::error::交付后在此处经 OIDC 获取短期身份，执行 Migration、部署与 Smoke，并回传脱敏 Evidence。"
+          exit 1

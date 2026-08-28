@@ -59,7 +59,7 @@ def test_list_tasks_not_implemented(client: TestClient) -> None:
     _assert_not_implemented(response.json())
 
 
-def test_list_approvals_not_implemented(client: TestClient) -> None:
+def test_list_approvals_is_implemented_and_guarded(client: TestClient) -> None:
+    # Implemented in Subphase 05: unauthenticated access is rejected, not 501.
     response = client.get("/api/v1/approvals")
-    assert response.status_code == 501
-    _assert_not_implemented(response.json())
+    assert response.status_code == 401
