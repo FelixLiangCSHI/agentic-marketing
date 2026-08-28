@@ -619,16 +619,19 @@ export function calculateVisitorsMetrics(
   const comparable = temporal.filter(
     (record) => record.pageViews !== null,
   );
+  // 粒度只由可比记录（含 pageViews）推断，避免稀疏无关字段
+  // 使合法的环比周期被误判为不可比。
+  const comparablePeriod = periodForRecords(comparable);
   const lastTwo = comparable.slice(-2);
   const periodChangePeriod = periodForRecords(lastTwo);
   const periodChangeComparable =
     lastTwo.length === 2 &&
-    period !== null &&
-    period.granularity !== "irregular" &&
+    comparablePeriod !== null &&
+    comparablePeriod.granularity !== "irregular" &&
     hasComparablePeriodGap(
       lastTwo[0].date as string,
       lastTwo[1].date as string,
-      period.granularity,
+      comparablePeriod.granularity,
     );
   const periodChange =
     periodChangeComparable

@@ -354,3 +354,35 @@ test("rejects malformed model output and broken evidence references safely", asy
       ),
   );
 });
+
+test("rejects model prose asserting numbers not traceable to inputs", () => {
+  const input = approvedPlanningInput();
+  const plan = generateActionPlan(input, PLANNING_NOW);
+  const clean = validateActionPlan(plan, input, PLANNING_NOW);
+  assert.equal(clean.valid, true);
+
+  const fabricated = {
+    ...plan,
+    contentCalendar: plan.contentCalendar.map((item, index) =>
+      index === 0
+        ? {
+            ...item,
+            postText: "Engagement is already up 87% with 12,345 new leads.",
+          }
+        : item,
+    ),
+  };
+  const validation = validateActionPlan(fabricated, input, PLANNING_NOW);
+
+  assert.equal(validation.valid, false);
+  const claims = validation.issues.filter(
+    (issue) => issue.code === "UNSUPPORTED_NUMERIC_CLAIM",
+  );
+  assert.equal(claims.length, 2);
+  assert.equal(
+    claims.every((issue) =>
+      issue.path.includes(plan.contentCalendar[0].itemId),
+    ),
+    true,
+  );
+});

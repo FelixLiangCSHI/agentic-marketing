@@ -8,6 +8,16 @@ import runEventSchema from "../schemas/run-event.v1.schema.json";
 import runSchema from "../schemas/run.v1.schema.json";
 import taskSchema from "../schemas/task.v1.schema.json";
 import toolCallSchema from "../schemas/tool-call.v1.schema.json";
+import type {
+  ActivationRequestV1,
+  ApprovalV1,
+  ApprovedContentPackageV1,
+  ConnectorErrorV1,
+  RunEventV1,
+  RunV1,
+  TaskV1,
+  ToolCallV1,
+} from "./types";
 
 export const CONTRACT_NAMES = [
   "run.v1",
@@ -64,4 +74,60 @@ export function validateContract(
     (error) => `${error.instancePath || "/"} ${error.message ?? "invalid"}`,
   );
   return { valid: false, errors };
+}
+
+// 编译期无法表达 JSON Schema 的 pattern/min-max/uniqueItems 等约束，
+// 因此契约对象必须经运行时校验后才能获得 Validated<T> 品牌类型。
+// 边界代码应要求 Validated<T>，避免拼装未经校验的契约对象。
+declare const CONTRACT_VALIDATED: unique symbol;
+export type Validated<T> = T & { readonly [CONTRACT_VALIDATED]: true };
+
+export interface ContractTypeByName {
+  "run.v1": RunV1;
+  "run-event.v1": RunEventV1;
+  "task.v1": TaskV1;
+  "approval.v1": ApprovalV1;
+  "tool-call.v1": ToolCallV1;
+  "approved-content-package.v1": ApprovedContentPackageV1;
+  "activation-request.v1": ActivationRequestV1;
+  "connector-error.v1": ConnectorErrorV1;
+}
+
+export class ContractValidationError extends Error {
+  readonly contract: ContractName;
+  readonly issues: readonly string[];
+
+  constructor(contract: ContractName, issues: readonly string[]) {
+    super(`${contract} document is invalid: ${issues.join("; ")}`);
+    this.name = "ContractValidationError";
+    this.contract = contract;
+    this.issues = issues;
+  }
+}
+
+export function parseContract<Name extends ContractName>(
+  name: Name,
+  document: unknown,
+): Validated<ContractTypeByName[Name]> {
+  const result = validateContract(name, document);
+  if (!result.valid) {
+    throw new ContractValidationError(name, result.errors);
+  }
+  return document as Validated<ContractTypeByName[Name]>;
+}
+
+export function tryParseContract<Name extends ContractName>(
+  name: Name,
+  document: unknown,
+):
+  | { ok: true; value: Validated<ContractTypeByName[Name]> }
+  | { ok: false; errors: string[] } {
+  const result = validateContract(name, document);
+  if (!result.valid) {
+    return { ok: false, errors: result.errors };
+  }
+  return {
+    ok: true,
+    value: document as Validated<ContractTypeByName[Name]>,
+  };
 }

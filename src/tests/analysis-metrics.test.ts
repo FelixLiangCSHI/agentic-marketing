@@ -339,3 +339,16 @@ test("demographic ranking never mixes count and percentage units", () => {
     true,
   );
 });
+
+test("period change granularity ignores records without page views", () => {
+  const metrics = calculateVisitorsMetrics([
+    visitorRecord(2, { date: "2026-01-01", pageViews: 100 }),
+    visitorRecord(3, { date: "2026-01-08", pageViews: 150 }),
+    // 稀疏的无关记录（仅 uniqueVisitors）不得改变环比的粒度判断。
+    visitorRecord(4, { date: "2026-01-09", uniqueVisitors: 10 }),
+    visitorRecord(5, { date: "2026-01-12", uniqueVisitors: 12 }),
+    visitorRecord(6, { date: "2026-01-13", uniqueVisitors: 9 }),
+  ]);
+
+  assert.equal(metrics.periodOverPeriodChange.value, 0.5);
+});

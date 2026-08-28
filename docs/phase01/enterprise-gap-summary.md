@@ -60,13 +60,7 @@
 
 ## 2. 现在就能改的 Gap（不需要企业云端）
 
-以下问题在 Phase 01 代码审查中已识别，均为**纯仓库内修复**，不依赖任何企业资源，建议在接入企业环境前完成：
-
-| # | 问题 | 位置 | 优先级 |
-|---|---|---|---|
-| 10 | 模型输出文案可夹带未受支持的数值断言（ADR-005 治理） | `src/agents/action-plan-agent.ts` | Medium |
-| 11 | 环比访客变化的粒度推断基于全部记录而非可比记录 | `src/analysis/metrics-engine.ts` | Medium |
-| 12 | domain-contracts TS 类型未编码 schema 约束（pattern/min-max 等） | `packages/domain-contracts/src/types.ts` | Low |
+原 12 项仓库内可修复的代码审查问题已全部修复并通过测试（2026-08-28），本节清单已清空。
 
 此外还可以现在完成：真实适配层的**接口与配置骨架**（LLM/Queue/ObjectStore/Secret 的 live-mode 客户端骨架 + 配置校验 + 契约测试），使企业环境交付后只需填入 `secretref://` 与 endpoint 即可切换。
 
@@ -74,7 +68,7 @@
 
 ## 3. 切换路径概览（mock → 企业级）
 
-1. **仓库内（现在）**：修复 §2 全部 High/Medium 项；补齐 live-mode 适配层骨架与负向测试。
+1. **仓库内（现在）**：§2 全部 12 项已修复；后续可补齐 live-mode 适配层骨架与负向测试。
 2. **企业交付后（B-06 解除）**：填入 DEV 环境 endpoint/secretref → `deploy-dev.yml` 去掉 fail-closed 占位 → 在 DEV 跑 DB migration（空库升级→降级→再升级）与 44 个 PG 测试。
 3. **IAM 交付后（B-02/B-07 解除）**：接入真实 OIDC，替换 FakeIdentityProvider，验证自批拒绝/Token 原子消费（P1-CP03 在真实 IdP 下复验）。
 4. **供应商 Credential 注入后（B-03/B-04/B-05）**：受保护流水线内逐一将 `mode: mock` → `sandbox` → `live`，每步保留幂等写与审批门禁验证。
