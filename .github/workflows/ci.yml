@@ -162,3 +162,14 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install -e "packages/harness-core[dev]"
       - run: python -m pytest evals
+
+  # Phase 01 集成质量门：Fake 双 Agent 生命周期 + 故障注入（harness-core × infra-core）。
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e "packages/harness-core[dev]" -e "packages/infra-core[dev]"
+      - run: python -m pytest integration

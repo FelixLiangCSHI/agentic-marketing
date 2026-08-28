@@ -17,7 +17,8 @@
     "infra:typecheck": "cd packages/infra-core && python3 -m mypy",
     "contract:test": "tsx --test src/tests/domain-contracts.test.ts src/tests/domain-contracts-adapter.test.ts && cd apps/api && python3 -m pytest tests/test_contract_fixtures.py",
     "eval:test": "python3 -m pytest evals",
-    "scan:secrets": "python3 scripts/check_no_secrets.py"
+    "scan:secrets": "python3 scripts/check_no_secrets.py",
+    "integration:test": "python3 -m pytest integration"
   },
   "dependencies": {
     "@e965/xlsx": "0.20.3",
