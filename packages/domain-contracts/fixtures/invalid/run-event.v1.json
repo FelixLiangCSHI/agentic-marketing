@@ -1,0 +1,62 @@
+[
+  {
+    "name": "run_event_missing_payload",
+    "document": {
+      "schema_version": "1.0",
+      "event_id": "evt-0001",
+      "run_id": "run-0001",
+      "sequence": 0,
+      "event_type": "RUN_STATUS_CHANGED",
+      "occurred_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "run_event_unknown_field",
+    "document": {
+      "schema_version": "1.0",
+      "event_id": "evt-0001",
+      "run_id": "run-0001",
+      "sequence": 0,
+      "event_type": "RUN_STATUS_CHANGED",
+      "payload": {},
+      "occurred_at": "2026-08-28T02:00:00Z",
+      "extra": true
+    }
+  },
+  {
+    "name": "run_event_free_text_type",
+    "document": {
+      "schema_version": "1.0",
+      "event_id": "evt-0001",
+      "run_id": "run-0001",
+      "sequence": 0,
+      "event_type": "something happened",
+      "payload": {},
+      "occurred_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "run_event_negative_sequence",
+    "document": {
+      "schema_version": "1.0",
+      "event_id": "evt-0001",
+      "run_id": "run-0001",
+      "sequence": -1,
+      "event_type": "RUN_STATUS_CHANGED",
+      "payload": {},
+      "occurred_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "run_event_wrong_schema_version",
+    "document": {
+      "schema_version": "1",
+      "event_id": "evt-0001",
+      "run_id": "run-0001",
+      "sequence": 0,
+      "event_type": "RUN_STATUS_CHANGED",
+      "payload": {},
+      "occurred_at": "2026-08-28T02:00:00Z"
+    }
+  }
+]

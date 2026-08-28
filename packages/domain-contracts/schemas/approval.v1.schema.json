@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agentic-marketing.local/schemas/approval.v1.schema.json",
+  "title": "Approval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "approval_id",
+    "run_id",
+    "approval_type",
+    "requester_id",
+    "approver_id",
+    "status",
+    "input_artifact_hash",
+    "policy_version",
+    "requested_at",
+    "decided_at",
+    "expires_at",
+    "token_consumed"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "approval_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "approval_type": {
+      "type": "string",
+      "enum": ["content_publication", "campaign_activation", "budget_change"]
+    },
+    "requester_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "approver_id": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING", "APPROVED", "REJECTED", "EXPIRED", "REVOKED"]
+    },
+    "input_artifact_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "policy_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "requested_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    },
+    "decided_at": {
+      "type": ["string", "null"],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    },
+    "token_consumed": { "type": "boolean" }
+  }
+}

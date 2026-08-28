@@ -1,0 +1,97 @@
+[
+  {
+    "name": "run_missing_required_status",
+    "document": {
+      "schema_version": "1.0",
+      "run_id": "run-0001",
+      "parent_run_id": null,
+      "agent_type": "content",
+      "workflow_name": "content.generate.v1",
+      "workflow_version": "1.0.0",
+      "tenant": "cshi",
+      "business_unit": "marketing",
+      "requester_id": "user-alice",
+      "environment": "local",
+      "created_at": "2026-08-28T02:00:00Z",
+      "started_at": null,
+      "finished_at": null
+    }
+  },
+  {
+    "name": "run_unknown_field_rejected",
+    "document": {
+      "schema_version": "1.0",
+      "run_id": "run-0001",
+      "parent_run_id": null,
+      "agent_type": "content",
+      "workflow_name": "content.generate.v1",
+      "workflow_version": "1.0.0",
+      "tenant": "cshi",
+      "business_unit": "marketing",
+      "requester_id": "user-alice",
+      "environment": "local",
+      "status": "CREATED",
+      "created_at": "2026-08-28T02:00:00Z",
+      "started_at": null,
+      "finished_at": null,
+      "free_text_note": "should be rejected"
+    }
+  },
+  {
+    "name": "run_free_text_status_rejected",
+    "document": {
+      "schema_version": "1.0",
+      "run_id": "run-0001",
+      "parent_run_id": null,
+      "agent_type": "content",
+      "workflow_name": "content.generate.v1",
+      "workflow_version": "1.0.0",
+      "tenant": "cshi",
+      "business_unit": "marketing",
+      "requester_id": "user-alice",
+      "environment": "local",
+      "status": "almost done",
+      "created_at": "2026-08-28T02:00:00Z",
+      "started_at": null,
+      "finished_at": null
+    }
+  },
+  {
+    "name": "run_wrong_schema_version",
+    "document": {
+      "schema_version": "2.0",
+      "run_id": "run-0001",
+      "parent_run_id": null,
+      "agent_type": "content",
+      "workflow_name": "content.generate.v1",
+      "workflow_version": "1.0.0",
+      "tenant": "cshi",
+      "business_unit": "marketing",
+      "requester_id": "user-alice",
+      "environment": "local",
+      "status": "CREATED",
+      "created_at": "2026-08-28T02:00:00Z",
+      "started_at": null,
+      "finished_at": null
+    }
+  },
+  {
+    "name": "run_bad_timestamp_format",
+    "document": {
+      "schema_version": "1.0",
+      "run_id": "run-0001",
+      "parent_run_id": null,
+      "agent_type": "content",
+      "workflow_name": "content.generate.v1",
+      "workflow_version": "1.0.0",
+      "tenant": "cshi",
+      "business_unit": "marketing",
+      "requester_id": "user-alice",
+      "environment": "local",
+      "status": "CREATED",
+      "created_at": "2026-08-28 02:00:00",
+      "started_at": null,
+      "finished_at": null
+    }
+  }
+]

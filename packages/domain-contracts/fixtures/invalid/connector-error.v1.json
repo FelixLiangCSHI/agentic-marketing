@@ -1,0 +1,67 @@
+[
+  {
+    "name": "connector_error_missing_retryable",
+    "document": {
+      "schema_version": "1.0",
+      "connector": "linkedin",
+      "code": "rate_limited",
+      "message": "LinkedIn API rate limit exceeded",
+      "trace_id": "trace-0001",
+      "details": null,
+      "occurred_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "connector_error_unknown_field",
+    "document": {
+      "schema_version": "1.0",
+      "connector": "linkedin",
+      "code": "rate_limited",
+      "message": "LinkedIn API rate limit exceeded",
+      "trace_id": "trace-0001",
+      "retryable": true,
+      "details": null,
+      "occurred_at": "2026-08-28T02:00:00Z",
+      "raw_vendor_token": "must never appear"
+    }
+  },
+  {
+    "name": "connector_error_unknown_connector",
+    "document": {
+      "schema_version": "1.0",
+      "connector": "instagram",
+      "code": "rate_limited",
+      "message": "rate limit exceeded",
+      "trace_id": "trace-0001",
+      "retryable": true,
+      "details": null,
+      "occurred_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "connector_error_bad_code_format",
+    "document": {
+      "schema_version": "1.0",
+      "connector": "linkedin",
+      "code": "Rate Limited!",
+      "message": "rate limit exceeded",
+      "trace_id": "trace-0001",
+      "retryable": true,
+      "details": null,
+      "occurred_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "connector_error_retryable_not_boolean",
+    "document": {
+      "schema_version": "1.0",
+      "connector": "linkedin",
+      "code": "rate_limited",
+      "message": "rate limit exceeded",
+      "trace_id": "trace-0001",
+      "retryable": "yes",
+      "details": null,
+      "occurred_at": "2026-08-28T02:00:00Z"
+    }
+  }
+]

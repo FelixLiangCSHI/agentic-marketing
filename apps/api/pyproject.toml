@@ -1,0 +1,33 @@
+[project]
+name = "dmt-api"
+version = "0.1.0"
+description = "Agentic Marketing Control API (Phase 01 skeleton; mode: mock only)"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "fastapi==0.141.1",
+  "pydantic==2.13.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "httpx==0.28.1",
+  "mypy==2.3.1",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src"
+packages = ["dmt_api"]
+strict = true

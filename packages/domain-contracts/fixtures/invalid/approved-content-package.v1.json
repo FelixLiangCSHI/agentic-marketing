@@ -1,0 +1,82 @@
+[
+  {
+    "name": "package_missing_approval_id",
+    "document": {
+      "schema_version": "1.0",
+      "package_id": "pkg-0001",
+      "run_id": "run-0001",
+      "agent_type": "content",
+      "channel": "linkedin",
+      "locale": "en-US",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "asset_uris": [],
+      "approved_at": "2026-08-28T02:00:00Z",
+      "status": "APPROVED"
+    }
+  },
+  {
+    "name": "package_unknown_field",
+    "document": {
+      "schema_version": "1.0",
+      "package_id": "pkg-0001",
+      "run_id": "run-0001",
+      "agent_type": "content",
+      "channel": "linkedin",
+      "locale": "en-US",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "asset_uris": [],
+      "approval_id": "apr-0001",
+      "approved_at": "2026-08-28T02:00:00Z",
+      "status": "APPROVED",
+      "raw_body": "inline content not allowed"
+    }
+  },
+  {
+    "name": "package_wrong_agent_type",
+    "document": {
+      "schema_version": "1.0",
+      "package_id": "pkg-0001",
+      "run_id": "run-0001",
+      "agent_type": "campaign",
+      "channel": "linkedin",
+      "locale": "en-US",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "asset_uris": [],
+      "approval_id": "apr-0001",
+      "approved_at": "2026-08-28T02:00:00Z",
+      "status": "APPROVED"
+    }
+  },
+  {
+    "name": "package_unsupported_channel",
+    "document": {
+      "schema_version": "1.0",
+      "package_id": "pkg-0001",
+      "run_id": "run-0001",
+      "agent_type": "content",
+      "channel": "instagram",
+      "locale": "en-US",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "asset_uris": [],
+      "approval_id": "apr-0001",
+      "approved_at": "2026-08-28T02:00:00Z",
+      "status": "APPROVED"
+    }
+  },
+  {
+    "name": "package_bad_asset_uri",
+    "document": {
+      "schema_version": "1.0",
+      "package_id": "pkg-0001",
+      "run_id": "run-0001",
+      "agent_type": "content",
+      "channel": "linkedin",
+      "locale": "en-US",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "asset_uris": ["not-a-uri"],
+      "approval_id": "apr-0001",
+      "approved_at": "2026-08-28T02:00:00Z",
+      "status": "APPROVED"
+    }
+  }
+]

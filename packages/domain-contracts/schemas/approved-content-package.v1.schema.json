@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agentic-marketing.local/schemas/approved-content-package.v1.schema.json",
+  "title": "ApprovedContentPackage",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "package_id",
+    "run_id",
+    "agent_type",
+    "channel",
+    "locale",
+    "content_hash",
+    "asset_uris",
+    "approval_id",
+    "approved_at",
+    "status"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "package_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "agent_type": { "type": "string", "enum": ["content"] },
+    "channel": { "type": "string", "enum": ["linkedin", "google_ads"] },
+    "locale": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$" },
+    "content_hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "asset_uris": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9+.-]*://[^\\s]+$"
+      }
+    },
+    "approval_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "approved_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["APPROVED", "SUPERSEDED", "REVOKED"]
+    }
+  }
+}
