@@ -23,6 +23,8 @@
     "deepseek:typecheck": "cd connectors/llm/deepseek && python3 -m mypy",
     "jimeng:test": "cd connectors/jimeng && python3 -m pytest",
     "jimeng:typecheck": "cd connectors/jimeng && python3 -m mypy",
+    "compliance:test": "cd packages/compliance && python3 -m pytest",
+    "compliance:typecheck": "cd packages/compliance && python3 -m mypy",
     "contract:test": "tsx --test src/tests/domain-contracts.test.ts src/tests/domain-contracts-adapter.test.ts && cd apps/api && python3 -m pytest tests/test_contract_fixtures.py",
     "eval:test": "python3 -m pytest evals",
     "scan:secrets": "python3 scripts/check_no_secrets.py",
