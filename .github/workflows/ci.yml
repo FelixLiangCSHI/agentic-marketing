@@ -84,6 +84,21 @@ jobs:
       - run: python -m pytest
       - run: python -m mypy
 
+  # Phase 02 / Subphase 01：批准 Product 只读 Adapter（仅合成 fixtures，无真实 Product API）。
+  product-rag:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/product-rag
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m pytest
+      - run: python -m mypy
+
   # 双语言契约门禁：TypeScript 与 Python 对同一批 golden/invalid fixture 结论必须一致。
   contract:
     runs-on: ubuntu-latest
@@ -147,7 +162,7 @@ jobs:
       - run: python3 scripts/check_no_secrets.py
       - run: npm audit --audit-level=high
       - run: |
-          python -m pip install -e "apps/api[dev]" -e "packages/harness-core[dev]" -e "packages/infra-core[dev]"
+          python -m pip install -e "apps/api[dev]" -e "packages/harness-core[dev]" -e "packages/infra-core[dev]" -e "packages/product-rag[dev]"
           python -m pip install pip-audit
           python -m pip_audit --skip-editable
       # 无回归例外：eslint 已在 web job 执行；此处仅安全扫描。
