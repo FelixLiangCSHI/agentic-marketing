@@ -41,3 +41,28 @@ class FixtureValidationError(ProductAdapterError):
     """Synthetic fixture data failed contract validation on load."""
 
     code = "fixture_contract_violation"
+
+
+class IngestionRejectedError(ProductAdapterError):
+    """A source failed pre-ingestion validation (status/validity/hash)."""
+
+    code = "ingestion_rejected"
+
+
+class IndexVersionMismatchError(ProductAdapterError):
+    """Attempted to mix entries from different embedding spaces/index versions."""
+
+    code = "index_version_mismatch"
+
+
+class MissingRetrievalFilterError(ProductAdapterError):
+    """A mandatory tenant/product/market/locale/validity filter was absent."""
+
+    code = "missing_retrieval_filter"
+
+
+class KnowledgeBaseNotConfiguredError(ProductAdapterError):
+    """Reserved external knowledge base (e.g. MIDEA KB) is not approved or
+    not fully configured; never silently fall back to a fake success."""
+
+    code = "knowledge_base_not_configured"
