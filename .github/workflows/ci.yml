@@ -132,7 +132,7 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - run: python -m pytest tests/db
 
-  # 安全门禁：Secret 扫描 + 依赖漏洞扫描。镜像扫描待企业批准方案（见 docs/phase01/p1-cp05-evidence.md）。
+  # 安全门禁：Secret 扫描 + 依赖漏洞扫描。镜像扫描待企业批准方案（见 docs/phase01/blocked.md）。
   security:
     runs-on: ubuntu-latest
     steps:
