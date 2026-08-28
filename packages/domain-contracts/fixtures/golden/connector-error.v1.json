@@ -1,0 +1,28 @@
+[
+  {
+    "name": "connector_error_retryable_with_details",
+    "document": {
+      "schema_version": "1.0",
+      "connector": "linkedin",
+      "code": "rate_limited",
+      "message": "LinkedIn API rate limit exceeded",
+      "trace_id": "trace-0001",
+      "retryable": true,
+      "details": { "retry_after_seconds": 30 },
+      "occurred_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "connector_error_non_retryable_null_details",
+    "document": {
+      "schema_version": "1.0",
+      "connector": "jimeng",
+      "code": "invalid_request",
+      "message": "Prompt rejected by provider policy",
+      "trace_id": "trace-0002",
+      "retryable": false,
+      "details": null,
+      "occurred_at": "2026-08-28T02:00:00.100000Z"
+    }
+  }
+]

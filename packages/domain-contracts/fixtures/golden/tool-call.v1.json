@@ -1,0 +1,32 @@
+[
+  {
+    "name": "tool_call_requested_l0",
+    "document": {
+      "schema_version": "1.0",
+      "tool_call_id": "tc-0001",
+      "run_id": "run-0001",
+      "task_id": null,
+      "tool_name": "read.approved_facts",
+      "permission_level": "L0",
+      "status": "REQUESTED",
+      "idempotency_key": "idem-run-0001-tc-0001",
+      "requested_at": "2026-08-28T02:00:00Z",
+      "finished_at": null
+    }
+  },
+  {
+    "name": "tool_call_succeeded_l3",
+    "document": {
+      "schema_version": "1.0",
+      "tool_call_id": "tc-0002",
+      "run_id": "run-0002",
+      "task_id": "task-0002",
+      "tool_name": "linkedin.create_campaign",
+      "permission_level": "L3",
+      "status": "SUCCEEDED",
+      "idempotency_key": "idem-run-0002-tc-0002",
+      "requested_at": "2026-08-28T02:00:00Z",
+      "finished_at": "2026-08-28T02:00:05Z"
+    }
+  }
+]

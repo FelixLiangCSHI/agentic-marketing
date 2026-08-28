@@ -1,0 +1,36 @@
+[
+  {
+    "name": "package_linkedin_with_assets",
+    "document": {
+      "schema_version": "1.0",
+      "package_id": "pkg-0001",
+      "run_id": "run-0001",
+      "agent_type": "content",
+      "channel": "linkedin",
+      "locale": "en-US",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "asset_uris": [
+        "s3://fake-bucket/local/cshi/content/run-0001/approved/hero.png"
+      ],
+      "approval_id": "apr-0001",
+      "approved_at": "2026-08-28T02:00:00Z",
+      "status": "APPROVED"
+    }
+  },
+  {
+    "name": "package_google_ads_no_assets",
+    "document": {
+      "schema_version": "1.0",
+      "package_id": "pkg-0002",
+      "run_id": "run-0002",
+      "agent_type": "content",
+      "channel": "google_ads",
+      "locale": "zh",
+      "content_hash": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "asset_uris": [],
+      "approval_id": "apr-0002",
+      "approved_at": "2026-08-28T03:00:00Z",
+      "status": "SUPERSEDED"
+    }
+  }
+]

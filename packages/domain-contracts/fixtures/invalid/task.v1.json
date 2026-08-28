@@ -1,0 +1,82 @@
+[
+  {
+    "name": "task_missing_depends_on",
+    "document": {
+      "schema_version": "1.0",
+      "task_id": "task-0001",
+      "run_id": "run-0001",
+      "task_type": "content.draft",
+      "status": "PENDING",
+      "attempt": 0,
+      "max_attempts": 3,
+      "lease_owner": null,
+      "lease_expires_at": null,
+      "created_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "task_unknown_field",
+    "document": {
+      "schema_version": "1.0",
+      "task_id": "task-0001",
+      "run_id": "run-0001",
+      "task_type": "content.draft",
+      "status": "PENDING",
+      "depends_on": [],
+      "attempt": 0,
+      "max_attempts": 3,
+      "lease_owner": null,
+      "lease_expires_at": null,
+      "created_at": "2026-08-28T02:00:00Z",
+      "priority_note": "high"
+    }
+  },
+  {
+    "name": "task_free_text_status",
+    "document": {
+      "schema_version": "1.0",
+      "task_id": "task-0001",
+      "run_id": "run-0001",
+      "task_type": "content.draft",
+      "status": "in progress",
+      "depends_on": [],
+      "attempt": 0,
+      "max_attempts": 3,
+      "lease_owner": null,
+      "lease_expires_at": null,
+      "created_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "task_zero_max_attempts",
+    "document": {
+      "schema_version": "1.0",
+      "task_id": "task-0001",
+      "run_id": "run-0001",
+      "task_type": "content.draft",
+      "status": "PENDING",
+      "depends_on": [],
+      "attempt": 0,
+      "max_attempts": 0,
+      "lease_owner": null,
+      "lease_expires_at": null,
+      "created_at": "2026-08-28T02:00:00Z"
+    }
+  },
+  {
+    "name": "task_wrong_schema_version",
+    "document": {
+      "schema_version": "0.9",
+      "task_id": "task-0001",
+      "run_id": "run-0001",
+      "task_type": "content.draft",
+      "status": "PENDING",
+      "depends_on": [],
+      "attempt": 0,
+      "max_attempts": 3,
+      "lease_owner": null,
+      "lease_expires_at": null,
+      "created_at": "2026-08-28T02:00:00Z"
+    }
+  }
+]

@@ -1,0 +1,40 @@
+[
+  {
+    "name": "run_minimal_created",
+    "document": {
+      "schema_version": "1.0",
+      "run_id": "run-0001",
+      "parent_run_id": null,
+      "agent_type": "content",
+      "workflow_name": "content.generate.v1",
+      "workflow_version": "1.0.0",
+      "tenant": "cshi",
+      "business_unit": "marketing",
+      "requester_id": "user-alice",
+      "environment": "local",
+      "status": "CREATED",
+      "created_at": "2026-08-28T02:00:00Z",
+      "started_at": null,
+      "finished_at": null
+    }
+  },
+  {
+    "name": "run_finished_with_parent",
+    "document": {
+      "schema_version": "1.0",
+      "run_id": "run-0002",
+      "parent_run_id": "run-0001",
+      "agent_type": "campaign",
+      "workflow_name": "campaign.activate.v1",
+      "workflow_version": "1.2.3",
+      "tenant": "cshi",
+      "business_unit": "marketing",
+      "requester_id": "user-bob",
+      "environment": "dev",
+      "status": "SUCCEEDED",
+      "created_at": "2026-08-28T02:00:00Z",
+      "started_at": "2026-08-28T02:00:01.500000Z",
+      "finished_at": "2026-08-28T02:05:00Z"
+    }
+  }
+]

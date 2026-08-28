@@ -8,10 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/tests/run-tests.ts"
+    "test": "tsx --test src/tests/run-tests.ts",
+    "api:test": "cd apps/api && python3 -m pytest",
+    "api:typecheck": "cd apps/api && python3 -m mypy"
   },
   "dependencies": {
     "@e965/xlsx": "0.20.3",
+    "ajv": "^8.20.0",
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4"
