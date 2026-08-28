@@ -1,0 +1,28 @@
+.container {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.hint {
+  color: var(--muted-foreground, #666);
+  margin-bottom: 1rem;
+}
+
+.notice {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 0.5rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border, #ddd);
+}
