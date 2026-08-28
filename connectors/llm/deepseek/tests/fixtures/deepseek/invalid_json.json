@@ -1,0 +1,17 @@
+{
+  "status_code": 200,
+  "headers": { "x-request-id": "mock-req-invalid-json" },
+  "body": {
+    "id": "mock-chatcmpl-invalid",
+    "object": "chat.completion",
+    "model": "deepseek-chat-mock",
+    "choices": [
+      {
+        "index": 0,
+        "message": { "role": "assistant", "content": "sure! here is the copy you asked for {{{" },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": { "prompt_tokens": 640, "completion_tokens": 18, "total_tokens": 658 }
+  }
+}

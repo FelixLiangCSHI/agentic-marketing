@@ -1,0 +1,40 @@
+[project]
+name = "deepseek-connector"
+version = "0.1.0"
+description = "DeepSeek LLM connector (Phase 02 / Subphase 04): unified interface, deterministic mock, normalized errors, rate limiting and cost gates. Real calls only run in approved DEV remote jobs."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+  "PyYAML>=6.0",
+  # Local path dependencies (installed with `pip install -e` from repo root):
+  #   packages/infra-core       -> secret resolver, clock
+  #   packages/content-workflow -> ContentModel protocol + node contracts
+  #   packages/product-rag      -> Citation
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+  "types-PyYAML",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+deepseek_connector = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src"
+packages = ["deepseek_connector"]
+strict = true

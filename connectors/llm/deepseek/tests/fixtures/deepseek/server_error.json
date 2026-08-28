@@ -1,0 +1,7 @@
+{
+  "status_code": 503,
+  "headers": { "x-request-id": "mock-req-503" },
+  "body": {
+    "error": { "message": "The server is temporarily unavailable", "type": "server_error", "code": "service_unavailable" }
+  }
+}
