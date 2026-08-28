@@ -4,6 +4,10 @@ import activationRequestSchema from "../schemas/activation-request.v1.schema.jso
 import approvalSchema from "../schemas/approval.v1.schema.json";
 import approvedContentPackageSchema from "../schemas/approved-content-package.v1.schema.json";
 import connectorErrorSchema from "../schemas/connector-error.v1.schema.json";
+import contentRequestSchema from "../schemas/content-request.v1.schema.json";
+import productChangeSchema from "../schemas/product-change.v1.schema.json";
+import productClaimSchema from "../schemas/product-claim.v1.schema.json";
+import productDocumentSchema from "../schemas/product-document.v1.schema.json";
 import runEventSchema from "../schemas/run-event.v1.schema.json";
 import runSchema from "../schemas/run.v1.schema.json";
 import taskSchema from "../schemas/task.v1.schema.json";
@@ -13,6 +17,10 @@ import type {
   ApprovalV1,
   ApprovedContentPackageV1,
   ConnectorErrorV1,
+  ContentRequestV1,
+  ProductChangeV1,
+  ProductClaimV1,
+  ProductDocumentV1,
   RunEventV1,
   RunV1,
   TaskV1,
@@ -28,6 +36,10 @@ export const CONTRACT_NAMES = [
   "approved-content-package.v1",
   "activation-request.v1",
   "connector-error.v1",
+  "content-request.v1",
+  "product-document.v1",
+  "product-claim.v1",
+  "product-change.v1",
 ] as const;
 
 export type ContractName = (typeof CONTRACT_NAMES)[number];
@@ -41,6 +53,10 @@ const SCHEMAS: Record<ContractName, object> = {
   "approved-content-package.v1": approvedContentPackageSchema,
   "activation-request.v1": activationRequestSchema,
   "connector-error.v1": connectorErrorSchema,
+  "content-request.v1": contentRequestSchema,
+  "product-document.v1": productDocumentSchema,
+  "product-claim.v1": productClaimSchema,
+  "product-change.v1": productChangeSchema,
 };
 
 const ajv = new Ajv({ allErrors: true, strict: true });
@@ -91,6 +107,10 @@ export interface ContractTypeByName {
   "approved-content-package.v1": ApprovedContentPackageV1;
   "activation-request.v1": ActivationRequestV1;
   "connector-error.v1": ConnectorErrorV1;
+  "content-request.v1": ContentRequestV1;
+  "product-document.v1": ProductDocumentV1;
+  "product-claim.v1": ProductClaimV1;
+  "product-change.v1": ProductChangeV1;
 }
 
 export class ContractValidationError extends Error {

@@ -1,0 +1,139 @@
+[
+  {
+    "name": "content_request_missing_market",
+    "document": {
+      "schema_version": "1.0",
+      "request_id": "creq-0001",
+      "tenant": "tenant-cshi",
+      "business_unit": "bu-oncology",
+      "product_ids": ["product-alpha"],
+      "locale": "en-US",
+      "target_audience": ["oncologists"],
+      "target_channels": ["linkedin"],
+      "objective": "objective",
+      "requested_media_types": [],
+      "created_at": "2026-09-07T08:00:00Z"
+    }
+  },
+  {
+    "name": "content_request_unknown_field",
+    "document": {
+      "schema_version": "1.0",
+      "request_id": "creq-0001",
+      "tenant": "tenant-cshi",
+      "business_unit": "bu-oncology",
+      "product_ids": ["product-alpha"],
+      "market": "US",
+      "locale": "en-US",
+      "target_audience": ["oncologists"],
+      "target_channels": ["linkedin"],
+      "objective": "objective",
+      "requested_media_types": [],
+      "created_at": "2026-09-07T08:00:00Z",
+      "campaign_account_id": "acct-9999"
+    }
+  },
+  {
+    "name": "content_request_illegal_market",
+    "document": {
+      "schema_version": "1.0",
+      "request_id": "creq-0001",
+      "tenant": "tenant-cshi",
+      "business_unit": "bu-oncology",
+      "product_ids": ["product-alpha"],
+      "market": "MARS",
+      "locale": "en-US",
+      "target_audience": ["oncologists"],
+      "target_channels": ["linkedin"],
+      "objective": "objective",
+      "requested_media_types": [],
+      "created_at": "2026-09-07T08:00:00Z"
+    }
+  },
+  {
+    "name": "content_request_illegal_locale",
+    "document": {
+      "schema_version": "1.0",
+      "request_id": "creq-0001",
+      "tenant": "tenant-cshi",
+      "business_unit": "bu-oncology",
+      "product_ids": ["product-alpha"],
+      "market": "US",
+      "locale": "english",
+      "target_audience": ["oncologists"],
+      "target_channels": ["linkedin"],
+      "objective": "objective",
+      "requested_media_types": [],
+      "created_at": "2026-09-07T08:00:00Z"
+    }
+  },
+  {
+    "name": "content_request_malicious_attachment_uri",
+    "document": {
+      "schema_version": "1.0",
+      "request_id": "creq-0001",
+      "tenant": "tenant-cshi",
+      "business_unit": "bu-oncology",
+      "product_ids": ["product-alpha"],
+      "market": "US",
+      "locale": "en-US",
+      "target_audience": ["oncologists"],
+      "target_channels": ["linkedin"],
+      "objective": "objective",
+      "attachment_artifact_ids": ["https://evil.example.com/steal?x=1"],
+      "requested_media_types": [],
+      "created_at": "2026-09-07T08:00:00Z"
+    }
+  },
+  {
+    "name": "content_request_empty_product_ids",
+    "document": {
+      "schema_version": "1.0",
+      "request_id": "creq-0001",
+      "tenant": "tenant-cshi",
+      "business_unit": "bu-oncology",
+      "product_ids": [],
+      "market": "US",
+      "locale": "en-US",
+      "target_audience": ["oncologists"],
+      "target_channels": ["linkedin"],
+      "objective": "objective",
+      "requested_media_types": [],
+      "created_at": "2026-09-07T08:00:00Z"
+    }
+  },
+  {
+    "name": "content_request_video_not_in_scope",
+    "document": {
+      "schema_version": "1.0",
+      "request_id": "creq-0001",
+      "tenant": "tenant-cshi",
+      "business_unit": "bu-oncology",
+      "product_ids": ["product-alpha"],
+      "market": "US",
+      "locale": "en-US",
+      "target_audience": ["oncologists"],
+      "target_channels": ["linkedin"],
+      "objective": "objective",
+      "requested_media_types": ["video"],
+      "created_at": "2026-09-07T08:00:00Z"
+    }
+  },
+  {
+    "name": "content_request_unknown_channel",
+    "document": {
+      "schema_version": "1.0",
+      "request_id": "creq-0001",
+      "tenant": "tenant-cshi",
+      "business_unit": "bu-oncology",
+      "product_ids": ["product-alpha"],
+      "market": "US",
+      "locale": "en-US",
+      "target_audience": ["oncologists"],
+      "target_channels": ["tiktok"],
+      "objective": "objective",
+      "requested_media_types": [],
+      "created_at": "2026-09-07T08:00:00Z"
+    }
+  }
+]

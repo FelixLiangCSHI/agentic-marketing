@@ -1,0 +1,107 @@
+[
+  {
+    "name": "product_document_missing_approval_status",
+    "document": {
+      "schema_version": "1.0",
+      "source_id": "doc-alpha-label",
+      "source_version": "2.1.0",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "market": "US",
+      "locale": "en-US",
+      "approved_by": "emp-1001",
+      "effective_from": "2026-01-01T00:00:00Z",
+      "expires_at": null,
+      "revoked_at": null,
+      "classification": "internal",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "content": "text",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "name": "product_document_unknown_field",
+    "document": {
+      "schema_version": "1.0",
+      "source_id": "doc-alpha-label",
+      "source_version": "2.1.0",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "market": "US",
+      "locale": "en-US",
+      "approval_status": "APPROVED",
+      "approved_by": "emp-1001",
+      "effective_from": "2026-01-01T00:00:00Z",
+      "expires_at": null,
+      "revoked_at": null,
+      "classification": "internal",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "content": "text",
+      "updated_at": "2026-01-01T00:00:00Z",
+      "raw_sql": "drop table products"
+    }
+  },
+  {
+    "name": "product_document_bad_status_latest",
+    "document": {
+      "schema_version": "1.0",
+      "source_id": "doc-alpha-label",
+      "source_version": "2.1.0",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "market": "US",
+      "locale": "en-US",
+      "approval_status": "LATEST",
+      "approved_by": "emp-1001",
+      "effective_from": "2026-01-01T00:00:00Z",
+      "expires_at": null,
+      "revoked_at": null,
+      "classification": "internal",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "content": "text",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "name": "product_document_bad_hash",
+    "document": {
+      "schema_version": "1.0",
+      "source_id": "doc-alpha-label",
+      "source_version": "2.1.0",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "market": "US",
+      "locale": "en-US",
+      "approval_status": "APPROVED",
+      "approved_by": "emp-1001",
+      "effective_from": "2026-01-01T00:00:00Z",
+      "expires_at": null,
+      "revoked_at": null,
+      "classification": "internal",
+      "content_hash": "md5:abcd",
+      "content": "text",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "name": "product_document_bad_version",
+    "document": {
+      "schema_version": "1.0",
+      "source_id": "doc-alpha-label",
+      "source_version": "latest",
+      "product_id": "product-alpha",
+      "tenant": "tenant-cshi",
+      "market": "US",
+      "locale": "en-US",
+      "approval_status": "APPROVED",
+      "approved_by": "emp-1001",
+      "effective_from": "2026-01-01T00:00:00Z",
+      "expires_at": null,
+      "revoked_at": null,
+      "classification": "internal",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "content": "text",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  }
+]
