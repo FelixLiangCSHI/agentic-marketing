@@ -1,0 +1,42 @@
+[project]
+name = "content-workflow"
+version = "0.1.0"
+description = "Content Agent skill registry, versioned node contracts and pausable LangGraph workflow (Phase 02 / Subphase 03; fake model/media/reviewer only)"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+  "langgraph==1.2.11",
+]
+
+# 本包还依赖同仓库的 product-rag（本地路径安装，避免解析到外部同名包）：
+#   python3 -m pip install -e "packages/product-rag" -e "packages/content-workflow[dev]"
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+content_workflow = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src"
+packages = ["content_workflow"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["langgraph.*"]
+follow_untyped_imports = true

@@ -17,6 +17,8 @@
     "infra:typecheck": "cd packages/infra-core && python3 -m mypy",
     "productrag:test": "cd packages/product-rag && python3 -m pytest",
     "productrag:typecheck": "cd packages/product-rag && python3 -m mypy",
+    "contentworkflow:test": "cd packages/content-workflow && python3 -m pytest",
+    "contentworkflow:typecheck": "cd packages/content-workflow && python3 -m mypy",
     "contract:test": "tsx --test src/tests/domain-contracts.test.ts src/tests/domain-contracts-adapter.test.ts && cd apps/api && python3 -m pytest tests/test_contract_fixtures.py",
     "eval:test": "python3 -m pytest evals",
     "scan:secrets": "python3 scripts/check_no_secrets.py",
