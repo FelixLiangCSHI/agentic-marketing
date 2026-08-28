@@ -1,6 +1,6 @@
 # LinkedIn Marketing AI Agent Demo
 
-一个面向 LinkedIn 公司主页聚合分析数据的本地交互 Demo。用户可上传 Followers、Visitors、Content 的 XLSX、XLS 或 CSV 导出；系统安全解析并规范化数据，由确定性 TypeScript 引擎生成 Analysis Snapshot，再把用户批准的洞察和策略转换为可编辑的 30 天计划。**演示主界面使用 Streamlit。**
+一个面向 LinkedIn 公司主页聚合分析数据的本地交互 Demo。用户可上传 Followers、Visitors、Content 的 XLSX、XLS 或 CSV 导出；系统安全解析并规范化数据，由确定性 TypeScript 引擎生成 Analysis Snapshot，再把用户批准的洞察和策略转换为可编辑的 30 天计划。
 
 > 当前不会调用真实 LLM。内置 Mock 使用完全虚构的合成 CSV，并与真实上传共用解析、Snapshot、审批、计划和聊天输出契约。所有精确数值均由程序计算；Mock Agent 只解释现有指标和编排行动。
 
@@ -20,8 +20,6 @@
 
 ## 技术栈
 
-- Streamlit 1.60：演示 UI、内存会话、上传与浏览器下载
-- Python 3.10+：仅负责展示与 Bridge 进程管理，不重新计算指标
 - Next.js 16（App Router、Route Handler）
 - React 19
 - TypeScript strict mode
@@ -29,42 +27,17 @@
 - `@e965/xlsx@0.20.3`：服务端 XLSX/XLS/CSV 读取
 - Node.js 原生测试运行器 + `tsx`
 
-Streamlit 和解析库精确锁定版本。项目未采用 npm 上存在已知未修复公告的旧 `xlsx@0.18.5`。新增依赖前检查了 PyPI/npm 公告和维护状态。
+解析库精确锁定版本。项目未采用 npm 上存在已知未修复公告的旧 `xlsx@0.18.5`。新增依赖前检查了 npm 公告和维护状态。
 
 ## 本地启动
 
-要求 Node.js 20.9+、npm 和 Python 3.10+。先安装 TypeScript 核心依赖：
+要求 Node.js 20.9+ 和 npm。先安装依赖：
 
 ```powershell
 npm install
 ```
 
-### Streamlit 演示主入口
-
-Windows PowerShell：
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m streamlit run streamlit_app.py
-```
-
-macOS/Linux：
-
-```bash
-python3 -m venv .venv
-./.venv/bin/python -m pip install -r requirements.txt
-./.venv/bin/python -m streamlit run streamlit_app.py
-```
-
-打开 <http://localhost:8501>。Streamlit 每次操作会启动一个短生命周期 Node Bridge。
-
-Bridge 通过 `node_modules` 中的 `tsx` 直接运行 `scripts/streamlit-bridge.ts`，
-因此启动 Streamlit 前必须先在项目目录执行 `npm install`。
-
 ### Next.js 工程界面
-
-Next.js 上传/识别工作区仍可用于开发和回归：
 
 ```powershell
 npm run dev
@@ -80,7 +53,6 @@ npm run lint
 npm run typecheck
 npm run build
 npm start
-.\.venv\Scripts\python.exe -m unittest discover -s python_tests -v
 ```
 
 ## 服务配置
@@ -96,9 +68,6 @@ npm start
 - 配置属于运行应用的本地工作区；多用户托管部署必须提供认证和按租户密钥存储，
   不应把个人凭据写入共享配置；
 - 不要把 API Key 放入上传文件或仓库。
-- Bridge 子进程会移除名称含 `API_KEY`、`TOKEN`、`SECRET`、`PASSWORD` 或 `AUTHORIZATION` 的环境变量。
-- 可使用标准 Streamlit 环境变量调整本地端口，例如 `STREAMLIT_SERVER_PORT=8502`。
-- `.streamlit/config.toml` 已关闭 Streamlit 使用统计并设置 10 MB 上传限制；`.streamlit/secrets.toml` 已忽略。
 
 ### API Key 审计
 
@@ -108,9 +77,8 @@ npm start
 | LinkedIn | 0 | 无 | 只读取用户上传的分析导出，不调用 LinkedIn API |
 | Buffer | 1 | 首次配置向导 / Settings / `BUFFER_API_KEY` | 验证连接、生成 CSV 人工交接，并可经官方 GraphQL API（`https://api.buffer.com`）动态发现组织与 LinkedIn 渠道后创建草稿/排期帖 |
 | GitHub | 0 | 无 | 应用代码不调用 GitHub API |
-| Streamlit secrets | 1 | `.streamlit/secrets.toml` / 环境变量 | 代码读取 `st.secrets["BUFFER_API_KEY"]`（或 `BUFFER_API_KEY` 环境变量）作为 Buffer API Key；不缓存、不记录、不回显 |
 
-`.streamlit/secrets.toml` 不是当前启动条件。若以后接入真实 LLM 或 Buffer OAuth，
+若以后接入真实 LLM 或 Buffer OAuth，
 必须改用服务端密钥存储、权限隔离和轮换，不能把 Key 提交到 Git。
 
 ## 使用流程
@@ -134,27 +102,11 @@ npm start
 
 完整刷新、会话断开或服务重启会重置状态；Demo 不使用数据库或浏览器持久化。
 
-## Streamlit 演示架构
-
-```text
-streamlit_app.py
-  -> streamlit_demo/bridge_client.py
-    -> 短生命周期 Node 子进程
-      -> scripts/streamlit-bridge.ts（由 tsx 运行）
-        -> 现有解析、Snapshot、策略、计划、聊天和导出纯逻辑
-```
-
-- Python 不复制 CSV/XLSX 解析、指标公式、排名、增长率或计划验证。
-- Bridge 通过 stdin/stdout 交换 JSON；上传文件临时使用 base64 传入，子进程结束后不保留 Buffer。
-- Bridge 对上传执行与 Next Route Handler 相同的扩展名、MIME、大小、签名、损坏和加密校验。
-- Bridge 成功响应只返回解析摘要、标准化预览、Snapshot 和业务结果；不返回原始单元格。
-- Bridge 错误只返回稳定代码、中文消息、是否可重试、数据是否保留和下一步，不返回堆栈。
-
 ## Demo 演示步骤
 
 ### Synthetic Mock
 
-1. 启动 Streamlit，点击“使用示例数据开始”。
+1. 启动应用，点击“使用示例数据开始”。
 2. 在“指标计算”检查 Followers、Visitors、Content 和 Proxy 指标的公式与证据。
 3. 在 Audience/Content 页面批准洞察；在“策略建议”批准引用已批准洞察的策略。
 4. 在“30 天计划”确认业务目标，设置时区、开始日期和每周内容数，生成计划。
@@ -171,7 +123,7 @@ streamlit_app.py
 1. 在三个独立上传控件选择 synthetic XLSX/XLS/CSV fixture。
 2. 点击“解析并计算 Analysis Snapshot”，检查模块、Sheet、字段映射、行数、日期范围和标准化预览。
 3. 缺少模块时可继续质量检查，但洞察和计划会被阻断；补齐文件后从数据接入重试。
-4. 完成审批、计划和导出。解析或 Bridge 单次失败不要求重新选择仍在当前会话中的文件。
+4. 完成审批、计划和导出。解析单次失败不要求重新选择仍在当前会话中的文件。
 
 所有 Synthetic 数据均为完全虚构，不包含真实公司或个人信息。
 
@@ -392,7 +344,7 @@ Snapshot 检查必要模块、共同时间范围、粒度一致性、日期缺�
 
 ## 安全导出
 
-共享实现位于 `src/exports/report-exports.ts`，Next/Streamlit 之外不再复制导出规则：
+共享实现位于 `src/exports/report-exports.ts`，Next 之外不再复制导出规则：
 
 - 文件名格式为 `{项目标识}-{类型}-{YYYY-MM-DD}.{扩展名}`，并清理操作系统非法字符；
 - Markdown 包含 Executive Summary、数据范围、质量、指标公式、洞察、建议、四周计划、内容日历、KPI 复盘、下一次导入问题和限制；
@@ -406,14 +358,14 @@ Snapshot 检查必要模块、共同时间范围、粒度一致性、日期缺�
 
 ## 错误恢复
 
-Streamlit 和 Bridge 对以下状态使用稳定错误代码和恢复提示：
+应用对以下状态使用稳定错误代码和恢复提示：
 
 - 空文件、格式/MIME/签名不符、损坏或加密工作簿；
 - 缺少或重复模块，以及数据质量阻断；
-- AI/Bridge 超时、限流、网络中断和无效结构；
+- AI 超时、限流、网络中断和无效结构；
 - 重复点击、阶段取消、无效计划引用和导出失败。
 
-计划、聊天或导出失败只需重试当前阶段；已解析 Snapshot 保留在当前 Streamlit session。计划取消不会删除上传、Snapshot 或审批。Bridge 是单请求进程，没有需要恢复的长期服务端会话。
+计划、聊天或导出失败只需重试当前阶段；已解析 Snapshot 保留在当前会话。计划取消不会删除上传、Snapshot 或审批。
 
 ## 解析 API
 
@@ -435,8 +387,7 @@ Streamlit 和 Bridge 对以下状态使用稳定错误代码和恢复提示：
 - 响应设置 `Cache-Control: no-store` 和 `X-Content-Type-Options: nosniff`。
 - 默认不写入磁盘、对象存储或数据库；请求结束前清零上传字节缓冲区。
 - 普通日志不记录原始文件、单元格或解析预览。
-- Streamlit Bridge 不把 stderr、异常消息、原始单元格或文件内容显示给用户；未知错误使用固定消息。
-- Streamlit 使用统计已关闭；Demo 不发送产品 analytics。
+- Demo 不发送产品 analytics。
 - “清除当前项目数据”会替换上传控件并清空当前 session 中的分析、计划、聊天、Buffer 交接记录和导出缓存。
 - 结构化导出移除来源文件名，保留不含原始内容的 evidence `sourceId`。
 - `Data/` 已加入 `.gitignore`，真实 LinkedIn 导出不得提交。
@@ -447,10 +398,6 @@ Streamlit 和 Bridge 对以下状态使用稳定错误代码和恢复提示：
 ## 源码结构
 
 ```text
-streamlit_app.py             # Streamlit 演示主界面
-streamlit_demo/              # 无状态 Bridge 客户端和上传内存编码
-scripts/                     # Node Bridge stdin/stdout 启动器
-python_tests/                # Bridge 与 Streamlit AppTest
 src/
   agents/                 # 审批证据、Action Plan 与证据聊天纯逻辑
   app/                    # 页面、错误/加载状态、解析 Route Handler
@@ -463,7 +410,6 @@ src/
   server/parsing/         # 服务端工作簿解析器和 Mock 结果生成
   services/               # 浏览器端解析 API 客户端
   state/                  # 统一上传与确认 reducer
-  streamlit/              # Bridge 协议与操作分发
   tests/                  # 内存生成的合成 fixture 与测试
 ```
 
@@ -499,21 +445,15 @@ src/
 - Markdown 必需章节和 Evidence ID；
 - CSV 公式注入、逗号、引号、换行和 Unicode；
 - JSON 原始文件名、原始单元格、密钥和内部 Prompt 排除；
-- Bridge 协议、Synthetic/上传/部分模块、审批门禁、计划和安全错误映射；
-- Python Bridge 启动、超时、文件签名错误和项目保留语义；
-- Streamlit AppTest 的 Synthetic 全流程、计划修改/撤销、证据聊天、三种导出和清除；
-- Streamlit AppTest 的三模块上传 fixture、Snapshot 和导出。
 - Buffer 连续 14 天、跨月/年、IANA 时区和 DST 不存在时间；
 - 内容审批、渠道/日期过滤、空文案、URL/媒体、单图、字符长度、冲突、重复文案和重复导出；
 - Buffer CSV 官方列、渠道拆分、文件名、中文/逗号/引号/换行和公式注入；
-- 一项失败不影响其他合法项、`exported_to_buffer` 不会变为 `published`；
-- Streamlit AppTest 的“确认计划 → 修复 blocked 项 → 确认 warning → 双渠道导出 → 人工导入指引”。
+- 一项失败不影响其他合法项、`exported_to_buffer` 不会变为 `published`。
 
 运行：
 
 ```powershell
 npm test
-.\.venv\Scripts\python.exe -m unittest discover -s python_tests -v
 ```
 
 ## 当前未覆盖
@@ -535,5 +475,4 @@ npm test
 - 视频、轮播、多图、首条评论和无法公开访问的媒体 URL 需在 Buffer 中手动处理。
 - 计划不会自动发布内容，也不连接 LinkedIn API、CRM、网站分析或项目管理工具。
 - 聊天目前使用规则意图识别，不提供开放域问答或多轮语义记忆。
-- Streamlit 的“取消当前阶段”在当前同步 Mock 中表示丢弃计划草稿并保留上游数据；尚不提供对外部模型流式请求的中途终止。
-- 验收时 `npm audit --omit=dev` 与 `pip-audit` 均为 0；完整 `npm audit` 仍报告 ESLint 9 工具链中旧 Minimatch/brace-expansion 的开发期 glob DoS 公告。该链不进入应用运行依赖，也不处理上传内容；直接强制新版会破坏现有 ESLint 插件的 CommonJS API，后续应随 Next/ESLint 插件升级移除。
+- 验收时 `npm audit --omit=dev` 为 0；完整 `npm audit` 仍报告 ESLint 9 工具链中旧 Minimatch/brace-expansion 的开发期 glob DoS 公告。该链不进入应用运行依赖，也不处理上传内容；直接强制新版会破坏现有 ESLint 插件的 CommonJS API，后续应随 Next/ESLint 插件升级移除。

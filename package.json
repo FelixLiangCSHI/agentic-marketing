@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "streamlit:bridge": "tsx scripts/streamlit-bridge.ts",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/tests/run-tests.ts"
