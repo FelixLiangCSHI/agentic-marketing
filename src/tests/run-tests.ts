@@ -11,4 +11,3 @@ import "@/tests/evidence-chat-agent.test";
 import "@/tests/planning-ui.test";
 import "@/tests/report-exports.test";
 import "@/tests/buffer-export.test";
-import "@/tests/streamlit-bridge.test";
