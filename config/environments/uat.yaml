@@ -1,0 +1,2 @@
+# UAT 环境层。仅结构占位；能力默认继承 base 的 mock。
+environment: uat

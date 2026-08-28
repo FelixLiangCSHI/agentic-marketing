@@ -1,0 +1,3 @@
+# DEV 环境层。真实 DEV 服务尚未交付，全部能力保持 mock。
+# 切换到 sandbox/live 前必须补齐 endpoint、quota_per_minute、proxy 与 secretref:// 引用。
+environment: dev

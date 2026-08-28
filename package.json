@@ -12,7 +12,9 @@
     "api:test": "cd apps/api && python3 -m pytest",
     "api:typecheck": "cd apps/api && python3 -m mypy",
     "harness:test": "cd packages/harness-core && python3 -m pytest",
-    "harness:typecheck": "cd packages/harness-core && python3 -m mypy"
+    "harness:typecheck": "cd packages/harness-core && python3 -m mypy",
+    "infra:test": "cd packages/infra-core && python3 -m pytest",
+    "infra:typecheck": "cd packages/infra-core && python3 -m mypy"
   },
   "dependencies": {
     "@e965/xlsx": "0.20.3",

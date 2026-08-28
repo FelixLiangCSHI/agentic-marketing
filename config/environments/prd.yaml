@@ -1,0 +1,2 @@
+# PRD 环境层。生产禁止 .env 携带密钥；凭据仅允许 secretref:// 引用，由企业密钥管理器解析。
+environment: prd

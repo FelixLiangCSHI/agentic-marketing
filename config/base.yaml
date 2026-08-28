@@ -1,0 +1,25 @@
+# 基础层配置（base）。合并顺序：base -> environment -> agent -> workflow -> tenant/market。
+# 所有能力默认 mode: mock；任何密钥只能以 secretref:// 引用出现，禁止写入原始值。
+mode: mock
+environment: local
+
+queue:
+  name: dmt-tasks
+  max_attempts: 3
+  lease_seconds: 60
+
+object_store:
+  bucket: dmt-artifacts
+  max_bytes: 10485760
+
+llm:
+  mode: mock
+
+media:
+  mode: mock
+
+linkedin:
+  mode: mock
+
+google_ads:
+  mode: mock

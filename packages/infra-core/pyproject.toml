@@ -1,0 +1,33 @@
+[project]
+name = "infra-core"
+version = "0.1.0"
+description = "Platform infrastructure abstractions: queue/DLQ, object store, secret resolver, clock, layered config (Phase 01; fakes only)"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+  "PyYAML==6.0.3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+  "types-PyYAML==6.0.12.20250915",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src"
+packages = ["infra_core"]
+strict = true
