@@ -1,0 +1,76 @@
+# 本地开发栈：仅合成数据、Fake Identity 与模拟 Credential；不连接任何 DEV/SIT/UAT/PRD 服务。
+# 每个 Worktree 通过 .env 中的 COMPOSE_PROJECT_NAME 与端口变量隔离（见 .env.example 与 README.md）。
+name: ${COMPOSE_PROJECT_NAME:-dmt-local}
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      # 本地一次性容器使用 trust 认证，无真实凭据。
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: ${DMT_DB_NAME:-dmt_local}
+    ports:
+      - "${DMT_PG_PORT:-15432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  queue:
+    # 本地 Queue Emulator；企业队列选型未定，仓库代码默认使用 infra-core FakeQueueClient。
+    image: rabbitmq:4-alpine
+    ports:
+      - "${DMT_QUEUE_PORT:-15672}:5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  objectstore:
+    # 本地 Object Store Emulator（S3 兼容）；bucket 前缀按 Worktree 隔离。
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      # 众所周知的本地 emulator 默认值，仅本机使用，非真实凭据。
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "${DMT_OBJECTSTORE_PORT:-19000}:9000"
+      - "${DMT_OBJECTSTORE_CONSOLE_PORT:-19001}:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - "${DMT_OTLP_GRPC_PORT:-14317}:4317"
+      - "${DMT_OTLP_HTTP_PORT:-14318}:4318"
+
+  fake-iam:
+    # 最小 Fake OIDC Provider：仅合成用户与合成 token，绝无真实 SSO 凭据。
+    image: python:3.12-alpine
+    command: ["python", "/srv/server.py"]
+    volumes:
+      - ./fake_iam/server.py:/srv/server.py:ro
+    ports:
+      - "${DMT_IAM_PORT:-18080}:8080"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz')",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10

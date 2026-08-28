@@ -83,3 +83,82 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - run: python -m pytest
       - run: python -m mypy
+
+  # 双语言契约门禁：TypeScript 与 Python 对同一批 golden/invalid fixture 结论必须一致。
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npx tsx --test src/tests/domain-contracts.test.ts src/tests/domain-contracts-adapter.test.ts
+      - run: python -m pip install -e "apps/api[dev]"
+      - run: python -m pytest tests/test_contract_fixtures.py
+        working-directory: apps/api
+
+  # Migration 往返门禁：base -> head -> base，逐版本 downgrade 后无残留表。
+  migration:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: dmt_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DMT_TEST_DATABASE_URL: postgresql+psycopg://postgres@localhost:5432/dmt_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m pytest tests/db
+
+  # 安全门禁：Secret 扫描 + 依赖漏洞扫描。镜像扫描待企业批准方案（见 docs/phase01/p1-cp05-evidence.md）。
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 scripts/check_no_secrets.py
+      - run: npm audit --audit-level=high
+      - run: |
+          python -m pip install -e "apps/api[dev]" -e "packages/harness-core[dev]" -e "packages/infra-core[dev]"
+          python -m pip install pip-audit
+          python -m pip_audit --skip-editable
+      # 无回归例外：eslint 已在 web job 执行；此处仅安全扫描。
+
+  # 最小 Content/Campaign Eval：golden + adversarial（无审批 L3 / L4 / 跨 Agent 必须拒绝）。
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e "packages/harness-core[dev]"
+      - run: python -m pytest evals
