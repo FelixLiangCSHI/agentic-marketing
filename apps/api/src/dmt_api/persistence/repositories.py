@@ -28,6 +28,7 @@ from dmt_api.persistence.domain import (
     Task,
 )
 from dmt_api.persistence.errors import (
+    ApprovalExpiredError,
     BindingMismatchError,
     DependencyCycleError,
     LeaseConflictError,
@@ -63,6 +64,14 @@ def _new_id(prefix: str) -> str:
 
 def _hash_token(plaintext: str) -> str:
     return "sha256:" + hashlib.sha256(plaintext.encode("utf-8")).hexdigest()
+
+
+def _same_timezone(left: datetime, right: datetime) -> tuple[datetime, datetime]:
+    if left.tzinfo is None and right.tzinfo is not None:
+        return left.replace(tzinfo=right.tzinfo), right
+    if left.tzinfo is not None and right.tzinfo is None:
+        return left, right.replace(tzinfo=left.tzinfo)
+    return left, right
 
 
 def _run_to_domain(row: RunRow) -> Run:
@@ -635,6 +644,9 @@ class ApprovalRepository(_BaseRepository):
         ensure_transition(
             APPROVAL_TRANSITIONS, f"approval {approval_id}", row.status, decision
         )
+        expires_at, decision_time = _same_timezone(row.expires_at, decided_at)
+        if decision_time >= expires_at:
+            raise ApprovalExpiredError(f"approval {approval_id!r} has expired")
         self._session.add(
             ApprovalDecisionRow(
                 decision_id=decision_id,

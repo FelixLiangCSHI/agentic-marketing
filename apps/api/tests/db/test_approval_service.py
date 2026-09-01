@@ -21,6 +21,7 @@ from dmt_api.approval_service import (
 )
 from dmt_api.identity.roles import Role
 from dmt_api.persistence.errors import (
+    ApprovalExpiredError,
     SeparationOfDutiesError,
     TokenConsumptionError,
 )
@@ -61,6 +62,7 @@ def create_request(
     requester_id: str = "alice",
     requester_roles: frozenset[Role] = _CREATOR,
     the_binding: ApprovalBinding | None = None,
+    expires_at: datetime = _LATER,
 ) -> tuple[str, str]:
     create_run(engine, run_id=run_id, requester_id=requester_id)
     with make_uow(engine) as uow:
@@ -70,7 +72,7 @@ def create_request(
             requester_id=requester_id,
             requester_roles=requester_roles,
             binding=the_binding or binding(),
-            expires_at=_LATER,
+            expires_at=expires_at,
         )
         return request.approval_id, token
 
@@ -169,6 +171,15 @@ class TestRoleRouting:
         approval_id, _ = create_request(migrated_engine)
         request = decide(migrated_engine, approval_id)
         assert request.status == "APPROVED"
+
+    def test_expired_pending_request_cannot_be_decided(
+        self, migrated_engine: Engine
+    ) -> None:
+        approval_id, _ = create_request(
+            migrated_engine, expires_at=_NOW - timedelta(seconds=1)
+        )
+        with pytest.raises(ApprovalExpiredError):
+            decide(migrated_engine, approval_id)
 
 
 class TestTokenLifecycle:

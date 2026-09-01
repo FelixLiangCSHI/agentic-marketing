@@ -135,6 +135,7 @@ def expected_content_hash(
     versions: VersionBindingsV1,
     channel_variants: tuple[tuple[str, tuple[str, ...]], ...],
     tenant_id: str = "tenant-cshi",
+    asset_hashes: tuple[str, ...] | None = None,
 ) -> str:
     from content_package import ClaimBindingV1
 
@@ -153,7 +154,7 @@ def expected_content_hash(
         copy_hash=model_hash(draft),
         tenant_id=tenant_id,
         claims=claims,
-        asset_hashes=tuple(asset.sha256 for asset in media),
+        asset_hashes=asset_hashes or tuple(asset.sha256 for asset in media),
         versions=versions,
         channel_variants=channel_variants,
     )
@@ -183,8 +184,16 @@ def make_inputs(**overrides: Any) -> PackageInputs:
         "channel_variants", (("linkedin", ("cv-req-0001",)),)
     )
     tenant_id = overrides.get("tenant_id", "tenant-cshi")
+    asset_hashes = overrides.get(
+        "asset_hashes", tuple(asset.sha256 for asset in media)
+    )
     content_hash = expected_content_hash(
-        draft, media, versions, channel_variants, tenant_id=tenant_id
+        draft,
+        media,
+        versions,
+        channel_variants,
+        tenant_id=tenant_id,
+        asset_hashes=asset_hashes,
     )
     compliance_result = overrides.pop(
         "compliance_result",
@@ -212,6 +221,7 @@ def make_inputs(**overrides: Any) -> PackageInputs:
         "draft": draft,
         "media": media,
         "asset_uris": tuple(asset.uri for asset in media),
+        "asset_hashes": asset_hashes,
         "requested_channels": ("linkedin",),
         "channel_variants": channel_variants,
         "compliance_result": compliance_result,

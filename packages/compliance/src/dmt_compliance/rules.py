@@ -9,6 +9,7 @@ Rule registry:
 - R-CITE-001  uncited claim                      critical  copy_issue
 - R-EXP-002   expired claim source               critical  fact_issue
 - R-MKT-003   cross-market claim source          critical  fact_issue
+- R-CITE-011  citation not grounded in facts     critical  fact_issue
 - R-BAN-004   banned expression                  policy    copy_issue
 - R-CMP-005   competitor comparison              major     copy_issue
 - R-APR-006   fabricated regulator approval      critical  copy_issue
@@ -23,7 +24,12 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Sequence
 
-from content_workflow.contracts import ContentBriefV1, CopyDraftV1, MediaAssetV1
+from content_workflow.contracts import (
+    ContentBriefV1,
+    CopyDraftV1,
+    MediaAssetV1,
+    RetrievedFactV1,
+)
 
 from dmt_compliance.contracts import (
     ComplianceIssueV1,
@@ -38,6 +44,7 @@ CHECKED_RULES: tuple[str, ...] = (
     "R-CITE-001",
     "R-EXP-002",
     "R-MKT-003",
+    "R-CITE-011",
     "R-BAN-004",
     "R-CMP-005",
     "R-APR-006",
@@ -86,6 +93,23 @@ def _source_ref(claim: object) -> SourceReferenceV1 | None:
     )
 
 
+def _citation_key(citation: object) -> tuple[str, str, str, str]:
+    return (
+        str(getattr(citation, "source_id")),
+        str(getattr(citation, "source_version")),
+        str(getattr(citation, "source_content_hash")),
+        str(getattr(citation, "chunk_hash")),
+    )
+
+
+def _searchable_text(draft: CopyDraftV1, media: Sequence[MediaAssetV1]) -> str:
+    parts = [draft.headline, draft.body]
+    parts.extend(draft.disclosures)
+    parts.extend(claim.text for claim in draft.claims)
+    parts.extend(asset.alt_text for asset in media)
+    return "\n".join(parts).lower()
+
+
 def run_rules(
     *,
     policy: ContentPolicyV1,
@@ -94,9 +118,12 @@ def run_rules(
     media: Sequence[MediaAssetV1],
     requested_media_types: Sequence[str],
     as_of: str,
+    grounded_facts: Sequence[RetrievedFactV1] | None = None,
 ) -> tuple[ComplianceIssueV1, ...]:
     issues: list[ComplianceIssueV1] = []
-    searchable = f"{draft.headline}\n{draft.body}".lower()
+    searchable = _searchable_text(draft, media)
+    grounding_source = tuple(brief.facts if grounded_facts is None else grounded_facts)
+    grounded_citations = {_citation_key(fact.citation) for fact in grounding_source}
 
     # R-CITE-001 / R-EXP-002 / R-MKT-003: per-claim source rules.
     for claim in draft.claims:
@@ -135,6 +162,20 @@ def run_rules(
                     detail=(
                         f"claim cites {claim.citation.market} source but brief "
                         f"targets {brief.market}; cross-market facts forbidden"
+                    ),
+                    node="fact_issue",
+                    claim_id=cid,
+                    source=source,
+                )
+            )
+        if grounded_citations and _citation_key(claim.citation) not in grounded_citations:
+            issues.append(
+                _issue(
+                    "R-CITE-011",
+                    severity="critical",
+                    detail=(
+                        "claim citation is not grounded in retrieved facts: "
+                        f"{claim.citation.source_id}@{claim.citation.source_version}"
                     ),
                     node="fact_issue",
                     claim_id=cid,

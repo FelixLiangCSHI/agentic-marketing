@@ -8,6 +8,7 @@ from builders import AS_OF, make_draft, make_inputs
 
 from content_package import (
     DuplicateVersionError,
+    InvalidPackageTransitionError,
     PackageBuilder,
     PackageStore,
     UnknownPackageError,
@@ -103,6 +104,47 @@ class TestRevocationAndConsumption:
             package, as_of=AS_OF, ledger_status=entry.status
         )
         assert allowed is False and "REVOKED" in reason
+
+    def test_revoke_on_approved_still_works(self) -> None:
+        store = PackageStore()
+        package = _package()
+        store.publish(package, recorded_at=NOW)
+
+        revoked = store.revoke(
+            package.package_id,
+            reason="source withdrawn",
+            recorded_at="2026-06-01T02:00:00Z",
+        )
+
+        assert revoked.status == "REVOKED"
+        assert store.get(package.package_id) is revoked
+
+    def test_revoke_on_revoked_package_is_invalid_transition(self) -> None:
+        store = PackageStore()
+        package = _package()
+        store.publish(package, recorded_at=NOW)
+        store.revoke(package.package_id, reason="source withdrawn", recorded_at=NOW)
+
+        with pytest.raises(InvalidPackageTransitionError, match="REVOKED"):
+            store.revoke(
+                package.package_id,
+                reason="duplicate revoke",
+                recorded_at="2026-06-01T02:00:00Z",
+            )
+
+    def test_revoke_on_superseded_package_is_invalid_transition(self) -> None:
+        store = PackageStore()
+        v1 = _package()
+        v2 = _package("Updated headline", version=2)
+        store.publish(v1, recorded_at=NOW)
+        store.publish(v2, recorded_at="2026-06-01T02:00:00Z")
+
+        with pytest.raises(InvalidPackageTransitionError, match="SUPERSEDED"):
+            store.revoke(
+                v1.package_id,
+                reason="old version withdrawn",
+                recorded_at="2026-06-01T03:00:00Z",
+            )
 
     def test_expired_package_blocks_consumption(self) -> None:
         package = _package()

@@ -7,7 +7,7 @@ suggested rework node.
 
 from __future__ import annotations
 
-from builders import AS_OF, make_brief, make_claim, make_draft, make_media
+from builders import AS_OF, make_brief, make_citation, make_claim, make_draft, make_media
 from content_workflow.contracts import ContentBriefV1, CopyDraftV1, MediaAssetV1
 
 from dmt_compliance import (
@@ -82,6 +82,17 @@ class TestClaimSourceRules:
         assert found[0].source_reference is not None
         assert found[0].source_reference.market == "CN"
 
+    def test_fabricated_citation_not_in_brief_facts_is_critical_fact_issue(self) -> None:
+        fabricated = make_citation(source_id="doc-fabricated-pi")
+        claim = make_claim("Fabricated citation claim.", citation=fabricated)
+        issues = _run(make_draft(claims=(claim,)))
+        found = [i for i in issues if i.rule_id == "R-CITE-011"]
+        assert len(found) == 1
+        assert found[0].severity == "critical"
+        assert found[0].suggested_rework_node == "fact_issue"
+        assert found[0].source_reference is not None
+        assert found[0].source_reference.source_id == "doc-fabricated-pi"
+
 
 class TestExpressionRules:
     def test_policy_banned_expression_detected_with_policy_severity(self) -> None:
@@ -112,6 +123,22 @@ class TestExpressionRules:
         issues = _run(make_draft(body="It probably works for most patients."))
         found = [i for i in issues if i.rule_id == "R-SPEC-010"]
         assert found and found[0].severity == "major"
+
+    def test_banned_expression_in_disclosure_is_detected(self) -> None:
+        issues = _run(make_draft(disclosures=("This is a miracle cure.",)))
+        assert "R-BAN-004" in _rules(issues)
+
+    def test_speculation_in_claim_text_is_detected(self) -> None:
+        claim = make_claim("It probably works for most patients.")
+        issues = _run(make_draft(body="Approved body.", claims=(claim,)))
+        assert "R-SPEC-010" in _rules(issues)
+
+    def test_banned_expression_in_media_alt_text_is_detected(self) -> None:
+        issues = _run(
+            make_draft(),
+            media=(make_media(alt_text="A miracle cure image."),),
+        )
+        assert "R-BAN-004" in _rules(issues)
 
 
 class TestStructuralRules:

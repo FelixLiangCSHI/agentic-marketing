@@ -139,6 +139,28 @@ class TestAccessControl:
         assert body["medical"]["status"] == "PENDING"
         assert body["marketing"]["status"] == "PENDING"
 
+    def test_list_and_detail_are_tenant_scoped(
+        self, client: TestClient, tokens: dict[str, dict[str, str]], idp: FakeIdentityProvider
+    ) -> None:
+        own_id = create_review(client, tokens)
+        other_creator = bearer(
+            idp.issue_session(
+                "olivia", "Olivia", tenant="tenant-other", groups=("grp-content",)
+            )
+        )
+        other_payload = {**create_payload(), "tenant": "tenant-other", "run_id": "run-0002"}
+        other = client.post(
+            "/api/v1/reviews", json=other_payload, headers=other_creator
+        )
+        assert other.status_code == 201
+        other_id = other.json()["review_id"]
+
+        listing = client.get("/api/v1/reviews", headers=tokens["auditor"])
+        assert listing.status_code == 200
+        assert [item["review_id"] for item in listing.json()] == [own_id]
+        hidden = client.get(f"/api/v1/reviews/{other_id}", headers=tokens["auditor"])
+        assert hidden.status_code == 404
+
 
 class TestTwoTrackApproval:
     def test_both_tracks_required_for_approved(

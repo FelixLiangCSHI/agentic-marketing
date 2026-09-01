@@ -20,6 +20,7 @@ Guarantees:
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from typing import Protocol
 
@@ -52,6 +53,8 @@ class JobStore(Protocol):
 
     def get(self, idempotency_key: str) -> JobRecordV1 | None: ...
 
+    def put_if_absent(self, record: JobRecordV1) -> JobRecordV1: ...
+
     def save_request(self, idempotency_key: str, request: MediaJobRequestV1) -> None: ...
 
     def get_request(self, idempotency_key: str) -> MediaJobRequestV1 | None: ...
@@ -63,12 +66,22 @@ class InMemoryJobStore:
 
     _records: dict[str, JobRecordV1] = field(default_factory=dict)
     _requests: dict[str, MediaJobRequestV1] = field(default_factory=dict)
+    _lock: threading.Lock = field(default_factory=threading.Lock)
 
     def save(self, record: JobRecordV1) -> None:
         self._records[record.idempotency_key] = record
 
     def get(self, idempotency_key: str) -> JobRecordV1 | None:
         return self._records.get(idempotency_key)
+
+    def put_if_absent(self, record: JobRecordV1) -> JobRecordV1:
+        """Atomic claim: returns the stored record (existing wins the race)."""
+        with self._lock:
+            existing = self._records.get(record.idempotency_key)
+            if existing is not None:
+                return existing
+            self._records[record.idempotency_key] = record
+            return record
 
     def save_request(self, idempotency_key: str, request: MediaJobRequestV1) -> None:
         self._requests[idempotency_key] = request
@@ -109,7 +122,11 @@ class JimengMediaWorker:
                 state="PENDING",
             )
             self.store.save_request(key, request)
-            self.store.save(record)
+            claimed = self.store.put_if_absent(record)
+            if claimed is not record:
+                # Another worker won the atomic claim: it owns the provider
+                # job and the poll task; never create a second provider job.
+                return claimed
             record = self._create_with_reconcile(request, record)
         finally:
             self.limiter.release()

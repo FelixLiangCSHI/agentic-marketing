@@ -14,8 +14,8 @@ jobs:
   web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
@@ -48,8 +48,8 @@ jobs:
     env:
       DMT_TEST_DATABASE_URL: postgresql+psycopg://postgres@localhost:5432/dmt_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e ".[dev]"
@@ -62,8 +62,8 @@ jobs:
       run:
         working-directory: packages/harness-core
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e ".[dev]"
@@ -76,8 +76,8 @@ jobs:
       run:
         working-directory: packages/infra-core
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e ".[dev]"
@@ -91,8 +91,8 @@ jobs:
       run:
         working-directory: packages/product-rag
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e ".[dev]"
@@ -103,8 +103,8 @@ jobs:
   content-workflow:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/content-workflow[dev]"
@@ -117,8 +117,8 @@ jobs:
   deepseek-connector:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/infra-core" -e "packages/content-workflow" -e "connectors/llm/deepseek[dev]"
@@ -133,8 +133,8 @@ jobs:
   jimeng-connector:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/infra-core" -e "packages/content-workflow" -e "connectors/jimeng[dev]"
@@ -149,8 +149,8 @@ jobs:
   compliance:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/infra-core" -e "packages/content-workflow" -e "packages/compliance[dev]"
@@ -165,8 +165,8 @@ jobs:
   content-package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e "packages/product-rag" -e "packages/harness-core" -e "packages/infra-core" -e "packages/content-workflow" -e "packages/compliance" -e "packages/content-package[dev]"
@@ -181,12 +181,12 @@ jobs:
   contract:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: npm ci
@@ -218,8 +218,8 @@ jobs:
     env:
       DMT_TEST_DATABASE_URL: postgresql+psycopg://postgres@localhost:5432/dmt_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e ".[dev]"
@@ -229,18 +229,18 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python3 scripts/check_no_secrets.py
       - run: npm audit --audit-level=high
       - run: |
-          python -m pip install -e "apps/api[dev]" -e "packages/harness-core[dev]" -e "packages/infra-core[dev]" -e "packages/product-rag[dev]" -e "packages/content-workflow[dev]" -e "connectors/llm/deepseek[dev]"
+          python -m pip install -e "apps/api[dev]" -e "packages/harness-core[dev]" -e "packages/infra-core[dev]" -e "packages/product-rag[dev]" -e "packages/content-workflow[dev]" -e "packages/compliance[dev]" -e "packages/content-package[dev]" -e "connectors/llm/deepseek[dev]" -e "connectors/jimeng[dev]"
           python -m pip install pip-audit
           python -m pip_audit --skip-editable
       # 无回归例外：eslint 已在 web job 执行；此处仅安全扫描。
@@ -249,8 +249,8 @@ jobs:
   eval:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e "packages/harness-core[dev]"
@@ -260,8 +260,8 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: python -m pip install -e "packages/harness-core[dev]" -e "packages/infra-core[dev]"

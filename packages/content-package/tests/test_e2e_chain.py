@@ -146,6 +146,7 @@ def _package_inputs(snapshot: WorkflowSnapshot) -> PackageInputs:
         draft=draft,
         media=media,
         asset_uris=tuple(asset.uri for asset in media),
+        asset_hashes=tuple(asset.sha256 for asset in media),
         requested_channels=(snapshot.request.channel,),
         channel_variants=channel_variants,
         compliance_result=compliance_result,

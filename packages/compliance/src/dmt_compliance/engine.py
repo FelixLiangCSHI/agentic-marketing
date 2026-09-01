@@ -15,6 +15,7 @@ from content_workflow.contracts import (
     ContentBriefV1,
     CopyDraftV1,
     MediaAssetV1,
+    RetrievedFactV1,
     model_hash,
 )
 
@@ -48,6 +49,7 @@ class ComplianceEngine:
         media: Sequence[MediaAssetV1] = (),
         requested_media_types: Sequence[str] = (),
         as_of: str,
+        grounded_facts: Sequence[RetrievedFactV1] | None = None,
     ) -> ComplianceResultV1:
         issues = run_rules(
             policy=self._policy,
@@ -56,6 +58,7 @@ class ComplianceEngine:
             media=media,
             requested_media_types=requested_media_types,
             as_of=as_of,
+            grounded_facts=grounded_facts,
         )
         # 状态只由确定性规则决定；Critic 输出在此之后才被读取。
         automated_status: AutomatedStatus = (

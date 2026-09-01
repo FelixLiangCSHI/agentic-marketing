@@ -7,6 +7,7 @@ All scenarios are deterministic mocks — no external HTTP anywhere.
 
 from __future__ import annotations
 
+import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -30,6 +31,7 @@ from jimeng_connector import (
     UnknownJobError,
     load_config,
 )
+from jimeng_connector.governance import JobRateLimiter, MediaBudget
 from jimeng_connector.transport import MockScenario
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -172,6 +174,24 @@ class TestHappyPathAndIdempotency:
         assert record.asset_object_key is not None
         assert record.asset_object_key.startswith("local/tenant-cshi/content-agent-generated/run-0001/")
         assert record.asset_sha256 is not None
+
+    def test_concurrent_submits_yield_one_provider_job(self) -> None:
+        transport = JimengMockTransport(FIXTURES)
+        connector = _connector(transport=transport)
+        results: list[object] = []
+        barrier = threading.Barrier(8)
+
+        def _submit() -> None:
+            barrier.wait()
+            results.append(connector.execute(_request()))
+
+        threads = [threading.Thread(target=_submit) for _ in range(8)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        assert len(results) == 8
+        assert transport.create_calls == 1  # put_if_absent claim is atomic
 
     def test_100_duplicate_creates_yield_one_provider_job(self) -> None:
         transport = JimengMockTransport(FIXTURES)
@@ -356,6 +376,75 @@ class TestGovernance:
         connector = _connector()
         connector.budget.record_asset(connector.budget.per_run_budget * 0.85)
         assert any("per_run" in alert for alert in connector.budget.alerts)
+
+    def test_budget_record_is_thread_safe(self) -> None:
+        budget = MediaBudget(
+            per_run_budget=100.0,
+            daily_budget=100.0,
+            max_assets_per_run=100_000,
+        )
+
+        def record_many() -> None:
+            for _ in range(1000):
+                budget.record_asset(0.001)
+
+        threads = [threading.Thread(target=record_many) for _ in range(20)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert budget.run_assets == 20_000
+        assert budget.run_spent == 20.0
+        assert budget.daily_spent == 20.0
+
+    def test_daily_budget_rolls_over_on_utc_date_change(self) -> None:
+        clock = FakeClock(datetime(2026, 8, 28, 23, 59, tzinfo=timezone.utc))
+        budget = MediaBudget(
+            per_run_budget=10.0,
+            daily_budget=1.0,
+            max_assets_per_run=100,
+            clock=clock,
+        )
+        budget.record_asset(0.9)
+        with pytest.raises(BudgetExceededError, match="daily budget"):
+            budget.check_before_create(0.2)
+
+        clock.advance(timedelta(minutes=2))
+        budget.check_before_create(0.2)
+        budget.record_asset(0.2)
+        assert budget.daily_spent == 0.2
+
+    def test_job_rate_limiter_acquire_is_thread_safe(self) -> None:
+        limiter = JobRateLimiter(
+            clock=_clock(),
+            requests_per_minute=5,
+            max_concurrency=5,
+            jobs_per_day=5,
+        )
+        acquired = 0
+        rejected = 0
+        result_lock = threading.Lock()
+
+        def try_acquire() -> None:
+            nonlocal acquired, rejected
+            try:
+                limiter.acquire_create()
+            except LocalQueueFullError:
+                with result_lock:
+                    rejected += 1
+            else:
+                with result_lock:
+                    acquired += 1
+
+        threads = [threading.Thread(target=try_acquire) for _ in range(20)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert acquired == 5
+        assert rejected == 15
 
     def test_jobs_per_day_limit(self) -> None:
         clock = _clock()

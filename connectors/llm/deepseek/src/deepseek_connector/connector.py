@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import random
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Literal
@@ -84,8 +85,8 @@ class NotSupportedResult:
     reason: str
 
 
-def _noop_sleeper(_: int) -> None:
-    return None
+def _default_sleeper(delay_ms: int) -> None:
+    time.sleep(delay_ms / 1000)
 
 
 class DeepSeekConnector:
@@ -114,8 +115,12 @@ class DeepSeekConnector:
             )
         self._transport = transport
         self._clock = clock or SystemClock()
-        self._sleeper = sleeper or _noop_sleeper
-        self._rng = rng or random.Random(config.mock.deterministic_seed)
+        self._sleeper = sleeper or _default_sleeper
+        self._rng = rng or (
+            random.Random(config.mock.deterministic_seed)
+            if self._runtime.mode == "mock"
+            else random.Random()
+        )
         self._limiter = LocalRateLimiter(
             clock=self._clock,
             requests_per_minute=self._runtime.requests_per_minute,
@@ -124,6 +129,7 @@ class DeepSeekConnector:
         self.budget = BudgetTracker(
             per_run_budget=self._runtime.per_run_budget,
             daily_budget=self._runtime.daily_budget,
+            clock=self._clock,
             alert_at_percent=config.cost_control.alert_at_percent,
         )
         self.journal = ConnectorJournal()
@@ -279,7 +285,7 @@ class DeepSeekConnector:
     def _backoff_ms(self, attempt: int, retry_after_s: int | None) -> int:
         strategy = self._config.retry_strategy
         if retry_after_s is not None and strategy.honor_retry_after:
-            return retry_after_s * 1000
+            return min(retry_after_s * 1000, strategy.max_delay_ms)
         base = strategy.initial_delay_ms * (strategy.multiplier ** (attempt - 1))
         capped = min(base, float(strategy.max_delay_ms))
         jitter = self._rng.uniform(0.0, capped / 2)

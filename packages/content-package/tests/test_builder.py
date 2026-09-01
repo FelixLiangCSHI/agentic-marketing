@@ -161,8 +161,39 @@ class TestHashBinding:
 
     def test_asset_uri_count_mismatch_is_tampering(self) -> None:
         inputs = make_inputs(asset_uris=())
-        with pytest.raises(AssetTamperedError):
+        with pytest.raises(AssetTamperedError, match="count"):
             BUILDER.build(inputs, as_of=AS_OF)
+
+    def test_tampered_asset_hash_is_refused_before_stale_approval(self) -> None:
+        media = (make_media("hero"),)
+        inputs = make_inputs(
+            media=media,
+            asset_uris=(media[0].uri,),
+            asset_hashes=("sha256:" + "0" * 64,),
+        )
+        with pytest.raises(AssetTamperedError, match="hash mismatch"):
+            BUILDER.build(inputs, as_of=AS_OF)
+
+    def test_unknown_asset_uri_is_refused(self) -> None:
+        media = (make_media("hero"),)
+        inputs = make_inputs(
+            media=media,
+            asset_uris=("object://local/tenant-cshi/unknown.png",),
+            asset_hashes=(media[0].sha256,),
+        )
+        with pytest.raises(AssetTamperedError, match="was not reviewed"):
+            BUILDER.build(inputs, as_of=AS_OF)
+
+    def test_matching_asset_uri_and_hash_pass(self) -> None:
+        media = (make_media("hero"), make_media("detail"))
+        inputs = make_inputs(
+            media=media,
+            asset_uris=(media[1].uri, media[0].uri),
+            asset_hashes=(media[1].sha256, media[0].sha256),
+        )
+        package = BUILDER.build(inputs, as_of=AS_OF)
+        assert package.asset_uris == (media[1].uri, media[0].uri)
+        assert package.asset_hashes == (media[1].sha256, media[0].sha256)
 
 
 class TestChannelVariants:

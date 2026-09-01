@@ -45,6 +45,7 @@ class TestFakeIdentityProvider:
         token = provider.issue_session("alice", "Alice", groups=("grp-content",))
         principal = provider.authenticate(token)
         assert principal.subject == "alice"
+        assert principal.tenant == "tenant-cshi"
         assert principal.roles == frozenset({Role.CONTENT_CREATOR, Role.REQUESTER})
 
     def test_client_claimed_roles_are_ignored(self) -> None:

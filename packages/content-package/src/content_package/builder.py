@@ -86,6 +86,7 @@ class PackageInputs:
     draft: CopyDraftV1
     media: tuple[MediaAssetV1, ...]
     asset_uris: tuple[str, ...]
+    asset_hashes: tuple[str, ...]
     requested_channels: tuple[str, ...]
     channel_variants: tuple[tuple[str, tuple[str, ...]], ...]
     compliance_result: ComplianceResultV1
@@ -194,12 +195,48 @@ class PackageBuilder:
                 )
 
     def _check_assets(self, inputs: PackageInputs) -> tuple[str, ...]:
-        hashes = tuple(asset.sha256 for asset in inputs.media)
-        if len(inputs.asset_uris) != len(hashes):
+        if len(inputs.asset_uris) != len(inputs.asset_hashes):
+            raise AssetTamperedError(
+                "asset URI count does not match provided asset hash count"
+            )
+        if len(inputs.asset_uris) != len(inputs.media):
             raise AssetTamperedError(
                 "asset URI count does not match reviewed media assets"
             )
-        return hashes
+
+        reviewed_by_uri: dict[str, str] = {}
+        for asset in inputs.media:
+            if asset.uri in reviewed_by_uri:
+                raise AssetTamperedError(
+                    f"duplicate reviewed media asset URI: {asset.uri}"
+                )
+            reviewed_by_uri[asset.uri] = asset.sha256
+
+        seen_uris: set[str] = set()
+        for asset_uri, asset_hash in zip(
+            inputs.asset_uris, inputs.asset_hashes, strict=True
+        ):
+            if asset_uri in seen_uris:
+                raise AssetTamperedError(f"duplicate package asset URI: {asset_uri}")
+            seen_uris.add(asset_uri)
+
+            reviewed_hash = reviewed_by_uri.get(asset_uri)
+            if reviewed_hash is None:
+                raise AssetTamperedError(
+                    f"asset URI was not reviewed: {asset_uri}"
+                )
+            if asset_hash != reviewed_hash:
+                raise AssetTamperedError(
+                    f"asset hash mismatch for {asset_uri}: expected "
+                    f"{reviewed_hash}, got {asset_hash}"
+                )
+
+        missing = set(reviewed_by_uri) - seen_uris
+        if missing:
+            raise AssetTamperedError(
+                f"reviewed media asset missing from package: {sorted(missing)[0]}"
+            )
+        return inputs.asset_hashes
 
     def _check_compliance(self, inputs: PackageInputs) -> None:
         result = inputs.compliance_result

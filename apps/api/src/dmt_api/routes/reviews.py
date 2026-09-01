@@ -160,7 +160,9 @@ def create_review(
     service: ReviewService = Depends(get_review_service),
 ) -> ReviewView | JSONResponse:
     if payload.tenant != principal.tenant:
-        return error_response(403, "tenant_mismatch", "tenant is not authorized", retryable=False)
+        return error_response(
+            403, "tenant_mismatch", "tenant is not authorized", retryable=False
+        )
     case = service.create(
         principal=principal,
         run_id=payload.run_id,

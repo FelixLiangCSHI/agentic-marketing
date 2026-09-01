@@ -67,6 +67,7 @@ WorkflowStatus = Literal[
 ]
 
 DEFAULT_RETRIEVAL_K = 5
+DEFAULT_MAX_REWORK = 3
 
 
 class WorkflowState(TypedDict, total=False):
@@ -138,12 +139,14 @@ class ContentWorkflow:
         media_generator: MediaGenerator,
         checkpointer: BaseCheckpointSaver[Any] | None = None,
         retrieval_k: int = DEFAULT_RETRIEVAL_K,
+        max_rework: int = DEFAULT_MAX_REWORK,
     ) -> None:
         self._skills = skills
         self._retriever = retriever
         self._model = model
         self._media = media_generator
         self._retrieval_k = retrieval_k
+        self._max_rework = max_rework
         self.checkpointer: BaseCheckpointSaver[Any] = (
             checkpointer if checkpointer is not None else InMemorySaver()
         )
@@ -434,11 +437,15 @@ class ContentWorkflow:
         checked = (
             "claims_present",
             "claim_citation_required",
+            "citation_grounded_in_facts",
             "banned_phrase",
             "disclosure_required",
             "headline_max_chars",
             "media_present",
         )
+        grounded_citations = {
+            self._citation_key(fact.citation) for fact in brief.facts
+        }
         if not draft.claims:
             violations.append(
                 ComplianceViolationV1(
@@ -454,7 +461,17 @@ class ContentWorkflow:
                         detail=f"uncited claim: {claim.text[:120]}",
                     )
                 )
-        searchable = f"{draft.headline}\n{draft.body}".lower()
+            elif self._citation_key(claim.citation) not in grounded_citations:
+                violations.append(
+                    ComplianceViolationV1(
+                        rule="R-CITE-011",
+                        detail=(
+                            "claim citation is not grounded in retrieved facts: "
+                            f"{claim.citation.source_id}@{claim.citation.source_version}"
+                        ),
+                    )
+                )
+        searchable = self._searchable_text(draft, media)
         for phrase in brief.banned_phrases:
             if phrase.lower() in searchable:
                 violations.append(
@@ -512,6 +529,25 @@ class ContentWorkflow:
             update["status_reason"] = "compliance_failed"
         return update
 
+    @staticmethod
+    def _citation_key(citation: object) -> tuple[str, str, str, str]:
+        return (
+            str(getattr(citation, "source_id")),
+            str(getattr(citation, "source_version")),
+            str(getattr(citation, "source_content_hash")),
+            str(getattr(citation, "chunk_hash")),
+        )
+
+    @staticmethod
+    def _searchable_text(
+        draft: CopyDraftV1, media: tuple[MediaAssetV1, ...]
+    ) -> str:
+        parts = [draft.headline, draft.body]
+        parts.extend(draft.disclosures)
+        parts.extend(claim.text for claim in draft.claims)
+        parts.extend(asset.alt_text for asset in media)
+        return "\n".join(parts).lower()
+
     def _route_after_compliance(self, state: WorkflowState) -> str:
         report = state.get("compliance")
         return "human_review" if report is not None and report.passed else "blocked"
@@ -556,9 +592,14 @@ class ContentWorkflow:
             update["status"] = "REJECTED"
             update["status_reason"] = "review_rejected"
             return update
+        next_rework_count = state.get("rework_count", 0) + 1
+        if next_rework_count > self._max_rework:
+            update["status"] = "REJECTED"
+            update["status_reason"] = "max_rework_exceeded"
+            return update
         update["status"] = "REWORK"
         update["status_reason"] = f"rework_{decision.rework_target}"
-        update["rework_count"] = state.get("rework_count", 0) + 1
+        update["rework_count"] = next_rework_count
         update["compliance"] = None
         invalidated: dict[ReworkTarget, tuple[str, ...]] = {
             "fact_issue": ("facts", "brief", "copy_draft", "media"),
@@ -572,6 +613,8 @@ class ContentWorkflow:
     def _route_after_review(self, state: WorkflowState) -> str:
         review = state.get("review")
         assert review is not None
+        if state.get("status") == "REJECTED":
+            return "rejected"
         if review.outcome == "approved":
             return "package_approved"
         if review.rework_target is None:

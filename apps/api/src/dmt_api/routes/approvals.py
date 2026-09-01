@@ -14,7 +14,6 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Path, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import create_engine
 
 from dmt_api.approval_service import (
     ApprovalBinding,
@@ -32,9 +31,11 @@ from dmt_api.errors import error_response
 from dmt_api.identity.auth import get_principal, require_roles
 from dmt_api.identity.provider import Principal
 from dmt_api.identity.roles import APPROVER_ROLES, Role
-from dmt_api.persistence import UnitOfWork, create_session_factory
+from dmt_api.persistence import UnitOfWork
+from dmt_api.persistence.db import get_session_factory
 from dmt_api.persistence.domain import ApprovalRequest
 from dmt_api.persistence.errors import (
+    ApprovalExpiredError,
     IllegalStateTransitionError,
     NotFoundError,
     SeparationOfDutiesError,
@@ -53,13 +54,9 @@ class PersistenceUnavailableError(Exception):
 
 
 def get_uow(request: Request) -> Iterator[UnitOfWork]:
-    factory = getattr(request.app.state, "session_factory", None)
+    factory = get_session_factory(request.app)
     if factory is None:
-        url = getattr(request.app.state, "database_url", None)
-        if not url:
-            raise PersistenceUnavailableError()
-        factory = create_session_factory(create_engine(url))
-        request.app.state.session_factory = factory
+        raise PersistenceUnavailableError()
     with UnitOfWork(factory) as uow:
         yield uow
 
@@ -210,7 +207,9 @@ def decide_approval(
             raise NotFoundError(f"approval {approval_id!r} does not exist")
         run = uow.runs.get(existing.run_id)
         if run is None or run.tenant != principal.tenant:
-            return error_response(404, "not_found", "approval not found", retryable=False)
+            return error_response(
+                404, "not_found", "approval not found", retryable=False
+            )
         request = service.decide(
             approval_id=approval_id,
             approver_id=principal.subject,
@@ -225,6 +224,8 @@ def decide_approval(
         return error_response(404, "not_found", str(exc), retryable=False)
     except IllegalStateTransitionError as exc:
         return error_response(409, "illegal_state", str(exc), retryable=False)
+    except ApprovalExpiredError as exc:
+        return error_response(409, "approval_expired", str(exc), retryable=False)
     return _view(request)
 
 
@@ -242,7 +243,9 @@ def revoke_approval(
             raise NotFoundError(f"approval {approval_id!r} does not exist")
         run = uow.runs.get(existing.run_id)
         if run is None or run.tenant != principal.tenant:
-            return error_response(404, "not_found", "approval not found", retryable=False)
+            return error_response(
+                404, "not_found", "approval not found", retryable=False
+            )
         request = service.revoke(
             approval_id, actor_id=principal.subject, reason=body.reason
         )

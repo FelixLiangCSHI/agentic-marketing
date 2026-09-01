@@ -25,6 +25,7 @@ from content_package.contracts import (
 )
 from content_package.store import (
     DuplicateVersionError,
+    InvalidPackageTransitionError,
     LedgerEntry,
     PackageStore,
     PackageStoreError,
@@ -38,6 +39,7 @@ __all__ = [
     "ClaimBindingV1",
     "DuplicateVersionError",
     "ExpiredInputError",
+    "InvalidPackageTransitionError",
     "LedgerEntry",
     "MissingChannelVariantError",
     "NotApprovedError",
