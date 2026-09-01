@@ -113,3 +113,30 @@ class TestServiceAccountGate:
             service_account_approval={"approved": True, "enterprise_owned_account": True}
         )
         assert credentials.identity_ref is None
+
+
+class TestExpiresInFailClosed:
+    def test_missing_or_zero_expires_in_fails_closed(self) -> None:
+        class NoExpiryTransport:
+            def __init__(self, payload: dict[str, object]) -> None:
+                self.payload = payload
+
+            def refresh(self, *, refresh_token: object) -> dict[str, object]:
+                return self.payload
+
+            def mint_identity_token(self, *, identity_ref: str) -> dict[str, object]:
+                return self.payload
+
+        for payload in (
+            {"access_token": "synthetic-a"},
+            {"access_token": "synthetic-a", "expires_in": 0},
+            {"access_token": "synthetic-a", "expires_in": -5},
+            {"access_token": "synthetic-a", "expires_in": "soon"},
+        ):
+            adapter = GoogleAdsAuthAdapter(
+                config=make_config(),
+                secret_resolver=make_resolver(),
+                transport=NoExpiryTransport(payload),
+            )
+            with pytest.raises(AuthExpiredError):
+                adapter.mint_credentials()

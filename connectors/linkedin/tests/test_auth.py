@@ -10,6 +10,7 @@ transport.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -116,3 +117,25 @@ def test_error_messages_never_carry_token_material() -> None:
     with pytest.raises(AuthExpiredError) as excinfo:
         adapter.refresh_access_token()
     assert "synthetic-refresh-token" not in str(excinfo.value)
+
+
+def test_missing_or_zero_expires_in_fails_closed() -> None:
+    @dataclass
+    class NoExpiryTransport:
+        payload: dict[str, object]
+
+        def exchange_code(self, *, code: str, redirect_uri: str) -> dict[str, object]:
+            return self.payload
+
+        def refresh(self, *, refresh_token: object) -> dict[str, object]:
+            return self.payload
+
+    for payload in (
+        {"access_token": "synthetic-a"},
+        {"access_token": "synthetic-a", "expires_in": 0},
+        {"access_token": "synthetic-a", "expires_in": -1},
+        {"access_token": "synthetic-a", "expires_in": "soon"},
+    ):
+        adapter, _ = make_adapter(transport=NoExpiryTransport(payload))
+        with pytest.raises(AuthExpiredError):
+            adapter.refresh_access_token()

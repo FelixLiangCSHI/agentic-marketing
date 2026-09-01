@@ -367,6 +367,14 @@ class TestNormalizeError:
         assert error.code == "unexpected_error"
         assert error.retryable is False
 
+    def test_normalize_error_sanitizes_credential_material(self) -> None:
+        error = _connector(_mock()).normalize_error(
+            ValueError("api_key: sk-verysecret1234567890 leaked"), trace_id="t-sm"
+        )
+        assert "sk-verysecret1234567890" not in error.message
+        assert "[redacted]" in error.message
+
+
     def test_invalid_provider_output_normalizes(self) -> None:
         error = _connector(_mock()).normalize_error(
             InvalidProviderOutputError("bad envelope"), trace_id="t-io"
