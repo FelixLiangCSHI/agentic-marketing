@@ -765,6 +765,13 @@ class ApprovalRepository(_BaseRepository):
         self, approval_id: str, *, actor_id: str, reason: str, now: datetime
     ) -> ApprovalRequest:
         """Revoke a request and burn its token (e.g. incident or input change)."""
+        # Lock order matches consume_token_bound (token before approval) so
+        # concurrent consume/revoke can never deadlock.
+        token_row = self._session.scalars(
+            select(ApprovalTokenRow)
+            .where(ApprovalTokenRow.approval_id == approval_id)
+            .with_for_update()
+        ).one_or_none()
         row = self._session.get(ApprovalRequestRow, approval_id, with_for_update=True)
         if row is None:
             raise NotFoundError(f"approval {approval_id!r} does not exist")
@@ -774,11 +781,6 @@ class ApprovalRepository(_BaseRepository):
         row.status = "REVOKED"
         row.decided_at = now
         row.version += 1
-        token_row = self._session.scalars(
-            select(ApprovalTokenRow)
-            .where(ApprovalTokenRow.approval_id == approval_id)
-            .with_for_update()
-        ).one_or_none()
         if token_row is not None and token_row.revoked_at is None:
             token_row.revoked_at = now
             token_row.revoked_reason = reason
@@ -868,6 +870,35 @@ class OutboxRepository(_BaseRepository):
             select(OutboxRow)
             .where(OutboxRow.dispatched_at.is_(None))
             .order_by(OutboxRow.created_at, OutboxRow.outbox_id)
+        ).all()
+        return [
+            OutboxMessage(
+                outbox_id=row.outbox_id,
+                aggregate_type=row.aggregate_type,
+                aggregate_id=row.aggregate_id,
+                event_type=row.event_type,
+                payload=row.payload,
+                created_at=row.created_at,
+                dispatched_at=row.dispatched_at,
+            )
+            for row in rows
+        ]
+
+    def claim_pending(self, *, limit: int = 100) -> list[OutboxMessage]:
+        """Lease a batch of pending messages with ``FOR UPDATE SKIP LOCKED``.
+
+        Concurrent dispatchers claim disjoint batches: rows locked by
+        another transaction are skipped instead of blocking, so multiple
+        instances can drain the outbox without double dispatching. The
+        lease lasts for the surrounding transaction; call
+        :meth:`mark_dispatched` before committing.
+        """
+        rows = self._session.scalars(
+            select(OutboxRow)
+            .where(OutboxRow.dispatched_at.is_(None))
+            .order_by(OutboxRow.created_at, OutboxRow.outbox_id)
+            .limit(limit)
+            .with_for_update(skip_locked=True)
         ).all()
         return [
             OutboxMessage(

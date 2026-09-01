@@ -56,8 +56,6 @@
 
 | # | 严重度 | 位置 | 问题 | 
 |---|---|---|---|
-| F8 | Medium | `apps/api/.../repositories.py` | 锁序不一致（token↔approval 死锁风险）；outbox `SKIP LOCKED` SQL 可预写（并发验证属 G1） |
-| F9 | Low | `apps/api/Dockerfile`、`routes/health.py` | digest 锁定、`HEALTHCHECK`、IdP 未配置时 readiness 应失败（真实探针联调属 G5） |
 | F10 | Medium | 连接器 `execute()` | 仅做非空/前缀校验，应在连接器侧复核审批哈希（纵深防御），mock 即可测 |
 
 ---

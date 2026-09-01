@@ -284,6 +284,41 @@ class TestConcurrentConsumption:
             results = list(pool.map(attempt, [f"worker-{i}" for i in range(8)]))
         assert results.count(True) == 1
 
+    def test_concurrent_consume_and_revoke_never_deadlock(
+        self, migrated_engine: Engine
+    ) -> None:
+        # consume_token_bound and revoke_request take locks in the same
+        # token-before-approval order, so racing them must always finish.
+        for i in range(4):
+            approval_id, token = create_request(
+                migrated_engine, run_id=f"run-cr-{i}", the_binding=binding()
+            )
+            decide(migrated_engine, approval_id)
+
+            def do_consume() -> bool:
+                try:
+                    consume(migrated_engine, token, consumed_by="worker-consume")
+                    return True
+                except TokenConsumptionError:
+                    return False
+
+            def do_revoke() -> bool:
+                try:
+                    with make_uow(migrated_engine) as uow:
+                        ApprovalService(uow, now=lambda: _NOW).revoke(
+                            approval_id, actor_id="admin", reason="race test"
+                        )
+                        uow.commit()
+                    return True
+                except Exception:
+                    return False
+
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                consumed = pool.submit(do_consume)
+                revoked = pool.submit(do_revoke)
+                consumed.result(timeout=30)
+                revoked.result(timeout=30)
+
 
 class TestAuditFailClosed:
     def test_decision_is_rolled_back_when_audit_write_fails(
