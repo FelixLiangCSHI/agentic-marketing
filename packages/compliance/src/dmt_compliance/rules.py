@@ -39,6 +39,7 @@ from dmt_compliance.contracts import (
     claim_id_for,
 )
 from dmt_compliance.policy import ContentPolicyV1
+from dmt_compliance.temporal import parse_utc
 
 CHECKED_RULES: tuple[str, ...] = (
     "R-CITE-001",
@@ -124,6 +125,7 @@ def run_rules(
     searchable = _searchable_text(draft, media)
     grounding_source = tuple(brief.facts if grounded_facts is None else grounded_facts)
     grounded_citations = {_citation_key(fact.citation) for fact in grounding_source}
+    as_of_dt = parse_utc(as_of)
 
     # R-CITE-001 / R-EXP-002 / R-MKT-003: per-claim source rules.
     for claim in draft.claims:
@@ -140,7 +142,10 @@ def run_rules(
             )
             continue
         source = _source_ref(claim)
-        if claim.citation.expires_at is not None and claim.citation.expires_at <= as_of:
+        if (
+            claim.citation.expires_at is not None
+            and parse_utc(claim.citation.expires_at) <= as_of_dt
+        ):
             issues.append(
                 _issue(
                     "R-EXP-002",

@@ -80,6 +80,22 @@ class TestDefaultFilters:
         )
         assert all(doc.source_id != "doc-alpha-label" for doc in docs)
 
+    def test_fractional_expiry_after_as_of_is_not_expired(self) -> None:
+        adapter = FakeProductAdapter(
+            documents=(
+                _doc(
+                    source_id="doc-fractional-expiry",
+                    expires_at="2026-06-01T00:00:00.5Z",
+                ),
+            )
+        )
+
+        docs = adapter.list_approved_documents(
+            "product-x", "US", "en-US", "2026-06-01T00:00:00Z", tenant=TENANT
+        )
+
+        assert [doc.source_id for doc in docs] == ["doc-fractional-expiry"]
+
     def test_not_yet_effective_excluded(self, adapter: FakeProductAdapter) -> None:
         docs = adapter.list_approved_documents(
             "product-alpha", "US", "en-US", "2026-01-15T00:00:00Z", tenant=TENANT

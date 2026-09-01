@@ -113,6 +113,36 @@ class TestExpiryAndRevocation:
         with pytest.raises(ExpiredInputError, match="expiry"):
             BUILDER.build(inputs, as_of=AS_OF)
 
+    def test_fractional_expiry_after_as_of_allows_build_and_consumption(self) -> None:
+        draft = make_draft(
+            claims=(make_claim(expires_at="2026-06-01T00:00:00.5Z"),)
+        )
+        inputs = make_inputs(draft=draft, expires_at="2026-06-01T00:00:00.5Z")
+
+        package = BUILDER.build(inputs, as_of="2026-06-01T00:00:00Z")
+
+        assert consumable(package, as_of="2026-06-01T00:00:00Z") == (
+            True,
+            "consumable",
+        )
+
+    def test_fractional_approval_after_as_of_is_future_dated(self) -> None:
+        base = make_inputs()
+        artifact_hash = base.approvals[0].artifact_hash
+        inputs = make_inputs(
+            approvals=(
+                make_approval(
+                    "medical",
+                    artifact_hash=artifact_hash,
+                    approved_at="2026-06-01T00:00:00.5Z",
+                ),
+                make_approval("marketing", artifact_hash=artifact_hash),
+            )
+        )
+
+        with pytest.raises(ExpiredInputError, match="future"):
+            BUILDER.build(inputs, as_of="2026-06-01T00:00:00Z")
+
     def test_revoked_product_blocks_build(self) -> None:
         inputs = make_inputs(product_status="REVOKED")
         with pytest.raises(RevokedInputError, match="product"):

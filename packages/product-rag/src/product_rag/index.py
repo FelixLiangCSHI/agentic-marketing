@@ -23,6 +23,7 @@ from product_rag.chunking import Chunk
 from product_rag.embedding import EmbeddingMetadata
 from product_rag.errors import IndexVersionMismatchError, MissingRetrievalFilterError
 from product_rag.models import DateTimeUtc, Identifier, Locale, Market
+from product_rag.temporal import parse_utc
 
 
 class IndexEntry(BaseModel):
@@ -147,6 +148,7 @@ class InMemoryKnowledgeBaseIndex:
     ) -> tuple[ScoredEntry, ...]:
         if k < 1:
             raise MissingRetrievalFilterError("k must be >= 1")
+        as_of = parse_utc(filters.as_of)
         candidates = [
             entry
             for entry in self._entries.values()
@@ -154,8 +156,8 @@ class InMemoryKnowledgeBaseIndex:
             and entry.chunk.product_id == filters.product_id
             and entry.chunk.market == filters.market
             and entry.chunk.locale == filters.locale
-            and entry.chunk.effective_from <= filters.as_of
-            and (entry.chunk.expires_at is None or entry.chunk.expires_at > filters.as_of)
+            and parse_utc(entry.chunk.effective_from) <= as_of
+            and (entry.chunk.expires_at is None or parse_utc(entry.chunk.expires_at) > as_of)
         ]
         scored = sorted(
             (ScoredEntry(entry=entry, score=_dot(vector, entry.vector))

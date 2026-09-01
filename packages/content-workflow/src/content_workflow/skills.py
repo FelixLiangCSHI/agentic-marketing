@@ -36,6 +36,8 @@ from product_rag.models import (
     Sha256Hash,
 )
 
+from content_workflow.temporal import parse_utc
+
 SkillKind = Literal["brand", "medical", "market", "channel"]
 SkillApprovalStatus = Literal["APPROVED", "DRAFT", "REVOKED"]
 AgentName = Literal["content"]
@@ -148,6 +150,7 @@ class SkillRegistry:
         instead of being silently skipped.
         """
         chosen: dict[SkillKind, SkillMetadata] = {}
+        as_of_dt = parse_utc(as_of)
         for kind in REQUIRED_SKILL_KINDS:
             candidates = [
                 skill
@@ -158,7 +161,7 @@ class SkillRegistry:
                 and market in skill.markets
                 and locale in skill.locales
                 and channel in skill.channels
-                and skill.effective_from <= as_of
+                and parse_utc(skill.effective_from) <= as_of_dt
             ]
             if not candidates:
                 raise SkillNotFoundError(
@@ -170,7 +173,7 @@ class SkillRegistry:
                 raise SkillRevokedError(
                     f"skill {best.skill_id!r} v{best.version} is revoked"
                 )
-            if best.expires_at is not None and best.expires_at <= as_of:
+            if best.expires_at is not None and parse_utc(best.expires_at) <= as_of_dt:
                 raise SkillExpiredError(
                     f"skill {best.skill_id!r} v{best.version} expired at "
                     f"{best.expires_at}"

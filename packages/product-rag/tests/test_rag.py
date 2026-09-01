@@ -355,6 +355,39 @@ class TestRevocationPurge:
         assert retriever.retrieve("legacy promotional summary", before)
         assert retriever.retrieve("legacy promotional summary", after) == ()
 
+    def test_fractional_expiry_after_as_of_remains_recallable(
+        self, embedding: FakeEmbeddingProvider
+    ) -> None:
+        content = "Fractional expiry product detail."
+        doc = _doc(
+            content,
+            source_id="doc-fractional-expiry",
+            expires_at="2026-06-01T00:00:00.5Z",
+        )
+        index = InMemoryKnowledgeBaseIndex(embedding.metadata)
+        chunks = chunk_document(doc)
+        vectors = embedding.embed_texts([chunk.text for chunk in chunks])
+        index.upsert(
+            [
+                IndexEntry(
+                    chunk=chunk,
+                    vector=vector,
+                    embedding=embedding.metadata,
+                    index_version=index.index_version,
+                )
+                for chunk, vector in zip(chunks, vectors)
+            ]
+        )
+        filters = RetrievalFilters(
+            tenant=TENANT,
+            product_id="product-alpha",
+            market="US",
+            locale="en-US",
+            as_of="2026-06-01T00:00:00Z",
+        )
+
+        assert Retriever(index, embedding).retrieve("fractional expiry", filters)
+
 
 class TestRetrievalIsolationAndCitations:
     @pytest.fixture()

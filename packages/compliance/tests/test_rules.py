@@ -72,6 +72,11 @@ class TestClaimSourceRules:
         issues = _run(make_draft(claims=(make_claim(expires_at=None),)))
         assert "R-EXP-002" not in _rules(issues)
 
+    def test_fractional_expiry_after_as_of_is_unexpired(self) -> None:
+        claim = make_claim(expires_at="2026-06-01T00:00:00.5Z")
+        issues = _run(make_draft(claims=(claim,)), as_of="2026-06-01T00:00:00Z")
+        assert "R-EXP-002" not in _rules(issues)
+
     def test_cross_market_claim_is_critical_fact_issue(self) -> None:
         claim = make_claim("CN-only claim.", market="CN")
         issues = _run(make_draft(claims=(claim,)))

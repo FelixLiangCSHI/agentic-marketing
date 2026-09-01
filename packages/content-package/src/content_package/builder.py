@@ -37,6 +37,7 @@ from content_package.contracts import (
     canonical_content_hash,
     package_id_for,
 )
+from content_package.temporal import parse_utc
 
 
 class PackageBuildError(Exception):
@@ -125,7 +126,10 @@ class PackageBuilder:
         self._check_approvals(inputs, content_hash=content_hash, as_of=as_of)
         self._check_expiry(inputs, as_of=as_of)
 
-        approved_at = max(approval.approved_at for approval in inputs.approvals)
+        approved_at = max(
+            inputs.approvals,
+            key=lambda approval: parse_utc(approval.approved_at),
+        ).approved_at
         return ApprovedContentPackageV1(
             schema_version="1.0",
             package_id=package_id_for(content_hash, version),
@@ -163,13 +167,17 @@ class PackageBuilder:
         self, inputs: PackageInputs, *, as_of: str
     ) -> tuple[ClaimBindingV1, ...]:
         bindings: list[ClaimBindingV1] = []
+        as_of_dt = parse_utc(as_of)
         for claim in inputs.draft.claims:
             citation = claim.citation
             if citation is None:
                 raise UncitedClaimError(
                     f"claim without citation cannot be packaged: {claim.text[:80]}"
                 )
-            if citation.expires_at is not None and citation.expires_at <= as_of:
+            if (
+                citation.expires_at is not None
+                and parse_utc(citation.expires_at) <= as_of_dt
+            ):
                 raise ExpiredInputError(
                     f"claim source {citation.source_id} expired at "
                     f"{citation.expires_at}"
@@ -248,6 +256,7 @@ class PackageBuilder:
     def _check_approvals(
         self, inputs: PackageInputs, *, content_hash: str, as_of: str
     ) -> None:
+        as_of_dt = parse_utc(as_of)
         tracks = {approval.track for approval in inputs.approvals}
         missing = _REQUIRED_TRACKS - tracks
         if missing:
@@ -265,13 +274,13 @@ class PackageBuilder:
                     f"{approval.track} approval is bound to a different "
                     "content version; re-review is required"
                 )
-            if approval.approved_at > as_of:
+            if parse_utc(approval.approved_at) > as_of_dt:
                 raise ExpiredInputError(
                     f"{approval.track} approval is dated in the future"
                 )
 
     def _check_expiry(self, inputs: PackageInputs, *, as_of: str) -> None:
-        if inputs.expires_at <= as_of:
+        if parse_utc(inputs.expires_at) <= parse_utc(as_of):
             raise ExpiredInputError("package expiry is not in the future")
 
 
@@ -297,15 +306,16 @@ def consumable(
     product_status: str = "APPROVED",
 ) -> tuple[bool, str]:
     """Campaign-side consumption gate: expired / revoked blocks usage."""
+    as_of_dt = parse_utc(as_of)
     status = ledger_status or package.status
     if status != "APPROVED":
         return False, f"package status is {status}"
-    if package.expires_at <= as_of:
+    if parse_utc(package.expires_at) <= as_of_dt:
         return False, "package is expired"
     if product_status != "APPROVED":
         return False, f"product is {product_status}"
     for claim in package.claims:
-        if claim.expires_at is not None and claim.expires_at <= as_of:
+        if claim.expires_at is not None and parse_utc(claim.expires_at) <= as_of_dt:
             return False, f"claim source {claim.source_id} is expired"
     if not verify_package_integrity(package):
         return False, "approvals are not bound to the package content hash"

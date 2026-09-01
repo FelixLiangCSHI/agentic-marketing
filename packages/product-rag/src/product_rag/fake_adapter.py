@@ -38,6 +38,7 @@ from product_rag.models import (
     ProductDocumentV1,
     ProductRecord,
 )
+from product_rag.temporal import parse_utc
 
 _DEFAULT_PAGE_SIZE = 100
 
@@ -50,14 +51,17 @@ def _is_effective(
     revoked_at: str | None,
     as_of: str,
 ) -> bool:
-    """Approved-and-valid gate. ISO-8601 UTC strings compare lexicographically."""
+    """Approved-and-valid gate for frozen UTC timestamp strings."""
+    effective_from_dt = parse_utc(effective_from)
+    expires_at_dt = parse_utc(expires_at) if expires_at is not None else None
+    as_of_dt = parse_utc(as_of)
     if approval_status != "APPROVED":
         return False
     if revoked_at is not None:
         return False
-    if effective_from > as_of:
+    if effective_from_dt > as_of_dt:
         return False
-    if expires_at is not None and expires_at <= as_of:
+    if expires_at_dt is not None and expires_at_dt <= as_of_dt:
         return False
     return True
 
