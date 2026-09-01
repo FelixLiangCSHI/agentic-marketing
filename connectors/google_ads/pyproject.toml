@@ -1,0 +1,40 @@
+[project]
+name = "google-ads-connector"
+version = "0.1.0"
+description = "Google Ads Connector (Phase 03 / Subphase 04): config-injected API version, Developer Token as Secret Reference only, OAuth by default with Service Account allowed only behind a recorded enterprise-ownership approval, verified-field mutate mappers, GAQL GoogleAdsService.Search/SearchStream reads with cursor pagination and response hashes, and a deterministic mock transport. Real Developer Token / test-account calls run ONLY in protected DEV/SIT jobs; this repo ships mock/contract code exclusively."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+  "PyYAML>=6.0",
+  # Local path dependencies (installed with `pip install -e` from repo root):
+  #   packages/infra-core     -> SecretResolver, Clock
+  #   packages/content-package, packages/campaign-draft -> proposal contracts
+  #   packages/connector-sdk  -> Connector protocol, dry-run, errors, retry
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+  "types-PyYAML",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+google_ads_connector = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src:tests"
+packages = ["google_ads_connector"]
+strict = true

@@ -95,6 +95,22 @@ export type ActivationStatus = (typeof ACTIVATION_STATUSES)[number];
 export const PACKAGE_STATUSES = ["APPROVED", "SUPERSEDED", "REVOKED"] as const;
 export type PackageStatus = (typeof PACKAGE_STATUSES)[number];
 
+export const CAMPAIGN_OBJECTIVES = [
+  "LEAD_GENERATION",
+  "BRAND_AWARENESS",
+  "WEBSITE_VISITS",
+  "ENGAGEMENT",
+  "CONVERSIONS",
+] as const;
+export type CampaignObjective = (typeof CAMPAIGN_OBJECTIVES)[number];
+
+export const PROPOSAL_STATUSES = [
+  "DRAFT",
+  "SUPERSEDED",
+  "INVALIDATED",
+] as const;
+export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
+
 export interface RunV1 {
   schema_version: "1.0";
   run_id: string;
@@ -192,6 +208,50 @@ export interface ActivationRequestV1 {
   idempotency_key: string;
   status: ActivationStatus;
   created_at: string;
+  content_package_hash?: string | null;
+  input_hash?: string | null;
+  policy_version?: string | null;
+}
+
+export interface CampaignProposalV1 {
+  schema_version: "1.0";
+  proposal_id: string;
+  version: number;
+  status: ProposalStatus;
+  tenant_id: string;
+  run_id: string;
+  content_package_id: string;
+  content_package_hash: string;
+  channel: Channel;
+  account_id: string;
+  objective: CampaignObjective;
+  campaign_name: string;
+  budget: {
+    currency: string;
+    total_limit_minor: number;
+    daily_limit_minor: number | null;
+  };
+  schedule: { timezone: string; start_at: string; end_at: string };
+  audience: { markets: Market[]; excluded_segments: string[] };
+  channel_variant_refs: string[];
+  asset_hashes: string[];
+  policy_version: string;
+  workflow_version: string;
+  input_hash: string;
+  warnings: string[];
+  created_by: string;
+  created_at: string;
+}
+
+export interface CampaignDryRunV1 {
+  schema_version: "1.0";
+  proposal_id: string;
+  policy_version: string;
+  valid: boolean;
+  request_fingerprint: string;
+  errors: { code: string; message: string; field: string }[];
+  warnings: string[];
+  evaluated_at: string;
 }
 
 export interface ConnectorErrorV1 {
@@ -308,4 +368,104 @@ export interface ProductChangeV1 {
   source_version: string;
   content_hash: string | null;
   occurred_at: string;
+}
+
+export const CANONICAL_METRICS = [
+  "impressions",
+  "clicks",
+  "spend",
+  "conversions",
+  "ctr",
+  "cpc",
+  "cpm",
+  "conversion_rate",
+] as const;
+export type CanonicalMetric = (typeof CANONICAL_METRICS)[number];
+
+export const METRIC_QUALITY_STATUSES = ["ok", "not_available"] as const;
+export type MetricQualityStatus = (typeof METRIC_QUALITY_STATUSES)[number];
+
+export interface ReportMetricEntryV1 {
+  canonical_metric: CanonicalMetric;
+  value: string | null;
+  status: MetricQualityStatus;
+  not_available_reason: string | null;
+  currency: string | null;
+  source_raw_metric_ids: string[];
+  formula_version: string;
+  freshness_retrieved_at: string | null;
+}
+
+export interface ReportBudgetV1 {
+  approved_limit_minor: number;
+  currency: string;
+  spend_minor: number | null;
+  variance_minor: number | null;
+  status: MetricQualityStatus;
+  not_available_reason: string | null;
+}
+
+export interface PerformanceReportV1 {
+  schema_version: "1.0";
+  report_id: string;
+  tenant_id: string;
+  run_id: string;
+  campaign_id: string;
+  channel: Channel;
+  account_id: string;
+  period_start: string;
+  period_end: string;
+  data_freshness_at: string | null;
+  metrics: ReportMetricEntryV1[];
+  budget: ReportBudgetV1;
+  warnings: string[];
+  generated_at: string;
+  trace_id: string;
+}
+
+export const STRATEGY_ACTION_TYPES = [
+  "budget_adjustment",
+  "audience_adjustment",
+  "creative_adjustment",
+  "schedule_adjustment",
+  "pause",
+] as const;
+export type StrategyActionType = (typeof STRATEGY_ACTION_TYPES)[number];
+
+export const STRATEGY_NEXT_STEPS = [
+  "create_activation_request",
+  "manual_task",
+] as const;
+export type StrategyNextStep = (typeof STRATEGY_NEXT_STEPS)[number];
+
+export interface StrategyEvidenceV1 {
+  canonical_metric: string;
+  value: string;
+  source_raw_metric_ids: string[];
+  formula_version: string;
+  freshness_retrieved_at: string | null;
+}
+
+export interface StrategyRecommendationEntryV1 {
+  action_type: StrategyActionType;
+  summary: string;
+  evidence: StrategyEvidenceV1[];
+  expected_impact: string;
+  risk: string;
+  confidence: number;
+  next_step: StrategyNextStep;
+  executed: false;
+}
+
+export interface StrategyRecommendationV1 {
+  schema_version: "1.0";
+  strategy_id: string;
+  status: "DRAFT";
+  report_id: string;
+  tenant_id: string;
+  channel: Channel;
+  data_window: { start: string; end: string };
+  recommendations: StrategyRecommendationEntryV1[];
+  generated_at: string;
+  trace_id: string;
 }

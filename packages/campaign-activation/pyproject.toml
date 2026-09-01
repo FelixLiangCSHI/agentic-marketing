@@ -1,0 +1,37 @@
+[project]
+name = "campaign-activation"
+version = "0.1.0"
+description = "Campaign activation pipeline (Phase 03 / Subphase 05): idempotent connector-operation ledger keyed by (tenant, channel, account, idempotency_key, input_hash), atomic single-use approval consumption before any external call, operation-intent + audit + outbox written before the write, reconcile-before-retry for UNKNOWN outcomes, manual-queue/DLQ escalation and L4 compensation emitted only as pending-approval runbook tasks. Real DEV/SIT reconciliation runs ONLY in protected jobs; this repo ships deterministic fakes exclusively."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+]
+
+# 本包还依赖同仓库的 infra-core、content-package、campaign-draft 与 connector-sdk（本地路径安装）：
+#   python3 -m pip install -e "packages/infra-core" -e "packages/content-package" -e "packages/campaign-draft" -e "packages/connector-sdk" -e "packages/campaign-activation[dev]"
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+campaign_activation = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src:tests"
+packages = ["campaign_activation"]
+strict = true

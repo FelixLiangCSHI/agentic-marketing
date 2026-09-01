@@ -1,0 +1,14 @@
+# Deterministic fault-injection fixtures for the LinkedIn connector.
+# Scenario names must stay in sync with config/linkedin.yaml
+# mock.fault_injection.scenarios. Synthetic data only.
+scenarios:
+  HTTP_429:
+    retry_after_seconds: 19
+  AUTH_EXPIRED:
+    message: "provider rejected the grant: token expired or revoked"
+  TIMEOUT_AFTER_EXTERNAL_CREATE:
+    note: "external object is created, then the response is lost; outcome UNKNOWN, reconcile before retry"
+  DUPLICATE_DELIVERY:
+    note: "provider already holds the object for this idempotency key; no second object is created"
+  PARTIAL_HIERARCHY_SUCCESS:
+    note: "campaign created, child resource fails; stop further writes and record created IDs"

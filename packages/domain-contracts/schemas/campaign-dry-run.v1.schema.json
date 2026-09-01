@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agentic-marketing.local/schemas/campaign-dry-run.v1.schema.json",
+  "title": "CampaignDryRun",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "policy_version",
+    "valid",
+    "request_fingerprint",
+    "errors",
+    "warnings",
+    "evaluated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "proposal_id": { "type": "string", "pattern": "^cpr_[a-f0-9]{24}$" },
+    "policy_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "valid": { "type": "boolean" },
+    "request_fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "field"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_]{1,63}$"
+          },
+          "message": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "field": { "type": "string", "minLength": 1, "maxLength": 200 }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 500 }
+    },
+    "evaluated_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    }
+  }
+}

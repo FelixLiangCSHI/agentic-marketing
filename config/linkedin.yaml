@@ -1,0 +1,69 @@
+# config/linkedin.yaml — non-sensitive structure only (Phase 03 parent-plan
+# template adapted to this repo's reference scheme: secretref:// / env:// /
+# config:// — raw values never validate). All credential fields are Secret
+# Manager references; the loader rejects unknown fields and literal values.
+# Real modes (sandbox/live) stay BLOCKED until official LinkedIn Marketing
+# API docs, Development Access, test ad account, internal Redirect/OAuth
+# Broker, scopes and API version are verified and recorded.
+schema_version: "1.0"
+provider: "linkedin"
+connector: "linkedin_connector.LinkedInAdvertisingConnector"
+enabled: false
+mode: "mock" # mock | sandbox | live
+endpoint:
+  base_url: "https://api.linkedin.com"
+  api_version_ref: "env://LINKEDIN_API_VERSION"
+  resource_prefix: "/rest"
+  verify_tls: true
+  official_docs:
+    - "https://learn.microsoft.com/en-us/linkedin/marketing/quick-start"
+    - "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow"
+    - "https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads/getting-started"
+  verification: "required-before-sandbox-or-live"
+auth:
+  method: "oauth_3legged"
+  client_id_ref: "secretref://vault/dmt/dev/linkedin/client-id"
+  client_secret_ref: "secretref://vault/dmt/dev/linkedin/client-secret"
+  refresh_token_ref: "secretref://vault/dmt/dev/linkedin/refresh-token"
+  redirect_uri_ref: "config://oauth/linkedin/redirect-uri"
+  scopes:
+    - "rw_ads"
+    - "r_ads"
+    - "r_ads_reporting"
+  token_endpoint: "https://www.linkedin.com/oauth/v2/accessToken"
+  authorization_endpoint: "https://www.linkedin.com/oauth/v2/authorization"
+  rotation_runbook: "docs/runbooks/channel-token-rotation.md"
+account:
+  account_id_ref: "config://accounts/dev/linkedin/ad-account-id"
+  test_account_required: true
+  production_access_tier_ref: "config://approvals/linkedin/access-tier"
+rate_limit:
+  requests_per_window_ref: "config://limits/linkedin/approved-rpm"
+  window_seconds: 60
+retry_strategy:
+  max_attempts: 3
+  reconcile_before_retry: true
+  honor_retry_after: true
+  base_delay_seconds: 2
+  max_delay_seconds: 60
+timeouts:
+  connect_seconds: 5
+  read_seconds: 30
+  total_seconds: 45
+proxy:
+  required: true
+  url_ref: "secretref://vault/dmt/dev/egress/proxy-url"
+  allow_inbound: false
+mock:
+  deterministic: true
+  seed: 31014
+  fixture_set: "connectors/linkedin/fixtures/mock_success.yaml"
+  fault_fixture_set: "connectors/linkedin/fixtures/mock_faults.yaml"
+  fault_injection:
+    enabled: true
+    scenarios:
+      - "HTTP_429"
+      - "TIMEOUT_AFTER_EXTERNAL_CREATE"
+      - "AUTH_EXPIRED"
+      - "DUPLICATE_DELIVERY"
+      - "PARTIAL_HIERARCHY_SUCCESS"

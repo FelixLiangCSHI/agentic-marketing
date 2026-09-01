@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Phase 04 SIT scenario manifest for the protected dual-channel pipeline. Each scenario mirrors a deterministic mock scenario in integration/test_phase03_gate.py and must be replayed against the DEV/SIT test accounts with real credentials from the Secret Manager. No credential values appear here.",
+  "code_under_test": {
+    "release_candidate_base": "3c86784ccfcbfd91d3dfa232fc2da17fe9675019",
+    "note": "Final RC SHA/tag is stamped by the protected pipeline at tag time.",
+    "contracts": [
+      "activation-request.v1",
+      "campaign-proposal.v1",
+      "campaign-dry-run.v1",
+      "connector-error.v1",
+      "performance-report.v1",
+      "strategy-recommendation.v1"
+    ],
+    "formula_version": "fv1",
+    "migrations_head": "0005_raw_normalized_metrics",
+    "connector_configs": ["config/linkedin.yaml", "config/google_ads.yaml"],
+    "api_version_refs": {
+      "linkedin": "env://LINKEDIN_API_VERSION",
+      "google_ads": "env://GOOGLE_ADS_API_VERSION"
+    }
+  },
+  "preconditions": [
+    "mode set to sandbox via approved feature flag; mock remains the default",
+    "test accounts with hard budget limits and named cleanup owners",
+    "official-doc verification record complete per docs/runbooks/channel-token-rotation.md",
+    "egress proxy + FQDN allowlist active; no public inbound/webhooks"
+  ],
+  "channels": ["linkedin", "google_ads"],
+  "scenarios": [
+    {"id": "sit-01", "name": "closed_loop_golden_path", "expect": "draft -> dry-run -> approval -> publish CREATED -> reconcile -> raw metrics -> normalized -> report -> DRAFT strategy; exactly one external object"},
+    {"id": "sit-02", "name": "dry_run_unknown_account", "expect": "invalid, zero external calls"},
+    {"id": "sit-03", "name": "dry_run_budget_over_cap", "expect": "invalid, zero external calls"},
+    {"id": "sit-04", "name": "dry_run_disallowed_currency", "expect": "invalid, zero external calls"},
+    {"id": "sit-05", "name": "dry_run_market_violation", "expect": "invalid, zero external calls"},
+    {"id": "sit-06", "name": "dry_run_schedule_too_long", "expect": "invalid, zero external calls"},
+    {"id": "sit-07", "name": "invalid_or_reused_approval", "expect": "FAILED before connector; zero external writes"},
+    {"id": "sit-08", "name": "input_hash_mismatch", "expect": "token rejected; zero external writes"},
+    {"id": "sit-09", "name": "token_expiry_during_publish", "expect": "non-retryable FAILED; zero external objects"},
+    {"id": "sit-10", "name": "http_429_with_retry_after", "expect": "queued retry honoring Retry-After; exactly one object after recovery"},
+    {"id": "sit-11", "name": "timeout_after_external_create", "expect": "UNKNOWN -> reconcile-before-retry -> RECONCILED; no second object"},
+    {"id": "sit-12", "name": "duplicate_delivery_100x", "expect": "one external object; 100% dedupe via operation ledger"},
+    {"id": "sit-13", "name": "worker_restart_replay", "expect": "ledger dedupe; no re-consume of approval; one object"},
+    {"id": "sit-14", "name": "partial_hierarchy_or_mutate_success", "expect": "COMPENSATION_PENDING + pending-approval task; no further writes"},
+    {"id": "sit-15", "name": "undecidable_reconcile", "expect": "WAITING_RECONCILIATION -> DLQ/manual queue; never recreate"},
+    {"id": "sit-16", "name": "backend_manual_modification", "expect": "drift reported by get_status/reconcile; never auto-overwritten"},
+    {"id": "sit-17", "name": "metrics_duplicate_pull", "expect": "raw dedupe by source_response_hash; zero duplicate raw rows"},
+    {"id": "sit-18", "name": "metrics_missing_values", "expect": "not_available preserved; never coerced to 0"},
+    {"id": "sit-19", "name": "report_traceability", "expect": "every number carries source_raw_metric_ids + formula_version fv1"},
+    {"id": "sit-20", "name": "strategy_draft_only", "expect": "status DRAFT, executed false, evidence-bound; zero write-tool calls"}
+  ],
+  "evidence_required": [
+    "external object IDs and cleanup ticket per created object",
+    "approval ids, input hashes, idempotency keys, audit trail export",
+    "raw metric source_response_hash list and normalized formula_version",
+    "P3-CP01..P3-CP06 sign-off by named QA / API Owner / Marketing / Security"
+  ]
+}

@@ -1,0 +1,77 @@
+# config/google_ads.yaml — non-sensitive structure only (Phase 03 parent-plan
+# template adapted to this repo's reference scheme: secretref:// / env:// /
+# config:// — raw values never validate). The Developer Token is a Secret
+# Reference and is never written to Git, fixtures, logs or errors.
+# use_service_account may only be true when a recorded Security/IAM approval
+# for an ENTERPRISE-OWNED account exists; otherwise OAuth is mandatory.
+# Real modes (sandbox/live) stay BLOCKED until Developer Token, Cloud
+# Project, test Manager/Customer accounts and the auth plan are verified.
+schema_version: "1.0"
+provider: "google_ads"
+connector: "google_ads_connector.GoogleAdsConnector"
+enabled: false
+mode: "mock" # mock | sandbox | live
+endpoint:
+  base_url: "https://googleads.googleapis.com"
+  api_version_ref: "env://GOOGLE_ADS_API_VERSION"
+  verify_tls: true
+  official_docs:
+    - "https://developers.google.com/google-ads/api/docs/api-policy/developer-token"
+    - "https://developers.google.com/google-ads/api/docs/oauth/overview"
+    - "https://developers.google.com/google-ads/api/docs/oauth/service-accounts"
+    - "https://developers.google.com/google-ads/api/docs/best-practices/test-accounts"
+  verification: "required-before-sandbox-or-live"
+auth:
+  method: "oauth" # oauth | service_account_approved
+  developer_token_ref: "secretref://vault/dmt/dev/google-ads/developer-token"
+  oauth_client_id_ref: "secretref://vault/dmt/dev/google-ads/oauth-client-id"
+  oauth_client_secret_ref: "secretref://vault/dmt/dev/google-ads/oauth-client-secret"
+  refresh_token_ref: "secretref://vault/dmt/dev/google-ads/refresh-token"
+  redirect_uri_ref: "config://oauth/google-ads/redirect-uri"
+  use_service_account: false
+  service_account_identity_ref: "config://identity/google-ads/workload-identity"
+  service_account_approval_ref: "config://approvals/google-ads/service-account"
+  rotation_runbook: "docs/runbooks/channel-token-rotation.md"
+account:
+  customer_id_ref: "config://accounts/dev/google_ads/customer-id"
+  login_customer_id_ref: "config://accounts/dev/google_ads/login-customer-id"
+  manager_account_required: true
+  test_account_required: true
+  enterprise_owned_account_required_for_service_account: true
+rate_limit:
+  requests_per_window_ref: "config://limits/google-ads/approved-rpm"
+  daily_operations_quota_ref: "config://limits/google-ads/approved-daily-quota"
+  window_seconds: 60
+retry_strategy:
+  max_attempts: 3
+  reconcile_before_retry: true
+  honor_retry_after: true
+  base_delay_seconds: 2
+  max_delay_seconds: 60
+timeouts:
+  connect_seconds: 5
+  read_seconds: 45
+  total_seconds: 60
+proxy:
+  required: true
+  url_ref: "secretref://vault/dmt/dev/egress/proxy-url"
+  allow_inbound: false
+query:
+  reporting_service: "GoogleAdsService"
+  query_language: "GAQL"
+  stream_mode: "SearchStream"
+mock:
+  deterministic: true
+  seed: 31015
+  fixture_set: "connectors/google_ads/fixtures/mock_success.yaml"
+  fault_fixture_set: "connectors/google_ads/fixtures/mock_faults.yaml"
+  fault_injection:
+    enabled: true
+    scenarios:
+      - "HTTP_429"
+      - "TIMEOUT_AFTER_EXTERNAL_CREATE"
+      - "AUTH_EXPIRED"
+      - "DEVELOPER_TOKEN_INVALID"
+      - "DUPLICATE_DELIVERY"
+      - "PARTIAL_MUTATE_SUCCESS"
+      - "PAGE_INTERRUPT"

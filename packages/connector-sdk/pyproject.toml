@@ -1,0 +1,37 @@
+[project]
+name = "dmt-connector-sdk"
+version = "0.1.0"
+description = "Unified channel Connector SDK (Phase 03 / Subphase 02): connector protocol, shared config validation, HTTP/Proxy/Clock/Secret abstractions, normalized errors with reconcile-before-retry semantics, side-effect-free dry-run and a deterministic Fake Connector. No real LinkedIn/Google adapter lives here."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+]
+
+# 本包还依赖同仓库的 infra-core、content-package 与 campaign-draft（本地路径安装）：
+#   python3 -m pip install -e "packages/infra-core" -e "packages/content-package" -e "packages/campaign-draft" -e "packages/connector-sdk[dev]"
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+connector_sdk = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src:tests"
+packages = ["connector_sdk"]
+strict = true

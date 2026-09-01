@@ -1,0 +1,39 @@
+[
+  {
+    "name": "dry_run_valid_pass",
+    "document": {
+      "schema_version": "1.0",
+      "proposal_id": "cpr_df0047238056a3565d8a409c",
+      "policy_version": "campaign-policy-1.0.0",
+      "valid": true,
+      "request_fingerprint": "sha256:33ea8f0bf82fd7773ace2a0c69f0e5717f5df80a7f5ee06b2d045bc60bd730af",
+      "errors": [],
+      "warnings": [],
+      "evaluated_at": "2026-09-14T00:00:00Z"
+    }
+  },
+  {
+    "name": "dry_run_intercepted_budget_and_currency",
+    "document": {
+      "schema_version": "1.0",
+      "proposal_id": "cpr_df0047238056a3565d8a409c",
+      "policy_version": "campaign-policy-1.0.0",
+      "valid": false,
+      "request_fingerprint": "sha256:33ea8f0bf82fd7773ace2a0c69f0e5717f5df80a7f5ee06b2d045bc60bd730af",
+      "errors": [
+        {
+          "code": "currency_not_allowed",
+          "message": "currency USD is not allowed by policy",
+          "field": "budget.currency"
+        },
+        {
+          "code": "budget_over_limit",
+          "message": "total budget exceeds the policy cap",
+          "field": "budget.total_limit_minor"
+        }
+      ],
+      "warnings": [],
+      "evaluated_at": "2026-09-14T00:00:00Z"
+    }
+  }
+]

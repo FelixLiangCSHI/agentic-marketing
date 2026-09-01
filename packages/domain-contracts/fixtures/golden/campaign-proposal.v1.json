@@ -1,0 +1,79 @@
+[
+  {
+    "name": "campaign_proposal_draft_from_approved_package",
+    "document": {
+      "schema_version": "1.0",
+      "proposal_id": "cpr_df0047238056a3565d8a409c",
+      "version": 1,
+      "status": "DRAFT",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0001",
+      "content_package_id": "acp_9a79b02baf55d7a1fb1d3735",
+      "content_package_hash": "sha256:74c9ca2f99e71c7b3a38ff57921e6d75c52f4de04476ff488f85bae96149c906",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "objective": "LEAD_GENERATION",
+      "campaign_name": "alpha-q4-lead-gen",
+      "budget": {
+        "currency": "USD",
+        "total_limit_minor": 100000,
+        "daily_limit_minor": 10000
+      },
+      "schedule": {
+        "timezone": "America/New_York",
+        "start_at": "2026-09-21T00:00:00Z",
+        "end_at": "2026-10-02T23:59:59Z"
+      },
+      "audience": { "markets": ["US"], "excluded_segments": [] },
+      "channel_variant_refs": ["cv-req-0001"],
+      "asset_hashes": [
+        "sha256:ae6c79d10f1fd410650790e63186ec108fa106325b52fbd88de21a43540e6f2c"
+      ],
+      "policy_version": "campaign-policy-1.0.0",
+      "workflow_version": "1.0.0",
+      "input_hash": "sha256:842b3ef4091422feb7805b0eac8b34d88160bb7be255698a75d94f03c8b304f6",
+      "warnings": [],
+      "created_by": "emp-campaign-op",
+      "created_at": "2026-09-14T00:00:00Z"
+    }
+  },
+  {
+    "name": "campaign_proposal_superseded_no_daily_limit",
+    "document": {
+      "schema_version": "1.0",
+      "proposal_id": "cpr_0123456789abcdef01234567",
+      "version": 2,
+      "status": "SUPERSEDED",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0002",
+      "content_package_id": "acp_9a79b02baf55d7a1fb1d3735",
+      "content_package_hash": "sha256:74c9ca2f99e71c7b3a38ff57921e6d75c52f4de04476ff488f85bae96149c906",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "objective": "BRAND_AWARENESS",
+      "campaign_name": "alpha-q4-awareness",
+      "budget": {
+        "currency": "EUR",
+        "total_limit_minor": 250000,
+        "daily_limit_minor": null
+      },
+      "schedule": {
+        "timezone": "Europe/Berlin",
+        "start_at": "2026-09-21T00:00:00Z",
+        "end_at": "2026-10-02T23:59:59Z"
+      },
+      "audience": {
+        "markets": ["US"],
+        "excluded_segments": ["competitors"]
+      },
+      "channel_variant_refs": ["cv-req-0001"],
+      "asset_hashes": [],
+      "policy_version": "campaign-policy-1.0.0",
+      "workflow_version": "1.0.0",
+      "input_hash": "sha256:842b3ef4091422feb7805b0eac8b34d88160bb7be255698a75d94f03c8b304f6",
+      "warnings": ["superseded by a newer draft"],
+      "created_by": "emp-campaign-op",
+      "created_at": "2026-09-14T00:00:00Z"
+    }
+  }
+]

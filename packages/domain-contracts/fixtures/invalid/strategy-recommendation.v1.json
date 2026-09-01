@@ -1,0 +1,447 @@
+[
+  {
+    "name": "status_not_draft",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "APPROVED",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "budget_adjustment",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [
+            {
+              "canonical_metric": "cpc",
+              "value": "2.5",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0002",
+                "raw-linkedin-0001"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            },
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 0.6,
+          "next_step": "create_activation_request",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "executed_true_forbidden",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "budget_adjustment",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [
+            {
+              "canonical_metric": "cpc",
+              "value": "2.5",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0002",
+                "raw-linkedin-0001"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            },
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 0.6,
+          "next_step": "create_activation_request",
+          "executed": true
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "empty_evidence",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "budget_adjustment",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 0.6,
+          "next_step": "create_activation_request",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "evidence_without_raw_ids",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "budget_adjustment",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [
+            {
+              "canonical_metric": "cpc",
+              "value": "2.5",
+              "source_raw_metric_ids": [],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            },
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 0.6,
+          "next_step": "create_activation_request",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "confidence_out_of_range",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "budget_adjustment",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [
+            {
+              "canonical_metric": "cpc",
+              "value": "2.5",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0002",
+                "raw-linkedin-0001"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            },
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 1.5,
+          "next_step": "create_activation_request",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "unknown_action_type",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "delete_campaign",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [
+            {
+              "canonical_metric": "cpc",
+              "value": "2.5",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0002",
+                "raw-linkedin-0001"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            },
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 0.6,
+          "next_step": "create_activation_request",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "direct_write_next_step",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "budget_adjustment",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [
+            {
+              "canonical_metric": "cpc",
+              "value": "2.5",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0002",
+                "raw-linkedin-0001"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            },
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 0.6,
+          "next_step": "apply_now",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "no_recommendations",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "unknown_field",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "budget_adjustment",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [
+            {
+              "canonical_metric": "cpc",
+              "value": "2.5",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0002",
+                "raw-linkedin-0001"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            },
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 0.6,
+          "next_step": "create_activation_request",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006",
+      "auto_execute": true
+    }
+  },
+  {
+    "name": "bad_strategy_id",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "strategy-1",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "budget_adjustment",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [
+            {
+              "canonical_metric": "cpc",
+              "value": "2.5",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0002",
+                "raw-linkedin-0001"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            },
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 0.6,
+          "next_step": "create_activation_request",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  }
+]

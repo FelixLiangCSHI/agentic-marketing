@@ -1,0 +1,26 @@
+# Deterministic mock fixtures for the LinkedIn connector (success paths).
+# Synthetic data only — no real account IDs, tokens or provider payloads.
+seed: 31014
+campaign:
+  external_id_prefix: "urn:li:sponsoredCampaign:"
+  initial_status: "DRAFT"
+metrics:
+  pages:
+    - cursor: null
+      next_cursor: "page-2"
+      rows:
+        - field: "impressions"
+          value: 12450
+          value_type: "integer"
+        - field: "clicks"
+          value: 0
+          value_type: "integer"
+    - cursor: "page-2"
+      next_cursor: null
+      rows:
+        - field: "costInLocalCurrency"
+          value: "413.27"
+          value_type: "decimal_string"
+        - field: "conversions"
+          value: null
+          value_type: "missing"
