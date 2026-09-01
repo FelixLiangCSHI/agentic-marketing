@@ -35,6 +35,8 @@
     "linkedin:typecheck": "cd connectors/linkedin && python3 -m mypy",
     "googleads:test": "cd connectors/google_ads && python3 -m pytest",
     "googleads:typecheck": "cd connectors/google_ads && python3 -m mypy",
+    "campaignactivation:test": "cd packages/campaign-activation && python3 -m pytest",
+    "campaignactivation:typecheck": "cd packages/campaign-activation && python3 -m mypy",
     "contract:test": "tsx --test src/tests/domain-contracts.test.ts src/tests/domain-contracts-adapter.test.ts && cd apps/api && python3 -m pytest tests/test_contract_fixtures.py",
     "eval:test": "python3 -m pytest evals",
     "scan:secrets": "python3 scripts/check_no_secrets.py",

@@ -28,6 +28,8 @@ _ALL_TABLES = (
     "approval.decisions",
     "approval.requests",
     "audit.events",
+    "campaign.compensation_tasks",
+    "campaign.connector_operations",
     "core.runs",
 )
 

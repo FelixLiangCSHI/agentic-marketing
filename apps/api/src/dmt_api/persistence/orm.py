@@ -266,3 +266,74 @@ class AuditEventRow(Base):
     run_id: Mapped[str | None] = mapped_column(Text, nullable=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+OPERATION_STATUSES = (
+    "INTENT",
+    "SUCCEEDED",
+    "UNKNOWN",
+    "RECONCILED",
+    "WAITING_RECONCILIATION",
+    "FAILED",
+    "COMPENSATION_PENDING",
+)
+COMPENSATION_STATUSES = ("PENDING_APPROVAL", "APPROVED", "EXECUTED", "REJECTED")
+
+
+class ConnectorOperationRow(Base):
+    __tablename__ = "connector_operations"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "channel",
+            "account_id",
+            "idempotency_key",
+            name="uq_campaign_operation_key",
+        ),
+        CheckConstraint(
+            _in_list("status", OPERATION_STATUSES),
+            name="ck_campaign_operation_status",
+        ),
+        CheckConstraint(
+            "input_hash ~ '^sha256:[0-9a-f]{64}$'",
+            name="ck_campaign_operation_input_hash",
+        ),
+        {"schema": "campaign"},
+    )
+
+    operation_pk: Mapped[str] = mapped_column(Text, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(Text, nullable=False)
+    channel: Mapped[str] = mapped_column(Text, nullable=False)
+    account_id: Mapped[str] = mapped_column(Text, nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
+    input_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    approval_id: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    external_object_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    operation_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class CompensationTaskRow(Base):
+    __tablename__ = "compensation_tasks"
+    __table_args__ = (
+        CheckConstraint(
+            _in_list("status", COMPENSATION_STATUSES),
+            name="ck_campaign_compensation_status",
+        ),
+        {"schema": "campaign"},
+    )
+
+    task_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(Text, nullable=False)
+    channel: Mapped[str] = mapped_column(Text, nullable=False)
+    account_id: Mapped[str] = mapped_column(Text, nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
+    created_object_ids: Mapped[list[Any]] = mapped_column(JSONB, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default="PENDING_APPROVAL"
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
