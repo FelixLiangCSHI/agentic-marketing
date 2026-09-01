@@ -17,6 +17,7 @@ from dmt_api.approval_service import (
     ApprovalBinding,
     ApprovalService,
     BindingMismatchError,
+    InvalidBindingError,
     RoleNotAllowedError,
 )
 from dmt_api.identity.roles import Role
@@ -49,6 +50,7 @@ def binding(**overrides: Any) -> ApprovalBinding:
         "valid_until": _LATER.isoformat(),
         "tool_name": "content.publish",
         "agent_type": "content",
+        "tool_call_id": "call-0001",
     }
     values.update(overrides)
     return ApprovalBinding(**values)
@@ -244,6 +246,24 @@ class TestTokenLifecycle:
             consume(migrated_engine, token, the_binding=changed)
         with pytest.raises(TokenConsumptionError):
             consume(migrated_engine, token)
+
+    def test_tool_call_id_change_invalidates_the_old_token(
+        self, migrated_engine: Engine
+    ) -> None:
+        _, token = self._approved_token(migrated_engine)
+        changed = binding(tool_call_id="call-9999")
+        with pytest.raises(BindingMismatchError):
+            consume(migrated_engine, token, the_binding=changed)
+        with pytest.raises(TokenConsumptionError):
+            consume(migrated_engine, token)
+
+    def test_binding_rejects_empty_tool_call_id_or_tool_name(self) -> None:
+        with pytest.raises(InvalidBindingError):
+            binding(tool_call_id="")
+        with pytest.raises(InvalidBindingError):
+            binding(tool_call_id="   ")
+        with pytest.raises(InvalidBindingError):
+            binding(tool_name="")
 
 
 class TestConcurrentConsumption:

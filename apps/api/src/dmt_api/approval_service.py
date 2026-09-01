@@ -28,6 +28,10 @@ class RoleNotAllowedError(Exception):
     """The identity's roles do not authorize this approval action."""
 
 
+class InvalidBindingError(Exception):
+    """The approval binding does not uniquely identify one tool call."""
+
+
 @dataclass(frozen=True, slots=True)
 class ApprovalBinding:
     """Everything a decision is bound to; hashed into the token contract."""
@@ -44,6 +48,15 @@ class ApprovalBinding:
     valid_until: str = ""
     tool_name: str = ""
     agent_type: str = ""
+    tool_call_id: str = ""
+
+    def __post_init__(self) -> None:
+        # An approval must be bound to exactly one tool call; empty
+        # identifiers would let one token authorize arbitrary calls.
+        if not self.tool_call_id.strip():
+            raise InvalidBindingError("binding requires a non-empty tool_call_id")
+        if not self.tool_name.strip():
+            raise InvalidBindingError("binding requires a non-empty tool_name")
 
     def canonical_hash(self) -> str:
         canonical = json.dumps(asdict(self), sort_keys=True, separators=(",", ":"))

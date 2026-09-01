@@ -56,8 +56,6 @@
 
 | # | 严重度 | 位置 | 问题 | 
 |---|---|---|---|
-| F1 | High | `apps/api/.../review_service.py:189` + `routes/reviews.py:203` | `decide()` / `content_changed()` 未按 `principal.tenant` 过滤，可跨租户审批 |
-| F2 | High | `apps/api/.../approval_service.py:31` | 审批绑定哈希允许空 `tool_call_id`/`tool_name`，未强绑定唯一工具调用 |
 | F3 | High | `packages/campaign-activation/.../worker.py:232-248` | 状态置 `SUCCEEDED` 与 outbox/audit 写入非原子，事件可能永久丢失 |
 | F4 | High | `packages/campaign-activation/.../worker.py:201-216` | 忽略 `reconcile_required`，可重试错误直接重试，可能重复外部副作用 |
 | F5 | High | `packages/campaign-metrics/normalize.py` + `report.py` | normalize/report 不校验输入行同属一个 tenant/account/campaign/时间窗；dedupe key 与 `metric_id` 缺 tenant/account |

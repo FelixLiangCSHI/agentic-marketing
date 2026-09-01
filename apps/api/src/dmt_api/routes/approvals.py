@@ -78,8 +78,9 @@ class BindingModel(BaseModel):
     budget_limit: str = Field(default="0", max_length=32)
     valid_from: str = Field(default="", max_length=64)
     valid_until: str = Field(default="", max_length=64)
-    tool_name: str = Field(default="", max_length=128)
+    tool_name: str = Field(min_length=1, max_length=128)
     agent_type: str = Field(default="", max_length=32)
+    tool_call_id: str = Field(min_length=1, max_length=128)
 
     def to_binding(self) -> ApprovalBinding:
         return ApprovalBinding(**self.model_dump())
