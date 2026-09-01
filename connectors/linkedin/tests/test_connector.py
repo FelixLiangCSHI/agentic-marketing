@@ -20,6 +20,7 @@ from connector_sdk import (
     AuthExpiredError,
     ConfigInvalidError,
     RateLimitedError,
+    SchemaInvalidError,
 )
 
 from linkedin_connector import (
@@ -53,7 +54,7 @@ def execute(connector: LinkedInAdvertisingConnector, key: str, request: dict[str
     return connector.execute(
         request,
         approval_token_ref="approval-token-ref-0001",
-        input_hash="sha256:" + "1" * 64,
+        input_hash=str(request["input_hash"]),
         idempotency_key=key,
     )
 
@@ -94,6 +95,28 @@ def test_execute_requires_approval_and_hash_and_key() -> None:
     with pytest.raises(ValueError):
         connector.execute(
             request, approval_token_ref="ref", input_hash="sha256:" + "1" * 64, idempotency_key=""
+        )
+    assert connector.transport.write_calls == 0
+
+
+def test_execute_rejects_mismatched_approved_hash_before_any_write() -> None:
+    connector = make_connector()
+    request = make_proposal().model_dump(mode="json")
+    with pytest.raises(SchemaInvalidError):
+        connector.execute(
+            request,
+            approval_token_ref="approval-token-ref-0001",
+            input_hash="sha256:" + "1" * 64,
+            idempotency_key="idem-li-tamper",
+        )
+    tampered = dict(request)
+    tampered["campaign_name"] = "tampered-name"
+    with pytest.raises(SchemaInvalidError):
+        connector.execute(
+            tampered,
+            approval_token_ref="approval-token-ref-0001",
+            input_hash=str(request["input_hash"]),
+            idempotency_key="idem-li-tamper",
         )
     assert connector.transport.write_calls == 0
 

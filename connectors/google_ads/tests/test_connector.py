@@ -19,6 +19,7 @@ from connector_sdk.errors import (
     AuthExpiredError,
     ProviderTimeoutError,
     RateLimitedError,
+    SchemaInvalidError,
 )
 
 from google_ads_connector import (
@@ -112,6 +113,27 @@ class TestWriteGates:
                 input_hash=proposal.input_hash,
                 idempotency_key="",
             )
+
+    def test_write_rejects_mismatched_approved_hash(self) -> None:
+        connector = make_connector()
+        proposal = make_proposal()
+        with pytest.raises(SchemaInvalidError):
+            connector.execute(
+                proposal.model_dump(mode="json"),
+                approval_token_ref=APPROVAL_REF,
+                input_hash="sha256:" + "1" * 64,
+                idempotency_key="idem-ga-tamper",
+            )
+        tampered = proposal.model_dump(mode="json")
+        tampered["campaign_name"] = "tampered-name"
+        with pytest.raises(SchemaInvalidError):
+            connector.execute(
+                tampered,
+                approval_token_ref=APPROVAL_REF,
+                input_hash=proposal.input_hash,
+                idempotency_key="idem-ga-tamper",
+            )
+        assert connector.transport.write_calls == 0
 
 
 class TestIdempotency:

@@ -24,7 +24,7 @@ from infra_core.secrets import SecretResolver
 
 from campaign_draft import CampaignProposalV1
 
-from connector_sdk import ChannelPolicy, DryRunResult, run_dry_run
+from connector_sdk import ChannelPolicy, DryRunResult, run_dry_run, verify_approved_input
 from connector_sdk.errors import (
     AuthExpiredError,
     ConnectorSdkError,
@@ -287,6 +287,9 @@ class GoogleAdsConnector:
                 )
 
         proposal = CampaignProposalV1.model_validate(dict(request), strict=False)
+        # Defence in depth: recompute the approved hash from the bound
+        # fields before any external write (never trust the caller).
+        verify_approved_input(proposal, input_hash=input_hash)
         mapped = map_campaign_mutate(proposal=proposal, config=self.config)
 
         try:
