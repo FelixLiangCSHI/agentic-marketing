@@ -83,6 +83,14 @@ ActivationStatus = Literal[
     "DRAFT", "PENDING_APPROVAL", "APPROVED", "DISPATCHED", "FAILED", "CANCELLED"
 ]
 PackageStatus = Literal["APPROVED", "SUPERSEDED", "REVOKED"]
+ProposalStatus = Literal["DRAFT", "SUPERSEDED", "INVALIDATED"]
+CampaignObjective = Literal[
+    "LEAD_GENERATION",
+    "BRAND_AWARENESS",
+    "WEBSITE_VISITS",
+    "ENGAGEMENT",
+    "CONVERSIONS",
+]
 Market = Literal["US", "CN"]
 MediaType = Literal["image"]
 ProductApprovalStatus = Literal["APPROVED", "DRAFT", "REVOKED"]
@@ -222,6 +230,66 @@ class ActivationRequestV1(_ContractModel):
     idempotency_key: IdempotencyKey
     status: ActivationStatus
     created_at: DateTimeUtc
+    # Phase 03 / Subphase 01 backward-compatible additions: bind the
+    # request to the approved package hash and the canonical input hash.
+    content_package_hash: Sha256Hash | None = None
+    input_hash: Sha256Hash | None = None
+    policy_version: Annotated[StrictStr, Field(min_length=1, max_length=64)] | None = None
+
+
+class ProposalBudgetV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    currency: Annotated[StrictStr, Field(pattern=r"^[A-Z]{3}$")]
+    total_limit_minor: Annotated[StrictInt, Field(ge=1)]
+    daily_limit_minor: Annotated[StrictInt, Field(ge=1)] | None
+
+
+class ProposalScheduleV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    timezone: Annotated[StrictStr, Field(min_length=1, max_length=64)]
+    start_at: DateTimeUtc
+    end_at: DateTimeUtc
+
+
+class ProposalAudienceV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    markets: Annotated[list[Market], Field(min_length=1)]
+    excluded_segments: list[Annotated[StrictStr, Field(min_length=1, max_length=200)]]
+
+
+class CampaignProposalV1(_ContractModel):
+    """Deterministic, hash-sealed campaign draft (Phase 03 / Subphase 01).
+
+    Mirrors ``campaign-proposal.v1.schema.json``. Money is integer minor
+    units only; the authoritative builder lives in
+    ``packages/campaign-draft``.
+    """
+
+    proposal_id: Annotated[StrictStr, Field(pattern=r"^cpr_[a-f0-9]{24}$")]
+    version: Annotated[StrictInt, Field(ge=1)]
+    status: ProposalStatus
+    tenant_id: Identifier
+    run_id: Identifier
+    content_package_id: Annotated[StrictStr, Field(pattern=r"^acp_[a-f0-9]{24}$")]
+    content_package_hash: Sha256Hash
+    channel: Channel
+    account_id: Identifier
+    objective: CampaignObjective
+    campaign_name: Annotated[StrictStr, Field(min_length=1, max_length=255)]
+    budget: ProposalBudgetV1
+    schedule: ProposalScheduleV1
+    audience: ProposalAudienceV1
+    channel_variant_refs: Annotated[list[Identifier], Field(min_length=1)]
+    asset_hashes: list[Sha256Hash]
+    policy_version: Annotated[StrictStr, Field(min_length=1, max_length=64)]
+    workflow_version: Annotated[StrictStr, Field(min_length=1, max_length=64)]
+    input_hash: Sha256Hash
+    warnings: list[Annotated[StrictStr, Field(min_length=1, max_length=500)]]
+    created_by: Identifier
+    created_at: DateTimeUtc
 
 
 class ConnectorErrorV1(_ContractModel):
@@ -345,6 +413,7 @@ CONTRACT_MODELS: dict[str, type[BaseModel]] = {
     "approval.v1": ApprovalV1,
     "tool-call.v1": ToolCallV1,
     "approved-content-package.v1": ApprovedContentPackageV1,
+    "campaign-proposal.v1": CampaignProposalV1,
     "activation-request.v1": ActivationRequestV1,
     "connector-error.v1": ConnectorErrorV1,
     "content-request.v1": ContentRequestV1,

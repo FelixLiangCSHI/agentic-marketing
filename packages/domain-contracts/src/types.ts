@@ -95,6 +95,22 @@ export type ActivationStatus = (typeof ACTIVATION_STATUSES)[number];
 export const PACKAGE_STATUSES = ["APPROVED", "SUPERSEDED", "REVOKED"] as const;
 export type PackageStatus = (typeof PACKAGE_STATUSES)[number];
 
+export const CAMPAIGN_OBJECTIVES = [
+  "LEAD_GENERATION",
+  "BRAND_AWARENESS",
+  "WEBSITE_VISITS",
+  "ENGAGEMENT",
+  "CONVERSIONS",
+] as const;
+export type CampaignObjective = (typeof CAMPAIGN_OBJECTIVES)[number];
+
+export const PROPOSAL_STATUSES = [
+  "DRAFT",
+  "SUPERSEDED",
+  "INVALIDATED",
+] as const;
+export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
+
 export interface RunV1 {
   schema_version: "1.0";
   run_id: string;
@@ -191,6 +207,39 @@ export interface ActivationRequestV1 {
   approval_id: string;
   idempotency_key: string;
   status: ActivationStatus;
+  created_at: string;
+  content_package_hash?: string | null;
+  input_hash?: string | null;
+  policy_version?: string | null;
+}
+
+export interface CampaignProposalV1 {
+  schema_version: "1.0";
+  proposal_id: string;
+  version: number;
+  status: ProposalStatus;
+  tenant_id: string;
+  run_id: string;
+  content_package_id: string;
+  content_package_hash: string;
+  channel: Channel;
+  account_id: string;
+  objective: CampaignObjective;
+  campaign_name: string;
+  budget: {
+    currency: string;
+    total_limit_minor: number;
+    daily_limit_minor: number | null;
+  };
+  schedule: { timezone: string; start_at: string; end_at: string };
+  audience: { markets: Market[]; excluded_segments: string[] };
+  channel_variant_refs: string[];
+  asset_hashes: string[];
+  policy_version: string;
+  workflow_version: string;
+  input_hash: string;
+  warnings: string[];
+  created_by: string;
   created_at: string;
 }
 

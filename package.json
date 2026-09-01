@@ -27,6 +27,8 @@
     "compliance:typecheck": "cd packages/compliance && python3 -m mypy",
     "package:test": "cd packages/content-package && python3 -m pytest",
     "package:typecheck": "cd packages/content-package && python3 -m mypy",
+    "campaigndraft:test": "cd packages/campaign-draft && python3 -m pytest",
+    "campaigndraft:typecheck": "cd packages/campaign-draft && python3 -m mypy",
     "contract:test": "tsx --test src/tests/domain-contracts.test.ts src/tests/domain-contracts-adapter.test.ts && cd apps/api && python3 -m pytest tests/test_contract_fixtures.py",
     "eval:test": "python3 -m pytest evals",
     "scan:secrets": "python3 scripts/check_no_secrets.py",

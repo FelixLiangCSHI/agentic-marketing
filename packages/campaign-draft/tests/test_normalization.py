@@ -50,7 +50,7 @@ def test_non_positive_or_non_finite_total_budget_rejected(value: Decimal) -> Non
 
 def test_float_budget_rejected() -> None:
     with pytest.raises(pydantic.ValidationError):
-        make_request(total_limit=1000.5)  # type: ignore[arg-type]
+        make_request(total_limit=1000.5)
 
 
 def test_sub_minor_unit_precision_rejected() -> None:

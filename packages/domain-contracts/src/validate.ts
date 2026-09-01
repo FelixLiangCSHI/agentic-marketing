@@ -3,6 +3,7 @@ import { Ajv, type ValidateFunction } from "ajv";
 import activationRequestSchema from "../schemas/activation-request.v1.schema.json";
 import approvalSchema from "../schemas/approval.v1.schema.json";
 import approvedContentPackageSchema from "../schemas/approved-content-package.v1.schema.json";
+import campaignProposalSchema from "../schemas/campaign-proposal.v1.schema.json";
 import connectorErrorSchema from "../schemas/connector-error.v1.schema.json";
 import contentRequestSchema from "../schemas/content-request.v1.schema.json";
 import productChangeSchema from "../schemas/product-change.v1.schema.json";
@@ -16,6 +17,7 @@ import type {
   ActivationRequestV1,
   ApprovalV1,
   ApprovedContentPackageV1,
+  CampaignProposalV1,
   ConnectorErrorV1,
   ContentRequestV1,
   ProductChangeV1,
@@ -34,6 +36,7 @@ export const CONTRACT_NAMES = [
   "approval.v1",
   "tool-call.v1",
   "approved-content-package.v1",
+  "campaign-proposal.v1",
   "activation-request.v1",
   "connector-error.v1",
   "content-request.v1",
@@ -51,6 +54,7 @@ const SCHEMAS: Record<ContractName, object> = {
   "approval.v1": approvalSchema,
   "tool-call.v1": toolCallSchema,
   "approved-content-package.v1": approvedContentPackageSchema,
+  "campaign-proposal.v1": campaignProposalSchema,
   "activation-request.v1": activationRequestSchema,
   "connector-error.v1": connectorErrorSchema,
   "content-request.v1": contentRequestSchema,
@@ -105,6 +109,7 @@ export interface ContractTypeByName {
   "approval.v1": ApprovalV1;
   "tool-call.v1": ToolCallV1;
   "approved-content-package.v1": ApprovedContentPackageV1;
+  "campaign-proposal.v1": CampaignProposalV1;
   "activation-request.v1": ActivationRequestV1;
   "connector-error.v1": ConnectorErrorV1;
   "content-request.v1": ContentRequestV1;

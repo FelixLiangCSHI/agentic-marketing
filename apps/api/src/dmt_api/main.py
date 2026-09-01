@@ -16,7 +16,7 @@ from dmt_api.identity.auth import ForbiddenError, UnauthenticatedError
 from dmt_api.identity.provider import IdentityProvider
 from dmt_api.middleware import RequestSizeLimitMiddleware
 from dmt_api.persistence.db import configure_database, dispose_database, initialize_database
-from dmt_api.routes import approvals, content, health, me, reviews, runs, tasks
+from dmt_api.routes import approvals, campaigns, content, health, me, reviews, runs, tasks
 from dmt_api.routes.approvals import PersistenceUnavailableError
 from dmt_api.settings import Settings
 
@@ -54,6 +54,7 @@ def create_app(
     app.include_router(approvals.router)
     app.include_router(content.router)
     app.include_router(reviews.router)
+    app.include_router(campaigns.router)
 
     @app.exception_handler(UnauthenticatedError)
     async def unauthenticated_handler(

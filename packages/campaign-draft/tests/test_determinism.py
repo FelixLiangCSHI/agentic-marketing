@@ -73,7 +73,7 @@ def test_status_is_always_draft_and_hashes_are_bound() -> None:
 def test_proposal_model_is_frozen_and_rejects_unknown_fields() -> None:
     proposal = _draft()
     with pytest.raises(pydantic.ValidationError):
-        proposal.status = "APPROVED"  # type: ignore[misc]
+        proposal.status = "SUPERSEDED"
     with pytest.raises(pydantic.ValidationError):
         CampaignProposalV1.model_validate(
             {**proposal.model_dump(mode="json"), "surprise": True}
