@@ -27,6 +27,10 @@ class DuplicateVersionError(PackageStoreError):
     """A different document tried to reuse an existing package id."""
 
 
+class InvalidPackageTransitionError(PackageStoreError):
+    """A package lifecycle transition is not allowed from its current state."""
+
+
 @dataclass(frozen=True)
 class LedgerEntry:
     package: ApprovedContentPackageV1
@@ -41,7 +45,7 @@ class _Lineage:
 
 
 def lineage_key(package: ApprovedContentPackageV1) -> str:
-    return f"{package.product_id}|{package.market}|{package.locale}"
+    return f"{package.tenant_id}|{package.product_id}|{package.market}|{package.locale}"
 
 
 class PackageStore:
@@ -92,6 +96,11 @@ class PackageStore:
         entry = self._status.get(package_id)
         if entry is None:
             raise UnknownPackageError(package_id)
+        if entry.status != "APPROVED":
+            raise InvalidPackageTransitionError(
+                f"only APPROVED packages can be revoked; "
+                f"{package_id} is {entry.status}"
+            )
         revoked = LedgerEntry(
             package=entry.package,
             status="REVOKED",

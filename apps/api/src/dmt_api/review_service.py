@@ -157,15 +157,23 @@ class ReviewService:
         self._cases[review_id] = case
         return case
 
-    def get(self, review_id: str) -> ReviewCase:
+    def get(self, review_id: str, *, tenant: str | None = None) -> ReviewCase:
         case = self._cases.get(review_id)
-        if case is None:
+        if case is None or (tenant is not None and case.tenant != tenant):
             raise ReviewNotFoundError(review_id)
         return case
 
-    def list_cases(self) -> tuple[ReviewCase, ...]:
+    def list_cases(self, *, tenant: str | None = None) -> tuple[ReviewCase, ...]:
         return tuple(
-            sorted(self._cases.values(), key=lambda c: c.created_at, reverse=True)
+            sorted(
+                (
+                    case
+                    for case in self._cases.values()
+                    if tenant is None or case.tenant == tenant
+                ),
+                key=lambda c: c.created_at,
+                reverse=True,
+            )
         )
 
     def decide(

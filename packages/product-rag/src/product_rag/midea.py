@@ -88,7 +88,7 @@ class MideaKnowledgeBaseIndex:
         raise KnowledgeBaseNotConfiguredError("not implemented")
 
     def delete_by_source(
-        self, source_id: str, source_version: str | None = None
+        self, source_id: str, *, tenant: str, source_version: str | None = None
     ) -> int:  # pragma: no cover
         raise KnowledgeBaseNotConfiguredError("not implemented")
 

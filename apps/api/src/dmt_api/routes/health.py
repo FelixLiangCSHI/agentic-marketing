@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from dmt_api.errors import error_response
+from dmt_api.persistence.db import get_engine
 from dmt_api.settings import Settings
 
 router = APIRouter(prefix="/api/health", tags=["health"])
@@ -47,10 +48,11 @@ def ready(request: Request) -> JSONResponse:
     database_url = getattr(request.app.state, "database_url", None)
     if database_url:
         try:
-            engine = create_engine(database_url)
+            engine = get_engine(request.app)
+            if engine is None:
+                raise SQLAlchemyError("database engine unavailable")
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-            engine.dispose()
             checks["database"] = "ok"
         except SQLAlchemyError:
             checks["database"] = "unavailable"

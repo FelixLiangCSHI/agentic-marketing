@@ -49,6 +49,29 @@ def _sha256(text: str) -> str:
     return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _chunk_id(document: ProductDocumentV1, ordinal: int) -> str:
+    version = document.source_version.replace(".", "-")
+    tenant = document.tenant
+    market = document.market.lower()
+    locale = document.locale.lower()
+    candidate = f"{tenant}_{market}_{locale}_{document.source_id}_v{version}_c{ordinal}"
+    if len(candidate) <= 64:
+        return candidate
+    digest = hashlib.sha256(
+        "|".join(
+            (
+                tenant,
+                market,
+                locale,
+                document.source_id,
+                document.source_version,
+                str(ordinal),
+            )
+        ).encode("utf-8")
+    ).hexdigest()[:32]
+    return f"chunk_{digest}_c{ordinal}"
+
+
 def chunk_document(
     document: ProductDocumentV1,
     *,
@@ -81,10 +104,7 @@ def chunk_document(
         chunk_text = text[char_start:char_end]
         chunks.append(
             Chunk(
-                chunk_id=(
-                    f"{document.source_id}_v"
-                    f"{document.source_version.replace('.', '-')}_c{ordinal}"
-                ),
+                chunk_id=_chunk_id(document, ordinal),
                 source_id=document.source_id,
                 source_version=document.source_version,
                 product_id=document.product_id,

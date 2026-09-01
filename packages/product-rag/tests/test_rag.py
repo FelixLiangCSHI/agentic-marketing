@@ -108,6 +108,20 @@ class TestChunking:
         assert chunk.expires_at == document.expires_at
         assert chunk.source_content_hash == document.content_hash
 
+    def test_chunk_ids_include_tenant_market_locale_scope(self) -> None:
+        content = "Short approved text."
+        tenant_a = _doc(content, tenant="tenant-cshi")
+        tenant_b = _doc(content, tenant="tenant-other")
+        market_b = _doc(content, tenant="tenant-cshi", market="CN", locale="zh-CN")
+
+        chunk_ids = {
+            chunk_document(tenant_a)[0].chunk_id,
+            chunk_document(tenant_b)[0].chunk_id,
+            chunk_document(market_b)[0].chunk_id,
+        }
+
+        assert len(chunk_ids) == 3
+
 
 class TestEmbedding:
     def test_metadata_is_complete(self, embedding: FakeEmbeddingProvider) -> None:
@@ -255,9 +269,47 @@ class TestRevocationPurge:
         )
         retriever = Retriever(index, embedding)
         assert retriever.retrieve("withdrawn superiority claim", filters)
-        deleted = index.delete_by_source("doc-alpha-live", "1.0.0")
+        deleted = index.delete_by_source(
+            "doc-alpha-live", tenant=TENANT, source_version="1.0.0"
+        )
         assert deleted == len(chunks)
         assert retriever.retrieve("withdrawn superiority claim", filters) == ()
+
+    def test_delete_by_source_is_tenant_scoped(
+        self, embedding: FakeEmbeddingProvider
+    ) -> None:
+        content = "Shared source id with tenant-specific content."
+        tenant_a = _doc(content, source_id="doc-shared", tenant=TENANT)
+        tenant_b = _doc(content, source_id="doc-shared", tenant="tenant-other")
+        index = InMemoryKnowledgeBaseIndex(embedding.metadata)
+        for doc in (tenant_a, tenant_b):
+            chunks = chunk_document(doc)
+            vectors = embedding.embed_texts([chunk.text for chunk in chunks])
+            index.upsert(
+                [
+                    IndexEntry(
+                        chunk=chunk,
+                        vector=vector,
+                        embedding=embedding.metadata,
+                        index_version=index.index_version,
+                    )
+                    for chunk, vector in zip(chunks, vectors)
+                ]
+            )
+
+        deleted = index.delete_by_source(
+            "doc-shared", tenant=TENANT, source_version="1.0.0"
+        )
+
+        assert deleted == len(chunk_document(tenant_a))
+        tenant_b_filters = RetrievalFilters(
+            tenant="tenant-other",
+            product_id="product-alpha",
+            market="US",
+            locale="en-US",
+            as_of=AS_OF,
+        )
+        assert Retriever(index, embedding).retrieve("tenant-specific", tenant_b_filters)
 
     def test_change_feed_revocations_purge_index(
         self,
@@ -302,6 +354,39 @@ class TestRevocationPurge:
         after = RetrievalFilters(**base, as_of="2026-08-01T00:00:00Z")  # type: ignore[arg-type]
         assert retriever.retrieve("legacy promotional summary", before)
         assert retriever.retrieve("legacy promotional summary", after) == ()
+
+    def test_fractional_expiry_after_as_of_remains_recallable(
+        self, embedding: FakeEmbeddingProvider
+    ) -> None:
+        content = "Fractional expiry product detail."
+        doc = _doc(
+            content,
+            source_id="doc-fractional-expiry",
+            expires_at="2026-06-01T00:00:00.5Z",
+        )
+        index = InMemoryKnowledgeBaseIndex(embedding.metadata)
+        chunks = chunk_document(doc)
+        vectors = embedding.embed_texts([chunk.text for chunk in chunks])
+        index.upsert(
+            [
+                IndexEntry(
+                    chunk=chunk,
+                    vector=vector,
+                    embedding=embedding.metadata,
+                    index_version=index.index_version,
+                )
+                for chunk, vector in zip(chunks, vectors)
+            ]
+        )
+        filters = RetrievalFilters(
+            tenant=TENANT,
+            product_id="product-alpha",
+            market="US",
+            locale="en-US",
+            as_of="2026-06-01T00:00:00Z",
+        )
+
+        assert Retriever(index, embedding).retrieve("fractional expiry", filters)
 
 
 class TestRetrievalIsolationAndCitations:

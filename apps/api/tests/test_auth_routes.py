@@ -59,6 +59,7 @@ class TestMe:
         assert response.status_code == 200
         body = response.json()
         assert body["subject"] == "alice"
+        assert body["tenant"] == "tenant-cshi"
         assert sorted(body["roles"]) == ["content_creator", "requester"]
 
     def test_me_never_echoes_the_session_token(

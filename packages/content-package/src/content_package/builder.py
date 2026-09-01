@@ -23,7 +23,7 @@ new approvals.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from content_workflow.contracts import CopyDraftV1, MediaAssetV1, model_hash
@@ -37,6 +37,7 @@ from content_package.contracts import (
     canonical_content_hash,
     package_id_for,
 )
+from content_package.temporal import parse_utc
 
 
 class PackageBuildError(Exception):
@@ -79,12 +80,14 @@ class PackageInputs:
     """Immutable snapshot handed to the builder (already reviewed)."""
 
     product_id: str
+    tenant_id: str
     market: str
     locale: str
     target_audience: tuple[str, ...]
     draft: CopyDraftV1
     media: tuple[MediaAssetV1, ...]
     asset_uris: tuple[str, ...]
+    asset_hashes: tuple[str, ...]
     requested_channels: tuple[str, ...]
     channel_variants: tuple[tuple[str, tuple[str, ...]], ...]
     compliance_result: ComplianceResultV1
@@ -113,6 +116,7 @@ class PackageBuilder:
 
         content_hash = canonical_content_hash(
             copy_hash=model_hash(inputs.draft),
+            tenant_id=inputs.tenant_id,
             claims=claims,
             asset_hashes=asset_hashes,
             versions=inputs.versions,
@@ -122,12 +126,16 @@ class PackageBuilder:
         self._check_approvals(inputs, content_hash=content_hash, as_of=as_of)
         self._check_expiry(inputs, as_of=as_of)
 
-        approved_at = max(approval.approved_at for approval in inputs.approvals)
+        approved_at = max(
+            inputs.approvals,
+            key=lambda approval: parse_utc(approval.approved_at),
+        ).approved_at
         return ApprovedContentPackageV1(
             schema_version="1.0",
             package_id=package_id_for(content_hash, version),
             version=version,
             status="APPROVED",
+            tenant_id=inputs.tenant_id,
             product_id=inputs.product_id,
             market=inputs.market,  # type: ignore[arg-type]
             locale=inputs.locale,
@@ -159,13 +167,17 @@ class PackageBuilder:
         self, inputs: PackageInputs, *, as_of: str
     ) -> tuple[ClaimBindingV1, ...]:
         bindings: list[ClaimBindingV1] = []
+        as_of_dt = parse_utc(as_of)
         for claim in inputs.draft.claims:
             citation = claim.citation
             if citation is None:
                 raise UncitedClaimError(
                     f"claim without citation cannot be packaged: {claim.text[:80]}"
                 )
-            if citation.expires_at is not None and citation.expires_at <= as_of:
+            if (
+                citation.expires_at is not None
+                and parse_utc(citation.expires_at) <= as_of_dt
+            ):
                 raise ExpiredInputError(
                     f"claim source {citation.source_id} expired at "
                     f"{citation.expires_at}"
@@ -191,12 +203,48 @@ class PackageBuilder:
                 )
 
     def _check_assets(self, inputs: PackageInputs) -> tuple[str, ...]:
-        hashes = tuple(asset.sha256 for asset in inputs.media)
-        if len(inputs.asset_uris) != len(hashes):
+        if len(inputs.asset_uris) != len(inputs.asset_hashes):
+            raise AssetTamperedError(
+                "asset URI count does not match provided asset hash count"
+            )
+        if len(inputs.asset_uris) != len(inputs.media):
             raise AssetTamperedError(
                 "asset URI count does not match reviewed media assets"
             )
-        return hashes
+
+        reviewed_by_uri: dict[str, str] = {}
+        for asset in inputs.media:
+            if asset.uri in reviewed_by_uri:
+                raise AssetTamperedError(
+                    f"duplicate reviewed media asset URI: {asset.uri}"
+                )
+            reviewed_by_uri[asset.uri] = asset.sha256
+
+        seen_uris: set[str] = set()
+        for asset_uri, asset_hash in zip(
+            inputs.asset_uris, inputs.asset_hashes, strict=True
+        ):
+            if asset_uri in seen_uris:
+                raise AssetTamperedError(f"duplicate package asset URI: {asset_uri}")
+            seen_uris.add(asset_uri)
+
+            reviewed_hash = reviewed_by_uri.get(asset_uri)
+            if reviewed_hash is None:
+                raise AssetTamperedError(
+                    f"asset URI was not reviewed: {asset_uri}"
+                )
+            if asset_hash != reviewed_hash:
+                raise AssetTamperedError(
+                    f"asset hash mismatch for {asset_uri}: expected "
+                    f"{reviewed_hash}, got {asset_hash}"
+                )
+
+        missing = set(reviewed_by_uri) - seen_uris
+        if missing:
+            raise AssetTamperedError(
+                f"reviewed media asset missing from package: {sorted(missing)[0]}"
+            )
+        return inputs.asset_hashes
 
     def _check_compliance(self, inputs: PackageInputs) -> None:
         result = inputs.compliance_result
@@ -208,6 +256,7 @@ class PackageBuilder:
     def _check_approvals(
         self, inputs: PackageInputs, *, content_hash: str, as_of: str
     ) -> None:
+        as_of_dt = parse_utc(as_of)
         tracks = {approval.track for approval in inputs.approvals}
         missing = _REQUIRED_TRACKS - tracks
         if missing:
@@ -225,13 +274,13 @@ class PackageBuilder:
                     f"{approval.track} approval is bound to a different "
                     "content version; re-review is required"
                 )
-            if approval.approved_at > as_of:
+            if parse_utc(approval.approved_at) > as_of_dt:
                 raise ExpiredInputError(
                     f"{approval.track} approval is dated in the future"
                 )
 
     def _check_expiry(self, inputs: PackageInputs, *, as_of: str) -> None:
-        if inputs.expires_at <= as_of:
+        if parse_utc(inputs.expires_at) <= parse_utc(as_of):
             raise ExpiredInputError("package expiry is not in the future")
 
 
@@ -257,20 +306,18 @@ def consumable(
     product_status: str = "APPROVED",
 ) -> tuple[bool, str]:
     """Campaign-side consumption gate: expired / revoked blocks usage."""
+    as_of_dt = parse_utc(as_of)
     status = ledger_status or package.status
     if status != "APPROVED":
         return False, f"package status is {status}"
-    if package.expires_at <= as_of:
+    if parse_utc(package.expires_at) <= as_of_dt:
         return False, "package is expired"
     if product_status != "APPROVED":
         return False, f"product is {product_status}"
     for claim in package.claims:
-        if claim.expires_at is not None and claim.expires_at <= as_of:
+        if claim.expires_at is not None and parse_utc(claim.expires_at) <= as_of_dt:
             return False, f"claim source {claim.source_id} is expired"
     if not verify_package_integrity(package):
         return False, "approvals are not bound to the package content hash"
     return True, "consumable"
 
-
-def sequence_hashes(media: Sequence[MediaAssetV1]) -> tuple[str, ...]:
-    return tuple(asset.sha256 for asset in media)

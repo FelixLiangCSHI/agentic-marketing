@@ -9,6 +9,7 @@ from content_workflow.contracts import (
     CopyClaimV1,
     CopyDraftV1,
     MediaAssetV1,
+    RetrievedFactV1,
 )
 from product_rag.citations import Citation
 
@@ -39,6 +40,7 @@ def make_citation(
 
 
 def make_brief(**overrides: object) -> ContentBriefV1:
+    citation = make_citation()
     base: dict[str, object] = {
         "request_id": "req-0001",
         "tenant": "tenant-cshi",
@@ -48,7 +50,13 @@ def make_brief(**overrides: object) -> ContentBriefV1:
         "objective": "Introduce Product Alpha dosing to physicians",
         "target_audience": ("physicians",),
         "tone": "professional",
-        "facts": (),
+        "facts": (
+            RetrievedFactV1(
+                text="Product Alpha is dosed once daily.",
+                score=1.0,
+                citation=citation,
+            ),
+        ),
         "banned_phrases": ("cure-all",),
         "required_disclosures": (DISCLOSURE,),
         "max_headline_chars": 150,
@@ -93,7 +101,7 @@ def make_draft(
     )
 
 
-def make_media() -> MediaAssetV1:
+def make_media(*, alt_text: str = "image draft") -> MediaAssetV1:
     digest = hashlib.sha256(b"asset").hexdigest()
     return MediaAssetV1(
         request_id="req-0001",
@@ -101,6 +109,6 @@ def make_media() -> MediaAssetV1:
         media_type="image",
         uri=f"fake://media/{digest}",
         sha256=f"sha256:{digest}",
-        alt_text="image draft",
+        alt_text=alt_text,
         generator_id="fake-media-v1",
     )

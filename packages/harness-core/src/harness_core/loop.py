@@ -166,7 +166,8 @@ class HarnessLoop:
                     )
                     continue
 
-                evidence.update(result.evidence)
+                if result.ok:
+                    evidence.update(result.evidence)
                 record(
                     "tool_result",
                     {

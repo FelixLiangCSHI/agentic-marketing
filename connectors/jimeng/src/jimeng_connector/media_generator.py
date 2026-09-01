@@ -38,7 +38,7 @@ class JimengMediaGenerator:
         return self._generator_id
 
     def generate_media(
-        self, brief: ContentBriefV1, media_type: MediaType
+        self, brief: ContentBriefV1, media_type: MediaType, *, attempt: int = 0
     ) -> MediaAssetV1:
         if media_type != "image":
             # 图片模型不得伪装其他媒体能力：类型化 BLOCKED，不虚构。
@@ -54,6 +54,7 @@ class JimengMediaGenerator:
             prompt=f"{brief.tone} {brief.objective}"[:8000],
             output_format="png",
             image_count=1,
+            attempt=attempt,
         )
         try:
             record = self._connector.execute(request)

@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from content_workflow import (
+    ContentBriefV1,
     ContentWorkflow,
     FakeContentModel,
     InvalidNodeOutputError,
@@ -68,6 +69,24 @@ def _request() -> WorkflowRequestV1:
             "requested_media_types": ("image",),
             "as_of": AS_OF,
         }
+    )
+
+
+def _brief() -> ContentBriefV1:
+    return ContentBriefV1(
+        request_id="req-0001",
+        tenant=TENANT,
+        market="US",
+        locale="en-US",
+        channel="linkedin",
+        objective="Introduce Product Alpha dosing to physicians",
+        target_audience=("physicians",),
+        tone="professional",
+        facts=(),
+        banned_phrases=(),
+        required_disclosures=(),
+        max_headline_chars=150,
+        skill_versions=(("brand", "v1"),),
     )
 
 
@@ -137,3 +156,13 @@ class TestWorkflowIntegration:
         brief_stub = None
         with pytest.raises(NotSupportedError):
             generator.generate_media(brief_stub, "video")  # type: ignore[arg-type]
+
+    def test_rework_attempt_creates_new_job_but_same_attempt_is_idempotent(self) -> None:
+        generator, _ = _media_generator()
+        first = generator.generate_media(_brief(), "image", attempt=0)
+        retry = generator.generate_media(_brief(), "image", attempt=0)
+        rework = generator.generate_media(_brief(), "image", attempt=1)
+
+        assert retry == first
+        assert rework.asset_id != first.asset_id
+        assert rework.sha256 != first.sha256

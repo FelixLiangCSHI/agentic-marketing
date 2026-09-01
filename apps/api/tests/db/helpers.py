@@ -16,7 +16,12 @@ def make_uow(engine: Engine) -> UnitOfWork:
     return UnitOfWork(create_session_factory(engine))
 
 
-def create_run(engine: Engine, run_id: str = "run-1", requester_id: str = "alice") -> Run:
+def create_run(
+    engine: Engine,
+    run_id: str = "run-1",
+    requester_id: str = "alice",
+    tenant: str = "tenant-a",
+) -> Run:
     with make_uow(engine) as uow:
         return uow.runs.create(
             run_id=run_id,
@@ -24,7 +29,7 @@ def create_run(engine: Engine, run_id: str = "run-1", requester_id: str = "alice
             agent_type="content",
             workflow_name="wf.demo",
             workflow_version="1.0.0",
-            tenant="tenant-a",
+            tenant=tenant,
             business_unit="bu-a",
             requester_id=requester_id,
             environment="local",

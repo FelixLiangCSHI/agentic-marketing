@@ -59,9 +59,11 @@ def test_full_flow_request_decide_and_deny_matrix(
     migrated_engine: Engine,
 ) -> None:
     create_run(migrated_engine)
-    alice = idp.issue_session("alice", "Alice", groups=("grp-content",))
-    mona = idp.issue_session("mona", "Mona", groups=("grp-medical",))
-    alice_reviewer = idp.issue_session("alice", "Alice", groups=("grp-medical",))
+    alice = idp.issue_session("alice", "Alice", tenant="tenant-a", groups=("grp-content",))
+    mona = idp.issue_session("mona", "Mona", tenant="tenant-a", groups=("grp-medical",))
+    alice_reviewer = idp.issue_session(
+        "alice", "Alice", tenant="tenant-a", groups=("grp-medical",)
+    )
 
     created = client.post("/api/v1/approvals", json=CREATE_BODY, headers=bearer(alice))
     assert created.status_code == 201
@@ -116,10 +118,10 @@ def test_list_approvals_is_scoped_to_requester_or_approver_role(
 ) -> None:
     create_run(migrated_engine, run_id="run-1", requester_id="alice")
     create_run(migrated_engine, run_id="run-2", requester_id="carl")
-    alice = idp.issue_session("alice", "Alice", groups=("grp-content",))
-    carl = idp.issue_session("carl", "Carl", groups=("grp-campaign",))
-    mona = idp.issue_session("mona", "Mona", groups=("grp-medical",))
-    auditor = idp.issue_session("audrey", "Audrey", groups=("grp-audit",))
+    alice = idp.issue_session("alice", "Alice", tenant="tenant-a", groups=("grp-content",))
+    carl = idp.issue_session("carl", "Carl", tenant="tenant-a", groups=("grp-campaign",))
+    mona = idp.issue_session("mona", "Mona", tenant="tenant-a", groups=("grp-medical",))
+    auditor = idp.issue_session("audrey", "Audrey", tenant="tenant-a", groups=("grp-audit",))
 
     content = client.post("/api/v1/approvals", json=CREATE_BODY, headers=bearer(alice))
     campaign_body = {
@@ -145,3 +147,31 @@ def test_list_approvals_is_scoped_to_requester_or_approver_role(
     run_listing = client.get("/api/v1/approvals?run_id=run-1", headers=bearer(auditor))
     assert run_listing.status_code == 200
     assert [item["approval_id"] for item in run_listing.json()] == [content_id]
+
+
+def test_list_approvals_is_tenant_scoped(
+    client: TestClient,
+    idp: FakeIdentityProvider,
+    migrated_engine: Engine,
+) -> None:
+    create_run(migrated_engine, run_id="run-1", requester_id="alice", tenant="tenant-a")
+    create_run(migrated_engine, run_id="run-2", requester_id="bob", tenant="tenant-b")
+    alice = idp.issue_session("alice", "Alice", tenant="tenant-a", groups=("grp-content",))
+    bob = idp.issue_session("bob", "Bob", tenant="tenant-b", groups=("grp-content",))
+    mona = idp.issue_session("mona", "Mona", tenant="tenant-a", groups=("grp-medical",))
+
+    tenant_a = client.post("/api/v1/approvals", json=CREATE_BODY, headers=bearer(alice))
+    tenant_b_body = {**CREATE_BODY, "run_id": "run-2"}
+    tenant_b = client.post("/api/v1/approvals", json=tenant_b_body, headers=bearer(bob))
+    assert tenant_a.status_code == 201
+    assert tenant_b.status_code == 201
+
+    listing = client.get("/api/v1/approvals", headers=bearer(mona))
+    assert listing.status_code == 200
+    assert [item["approval_id"] for item in listing.json()] == [
+        tenant_a.json()["approval"]["approval_id"]
+    ]
+
+    hidden = client.get("/api/v1/approvals?run_id=run-2", headers=bearer(mona))
+    assert hidden.status_code == 200
+    assert hidden.json() == []

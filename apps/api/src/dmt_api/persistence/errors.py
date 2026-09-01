@@ -15,6 +15,10 @@ class IllegalStateTransitionError(PersistenceError):
     """A state machine transition is not allowed."""
 
 
+class ApprovalExpiredError(PersistenceError):
+    """The approval request expired before it was decided."""
+
+
 class DependencyCycleError(PersistenceError):
     """Adding the dependency would create a cycle in the task DAG."""
 

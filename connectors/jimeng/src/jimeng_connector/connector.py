@@ -84,6 +84,7 @@ class JimengConnector:
             per_run_budget=self._runtime.per_run_budget,
             daily_budget=self._runtime.daily_budget,
             max_assets_per_run=self._runtime.max_assets_per_run,
+            clock=clock,
             alert_at_percent=config.cost_control.alert_at_percent,
         )
         self.worker = JimengMediaWorker(

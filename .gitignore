@@ -53,3 +53,6 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 *.egg-info/
+
+# agent temp files
+.agent-tmp/

@@ -1,8 +1,9 @@
 """Versioned job/asset contracts and the idempotency key scheme.
 
 ``idempotency_key = run_id_node_id_input_hash`` binds a media job to the
-workflow run and node that requested it, so retries and worker restarts
-can always reconcile instead of creating duplicate provider jobs.
+workflow run, node, attempt and inputs that requested it, so retries and
+worker restarts can always reconcile instead of creating duplicate provider
+jobs while explicit rework attempts can create fresh assets.
 """
 
 from __future__ import annotations
@@ -51,13 +52,14 @@ class MediaJobRequestV1(_Model):
     prompt: Annotated[StrictStr, Field(min_length=1, max_length=8000)]
     output_format: MediaFormat
     image_count: Annotated[StrictInt, Field(ge=1, le=8)]
+    attempt: Annotated[StrictInt, Field(ge=0)] = 0
 
     def input_hash(self) -> str:
         payload = json.dumps(self.model_dump(mode="json"), sort_keys=True)
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def idempotency_key(self) -> str:
-        """``run_id_node_id_input_hash`` per the parent-plan retry policy."""
+        """``run_id_node_id_input_hash``; the input hash includes ``attempt``."""
         return f"{self.run_id}_{self.node_id}_{self.input_hash()[:32]}"
 
 

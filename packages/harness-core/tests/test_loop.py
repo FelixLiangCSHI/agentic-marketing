@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from pydantic import BaseModel
+
+from harness_core.context import ArtifactRef
 from harness_core.goal import GoalSpec
 from harness_core.hooks import InMemoryAuditSink
 from harness_core.loop import AgentConfig, HarnessLoop
 from harness_core.model import FakeModel, StopAction, ToolCallAction
 from harness_core.permissions import PermissionGate
-from harness_core.tools import AgentType
+from harness_core.tools import AgentType, ToolRegistry, ToolResult, ToolSpec
 
-from tests.fakes import FailingAuditSink, FakeApprovalVerifier, build_registry
+from tests.fakes import FailingAuditSink, FakeApprovalVerifier, NoParams, build_registry
 
 
 def _config(
@@ -131,6 +134,53 @@ def test_malicious_params_yield_typed_error_not_execution() -> None:
     errors = [e for e in report.timeline if e.kind == "tool_error"]
     assert len(errors) == 1
     assert report.evidence == {}
+
+
+def test_failed_tool_evidence_does_not_satisfy_goal() -> None:
+    def failed_handler(params: BaseModel) -> ToolResult:
+        assert isinstance(params, NoParams)
+        ref = ArtifactRef(
+            uri="memory://artifacts/failed-draft",
+            sha256="sha256:" + "d" * 64,
+            summary="failed draft",
+        )
+        return ToolResult(ok=False, evidence={"draft": ref})
+
+    registry = ToolRegistry()
+    registry.register(
+        ToolSpec(
+            name="content.failed_draft",
+            version="1.0.0",
+            level="L1",
+            agent_allowlist=frozenset({"content"}),
+            params_model=NoParams,
+            handler=failed_handler,
+        )
+    )
+    registry.freeze()
+    gate = PermissionGate(registry, approval_verifier=FakeApprovalVerifier())
+    config = AgentConfig(
+        agent_type="content",
+        registry=registry,
+        gate=gate,
+        goal=GoalSpec(frozenset({"draft"})),
+    )
+    sink = InMemoryAuditSink()
+    model = FakeModel([ToolCallAction("content.failed_draft", {}), StopAction()])
+
+    report = HarnessLoop(audit_sink=sink).run(config, model, run_id="run-failed-evidence")
+
+    assert report.status == "FAILED"
+    assert "goal_evidence_missing: draft" == report.reason
+    assert report.evidence == {}
+    tool_results = [event for event in report.timeline if event.kind == "tool_result"]
+    assert len(tool_results) == 1
+    assert tool_results[0].detail == {
+        "tool_name": "content.failed_draft",
+        "ok": False,
+        "evidence_keys": ["draft"],
+    }
+    assert "after_tool" in [record.hook for record in sink.records]
 
 
 def test_stop_without_evidence_never_succeeds() -> None:

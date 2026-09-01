@@ -36,6 +36,7 @@ class TestHappyPath:
         package = BUILDER.build(make_inputs(), as_of=AS_OF)
         assert package.schema_version == "1.0"
         assert package.status == "APPROVED"
+        assert package.tenant_id == "tenant-cshi"
         assert package.package_id.startswith("acp_")
         assert package.version == 1
         assert package.content_hash.startswith("sha256:")
@@ -112,6 +113,36 @@ class TestExpiryAndRevocation:
         with pytest.raises(ExpiredInputError, match="expiry"):
             BUILDER.build(inputs, as_of=AS_OF)
 
+    def test_fractional_expiry_after_as_of_allows_build_and_consumption(self) -> None:
+        draft = make_draft(
+            claims=(make_claim(expires_at="2026-06-01T00:00:00.5Z"),)
+        )
+        inputs = make_inputs(draft=draft, expires_at="2026-06-01T00:00:00.5Z")
+
+        package = BUILDER.build(inputs, as_of="2026-06-01T00:00:00Z")
+
+        assert consumable(package, as_of="2026-06-01T00:00:00Z") == (
+            True,
+            "consumable",
+        )
+
+    def test_fractional_approval_after_as_of_is_future_dated(self) -> None:
+        base = make_inputs()
+        artifact_hash = base.approvals[0].artifact_hash
+        inputs = make_inputs(
+            approvals=(
+                make_approval(
+                    "medical",
+                    artifact_hash=artifact_hash,
+                    approved_at="2026-06-01T00:00:00.5Z",
+                ),
+                make_approval("marketing", artifact_hash=artifact_hash),
+            )
+        )
+
+        with pytest.raises(ExpiredInputError, match="future"):
+            BUILDER.build(inputs, as_of="2026-06-01T00:00:00Z")
+
     def test_revoked_product_blocks_build(self) -> None:
         inputs = make_inputs(product_status="REVOKED")
         with pytest.raises(RevokedInputError, match="product"):
@@ -160,8 +191,39 @@ class TestHashBinding:
 
     def test_asset_uri_count_mismatch_is_tampering(self) -> None:
         inputs = make_inputs(asset_uris=())
-        with pytest.raises(AssetTamperedError):
+        with pytest.raises(AssetTamperedError, match="count"):
             BUILDER.build(inputs, as_of=AS_OF)
+
+    def test_tampered_asset_hash_is_refused_before_stale_approval(self) -> None:
+        media = (make_media("hero"),)
+        inputs = make_inputs(
+            media=media,
+            asset_uris=(media[0].uri,),
+            asset_hashes=("sha256:" + "0" * 64,),
+        )
+        with pytest.raises(AssetTamperedError, match="hash mismatch"):
+            BUILDER.build(inputs, as_of=AS_OF)
+
+    def test_unknown_asset_uri_is_refused(self) -> None:
+        media = (make_media("hero"),)
+        inputs = make_inputs(
+            media=media,
+            asset_uris=("object://local/tenant-cshi/unknown.png",),
+            asset_hashes=(media[0].sha256,),
+        )
+        with pytest.raises(AssetTamperedError, match="was not reviewed"):
+            BUILDER.build(inputs, as_of=AS_OF)
+
+    def test_matching_asset_uri_and_hash_pass(self) -> None:
+        media = (make_media("hero"), make_media("detail"))
+        inputs = make_inputs(
+            media=media,
+            asset_uris=(media[1].uri, media[0].uri),
+            asset_hashes=(media[1].sha256, media[0].sha256),
+        )
+        package = BUILDER.build(inputs, as_of=AS_OF)
+        assert package.asset_uris == (media[1].uri, media[0].uri)
+        assert package.asset_hashes == (media[1].sha256, media[0].sha256)
 
 
 class TestChannelVariants:
@@ -191,5 +253,11 @@ class TestDuplicateBuild:
         first = BUILDER.build(make_inputs(), as_of=AS_OF)
         changed_draft = make_draft(headline="A different headline")
         second = BUILDER.build(make_inputs(draft=changed_draft), as_of=AS_OF)
+        assert first.content_hash != second.content_hash
+        assert first.package_id != second.package_id
+
+    def test_tenant_is_bound_to_content_hash(self) -> None:
+        first = BUILDER.build(make_inputs(tenant_id="tenant-cshi"), as_of=AS_OF)
+        second = BUILDER.build(make_inputs(tenant_id="tenant-other"), as_of=AS_OF)
         assert first.content_hash != second.content_hash
         assert first.package_id != second.package_id

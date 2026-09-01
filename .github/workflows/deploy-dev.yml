@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'FelixLiangCSHI/agentic-marketing' && github.event.repository.fork == false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ inputs.git_ref }}
       - name: Guard — 普通 PR 不得到达此处

@@ -1,16 +1,11 @@
+import {
+  ControlApiShapeError,
+  parseApprovalViews,
+  type ApprovalView,
+} from "@/server/control-api-views";
 import styles from "./approvals.module.css";
 
 export const dynamic = "force-dynamic";
-
-interface ApprovalView {
-  approval_id: string;
-  run_id: string;
-  approval_type: string;
-  requester_id: string;
-  status: string;
-  requested_at: string;
-  expires_at: string;
-}
 
 interface InboxState {
   kind: "unconfigured" | "denied" | "error" | "ok";
@@ -40,8 +35,11 @@ async function loadInbox(): Promise<InboxState> {
     if (!response.ok) {
       return { kind: "error", message: `Control API 返回 ${response.status}` };
     }
-    return { kind: "ok", approvals: (await response.json()) as ApprovalView[] };
-  } catch {
+    return { kind: "ok", approvals: parseApprovalViews(await response.json()) };
+  } catch (error) {
+    if (error instanceof ControlApiShapeError) {
+      return { kind: "error", message: `Control API 响应格式无效：${error.message}` };
+    }
     return { kind: "error", message: "无法连接 Control API" };
   }
 }

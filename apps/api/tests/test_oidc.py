@@ -55,6 +55,7 @@ def claims(**overrides: Any) -> dict[str, Any]:
         "aud": CONFIG.audience,
         "sub": "alice",
         "name": "Alice",
+        "tenant": "tenant-cshi",
         "exp": int((_NOW + timedelta(minutes=5)).timestamp()),
         "nbf": int((_NOW - timedelta(minutes=5)).timestamp()),
         "iat": int((_NOW - timedelta(minutes=1)).timestamp()),
@@ -82,7 +83,15 @@ class TestOidcValidation:
         provider, _ = make_provider({"tok-good": claims()})
         principal = provider.authenticate("tok-good")
         assert principal.subject == "alice"
+        assert principal.tenant == "tenant-cshi"
         assert principal.roles == frozenset({Role.CONTENT_CREATOR})
+
+    def test_missing_tenant_is_rejected(self) -> None:
+        payload = claims()
+        del payload["tenant"]
+        provider, _verifier = make_provider({"tok": payload})
+        with pytest.raises(AuthenticationError):
+            provider.authenticate("tok")
 
     def test_bad_signature_is_rejected(self) -> None:
         provider, _verifier = make_provider({})
@@ -170,6 +179,42 @@ class TestLoginFlow:
         verifier.add("tok", claims(nonce="different-nonce"))
         with pytest.raises(AuthenticationError):
             provider.complete_login(state=state, id_token="tok")
+
+    def test_expired_login_state_is_rejected_and_evicted(self) -> None:
+        now = _NOW
+        verifier = ScriptedVerifier({})
+        provider = EnterpriseIdentityProvider(
+            config=OidcConfig(
+                issuer=CONFIG.issuer,
+                audience=CONFIG.audience,
+                nonce_ttl_seconds=60,
+            ),
+            signature_verifier=verifier,
+            group_mapping=GROUP_MAPPING,
+            clock=lambda: now,
+        )
+        state, nonce = provider.begin_login()
+        verifier.add("tok", claims(nonce=nonce))
+        now = _NOW + timedelta(seconds=61)
+
+        with pytest.raises(AuthenticationError):
+            provider.complete_login(state=state, id_token="tok")
+        assert state not in provider._pending_nonces
+
+    def test_pending_login_cap_rejects_new_login(self) -> None:
+        provider = EnterpriseIdentityProvider(
+            config=OidcConfig(
+                issuer=CONFIG.issuer,
+                audience=CONFIG.audience,
+                max_pending_nonces=1,
+            ),
+            signature_verifier=ScriptedVerifier({}),
+            group_mapping=GROUP_MAPPING,
+            clock=lambda: _NOW,
+        )
+        provider.begin_login()
+        with pytest.raises(AuthenticationError):
+            provider.begin_login()
 
 
 def test_unconfigured_provider_is_blocked_not_faked() -> None:

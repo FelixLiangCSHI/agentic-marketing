@@ -7,11 +7,13 @@ from __future__ import annotations
 
 import json
 import random
-from datetime import datetime, timezone
+import threading
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
+import deepseek_connector.connector as connector_module
 from deepseek_connector import (
     AuthenticationError,
     BudgetExceededError,
@@ -35,6 +37,7 @@ from deepseek_connector import (
     TransportTimeout,
     load_config,
 )
+from deepseek_connector.governance import BudgetTracker
 from deepseek_connector.transport import BRIEF_MARKER, FACTS_MARKER, MockScenario
 from infra_core.clock import FakeClock
 
@@ -79,13 +82,14 @@ def _connector(
     transport: object,
     *,
     env: dict[str, str] | None = None,
+    clock: FakeClock | None = None,
 ) -> DeepSeekConnector:
     sleeps: list[int] = []
     connector = DeepSeekConnector(
         load_config(CONFIG_PATH),
         env=env or {},
         transport=transport,  # type: ignore[arg-type]
-        clock=FakeClock(datetime(2026, 8, 28, tzinfo=timezone.utc)),
+        clock=clock or FakeClock(datetime(2026, 8, 28, tzinfo=timezone.utc)),
         sleeper=sleeps.append,
         rng=random.Random(7),
     )
@@ -187,6 +191,55 @@ class TestRetries:
         assert len(transport.sent_payloads) == 2
         assert transport.sent_payloads[0] == transport.sent_payloads[1]
 
+    def test_retry_after_is_clamped_to_max_delay(self) -> None:
+        transport = ScriptedTransport([self._resp(429, {"Retry-After": "86400"}), self._ok()])
+        connector = _connector(transport)
+        connector.execute(_request(), trace_id="t-429-clamp")
+        assert connector.test_sleeps == [8000]  # type: ignore[attr-defined]
+
+    def test_default_sleeper_uses_time_sleep(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        slept: list[float] = []
+        monkeypatch.setattr(connector_module.time, "sleep", slept.append)
+        connector = DeepSeekConnector(
+            load_config(CONFIG_PATH),
+            env={},
+            transport=ScriptedTransport([self._resp(429, {"Retry-After": "1"}), self._ok()]),
+            clock=FakeClock(datetime(2026, 8, 28, tzinfo=timezone.utc)),
+            rng=random.Random(7),
+        )
+        connector.execute(_request(), trace_id="t-default-sleeper")
+        assert slept == [1.0]
+
+    def test_real_mode_default_rng_uses_entropy(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        random_args: list[object] = []
+        original_random = connector_module.random.Random
+
+        def spy_random(seed: object = None) -> random.Random:
+            random_args.append(seed)
+            return original_random(seed)
+
+        monkeypatch.setattr(connector_module.random, "Random", spy_random)
+        config = load_config(CONFIG_PATH).model_copy(update={"mode": "sandbox", "enabled": True})
+        DeepSeekConnector(
+            config,
+            env={
+                "DEEPSEEK_API_ENDPOINT": "https://api.deepseek.example",
+                "DEEPSEEK_API_KEY_SECRET_REF": "secretref://vault/dev/deepseek-api-key",
+                "DEEPSEEK_CHAT_MODEL": "deepseek-chat",
+                "DEEPSEEK_MAX_OUTPUT_TOKENS": "2048",
+                "DEEPSEEK_RPM": "30",
+                "DEEPSEEK_TPM": "60000",
+                "DEEPSEEK_MAX_CONCURRENCY": "2",
+                "DEEPSEEK_PER_RUN_BUDGET": "1.0",
+                "DEEPSEEK_DAILY_BUDGET": "5.0",
+                "DMT_HTTPS_PROXY": "http://proxy.internal:3128",
+                "DEEPSEEK_ALLOWED_FQDNS": "api.deepseek.example",
+            },
+            transport=ScriptedTransport([self._ok()]),
+            real_mode_approval_ref="approval://dev/deepseek/1",
+        )
+        assert random_args == [None]
+
     def test_5xx_bounded_exponential_backoff_then_typed_exhaustion(self) -> None:
         transport = ScriptedTransport([self._resp(503)] * 4)
         connector = _connector(transport)
@@ -243,6 +296,38 @@ class TestGovernance:
         connector = _connector(_mock())
         connector.budget.record(connector.budget.per_run_budget * 0.85)
         assert any("per_run" in alert for alert in connector.budget.alerts)
+
+    def test_budget_record_is_thread_safe(self) -> None:
+        budget = BudgetTracker(per_run_budget=100.0, daily_budget=100.0)
+
+        def record_many() -> None:
+            for _ in range(1000):
+                budget.record(0.001)
+
+        threads = [threading.Thread(target=record_many) for _ in range(20)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert budget.run_spent == 20.0
+        assert budget.daily_spent == 20.0
+
+    def test_daily_budget_rolls_over_on_utc_date_change(self) -> None:
+        clock = FakeClock(datetime(2026, 8, 28, 23, 59, tzinfo=timezone.utc))
+        connector = _connector(
+            _mock(),
+            env={"DEEPSEEK_PER_RUN_BUDGET": "10.0", "DEEPSEEK_DAILY_BUDGET": "1.0"},
+            clock=clock,
+        )
+        connector.budget.record(0.9)
+        with pytest.raises(BudgetExceededError, match="daily budget"):
+            connector.budget.check_before_request(0.2)
+
+        clock.advance(timedelta(minutes=2))
+        connector.budget.check_before_request(0.2)
+        connector.budget.record(0.2)
+        assert connector.budget.daily_spent == 0.2
 
     def test_rpm_limit_hits_local_queue(self) -> None:
         connector = _connector(_mock(), env={"DEEPSEEK_RPM": "1"})

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -12,8 +14,11 @@ from dmt_api import __version__
 from dmt_api.errors import error_response
 from dmt_api.identity.auth import ForbiddenError, UnauthenticatedError
 from dmt_api.identity.provider import IdentityProvider
+from dmt_api.middleware import RequestSizeLimitMiddleware
+from dmt_api.persistence.db import configure_database, dispose_database, initialize_database
 from dmt_api.routes import approvals, content, health, me, reviews, runs, tasks
 from dmt_api.routes.approvals import PersistenceUnavailableError
+from dmt_api.settings import Settings
 
 
 def create_app(
@@ -21,14 +26,27 @@ def create_app(
     identity_provider: IdentityProvider | None = None,
     database_url: str | None = None,
 ) -> FastAPI:
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        initialize_database(app)
+        try:
+            yield
+        finally:
+            dispose_database(app)
+
+    settings = Settings.from_env()
     app = FastAPI(
         title="Agentic Marketing Control API",
         version=__version__,
         docs_url=None,
         redoc_url=None,
+        lifespan=lifespan,
+    )
+    app.add_middleware(
+        RequestSizeLimitMiddleware, max_body_bytes=settings.request_max_body_bytes
     )
     app.state.identity_provider = identity_provider
-    app.state.database_url = database_url or os.environ.get("DMT_DATABASE_URL")
+    configure_database(app, database_url or os.environ.get("DMT_DATABASE_URL"))
     app.include_router(health.router)
     app.include_router(me.router)
     app.include_router(runs.router)

@@ -20,10 +20,12 @@ from harness_core.goal import check_goal
 from content_workflow import (
     CONTENT_GOAL_SPEC,
     CONTENT_WORKFLOW_VERSION,
+    ContentModel,
     ContentWorkflow,
     FakeContentModel,
     FakeMediaGenerator,
     InvalidNodeOutputError,
+    MediaGenerator,
     ReviewDecisionV1,
     SkillRegistry,
     WorkflowCancelledError,
@@ -31,6 +33,13 @@ from content_workflow import (
     WorkflowSnapshot,
     WorkflowStateError,
     build_goal_evidence,
+)
+from content_workflow.contracts import (
+    ContentBriefV1,
+    CopyClaimV1,
+    CopyDraftV1,
+    MediaAssetV1,
+    MediaType,
 )
 from product_rag import (
     FakeEmbeddingProvider,
@@ -75,12 +84,71 @@ def _request(**overrides: object) -> WorkflowRequestV1:
     return WorkflowRequestV1.model_validate(base)
 
 
-def _workflow(model: FakeContentModel | None = None) -> ContentWorkflow:
+class FabricatedCitationModel:
+    model_id = "fabricated-citation-model"
+
+    def generate_copy(self, brief: ContentBriefV1) -> CopyDraftV1:
+        fact = brief.facts[0]
+        citation = fact.citation.model_copy(
+            update={
+                "source_id": "doc-fabricated-pi",
+                "source_content_hash": "sha256:" + ("0" * 64),
+                "chunk_hash": "sha256:" + ("1" * 64),
+            }
+        )
+        claim = CopyClaimV1(text=fact.text, citation=citation)
+        return CopyDraftV1(
+            request_id=brief.request_id,
+            channel=brief.channel,
+            headline="Grounded-looking copy",
+            body=claim.text,
+            claims=(claim,),
+            disclosures=brief.required_disclosures,
+            model_id=self.model_id,
+        )
+
+
+class DisclosureBannedPhraseModel:
+    model_id = "bad-disclosure-model"
+
+    def generate_copy(self, brief: ContentBriefV1) -> CopyDraftV1:
+        claim = CopyClaimV1(text=brief.facts[0].text, citation=brief.facts[0].citation)
+        return CopyDraftV1(
+            request_id=brief.request_id,
+            channel=brief.channel,
+            headline="Clean headline",
+            body=claim.text,
+            claims=(claim,),
+            disclosures=("This is a cure-all disclosure.",),
+            model_id=self.model_id,
+        )
+
+
+class BannedAltTextMediaGenerator(FakeMediaGenerator):
+    generator_id = "bad-alt-media-v1"
+
+    def generate_media(
+        self, brief: ContentBriefV1, media_type: MediaType, *, attempt: int = 0
+    ) -> MediaAssetV1:
+        asset = super().generate_media(brief, media_type, attempt=attempt)
+        return asset.model_copy(update={"alt_text": "A cure-all image."})
+
+
+def _workflow(
+    model: ContentModel | None = None,
+    *,
+    media_generator: MediaGenerator | None = None,
+    max_rework: int | None = None,
+) -> ContentWorkflow:
+    kwargs: dict[str, object] = {}
+    if max_rework is not None:
+        kwargs["max_rework"] = max_rework
     return ContentWorkflow(
         skills=SkillRegistry.from_fixture_file(SKILLS),
         retriever=_retriever(),
         model=model or FakeContentModel(),
-        media_generator=FakeMediaGenerator(),
+        media_generator=media_generator or FakeMediaGenerator(),
+        **kwargs,
     )
 
 
@@ -228,7 +296,7 @@ class TestTargetedRework:
 
     def test_asset_issue_reruns_only_media_and_compliance(self) -> None:
         workflow = _workflow()
-        workflow.start(_request(), thread_id="t-assetfix")
+        initial = workflow.start(_request(), thread_id="t-assetfix")
         reworked = workflow.resume("t-assetfix", _reject("asset_issue"))
         counts = _node_counts(reworked)
         assert counts["generate_media"] == 2
@@ -236,6 +304,8 @@ class TestTargetedRework:
         assert counts["generate_copy"] == 1
         assert counts["retrieve_product_facts"] == 1
         assert counts["build_brief"] == 1
+        assert initial.media is not None and reworked.media is not None
+        assert reworked.media[0].sha256 != initial.media[0].sha256
 
     def test_fact_issue_reruns_full_downstream(self) -> None:
         workflow = _workflow()
@@ -256,6 +326,16 @@ class TestTargetedRework:
         assert final.status == "REJECTED"
         assert final.package is None
 
+    def test_rework_limit_terminates_in_rejected_state(self) -> None:
+        workflow = _workflow(max_rework=1)
+        workflow.start(_request(), thread_id="t-rework-limit")
+        reworked = workflow.resume("t-rework-limit", _reject("copy_issue"))
+        assert reworked.status == "AWAITING_REVIEW"
+        final = workflow.resume("t-rework-limit", _reject("copy_issue"))
+        assert final.status == "REJECTED"
+        assert final.status_reason == "max_rework_exceeded"
+        assert final.rework_count == 1
+
 
 class TestTypedFailuresAndBlocking:
     def test_uncited_claim_is_flagged_and_blocked(self) -> None:
@@ -268,6 +348,28 @@ class TestTypedFailuresAndBlocking:
         rules = {v.rule for v in snapshot.compliance.violations}
         assert "claim_citation_required" in rules
         assert snapshot.package is None
+
+    def test_fabricated_citation_is_flagged_and_blocked(self) -> None:
+        workflow = _workflow(FabricatedCitationModel())
+        snapshot = workflow.start(_request(), thread_id="t-fabricated-citation")
+        assert snapshot.status == "BLOCKED"
+        assert snapshot.compliance is not None
+        rules = {v.rule for v in snapshot.compliance.violations}
+        assert "R-CITE-011" in rules
+
+    def test_banned_phrase_in_disclosure_is_flagged_and_blocked(self) -> None:
+        workflow = _workflow(DisclosureBannedPhraseModel())
+        snapshot = workflow.start(_request(), thread_id="t-bad-disclosure")
+        assert snapshot.status == "BLOCKED"
+        assert snapshot.compliance is not None
+        assert "banned_phrase" in {v.rule for v in snapshot.compliance.violations}
+
+    def test_banned_phrase_in_media_alt_text_is_flagged_and_blocked(self) -> None:
+        workflow = _workflow(media_generator=BannedAltTextMediaGenerator())
+        snapshot = workflow.start(_request(), thread_id="t-bad-alt")
+        assert snapshot.status == "BLOCKED"
+        assert snapshot.compliance is not None
+        assert "banned_phrase" in {v.rule for v in snapshot.compliance.violations}
 
     def test_invalid_model_output_fails_typed_not_faked(self) -> None:
         workflow = _workflow(FakeContentModel(mode="invalid_output"))
