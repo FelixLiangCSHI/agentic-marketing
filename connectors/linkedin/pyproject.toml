@@ -1,0 +1,40 @@
+[project]
+name = "linkedin-connector"
+version = "0.1.0"
+description = "LinkedIn Advertising Connector (Phase 03 / Subphase 03): config-injected API version, 3-legged OAuth adapter (references only), official-field mappers with request/response hashes, cursor-paged metrics and a deterministic mock transport. Real OAuth and test-account writes run ONLY in protected DEV/SIT jobs; this repo ships mock/contract code exclusively."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+  "PyYAML>=6.0",
+  # Local path dependencies (installed with `pip install -e` from repo root):
+  #   packages/infra-core     -> SecretResolver, Clock
+  #   packages/content-package, packages/campaign-draft -> proposal contracts
+  #   packages/connector-sdk  -> Connector protocol, dry-run, errors, retry
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+  "types-PyYAML",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+linkedin_connector = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src:tests"
+packages = ["linkedin_connector"]
+strict = true
