@@ -154,6 +154,40 @@ class TestUnknownOutcome:
         assert harness.connector.external_write_calls == 1  # never recreated
         assert any(e["event"] == "activation_reconciled" for e in harness.audit.events)
 
+    def test_reconcile_required_error_parks_as_unknown_not_blind_retry(self) -> None:
+        from connector_sdk.errors import ProviderTimeoutError
+
+        class TimeoutOnceConnector:
+            def __init__(self, inner: Any) -> None:
+                self.inner = inner
+                self.calls = 0
+
+            def __getattr__(self, name: str) -> Any:
+                return getattr(self.inner, name)
+
+            def execute(self, request: Mapping[str, Any], **kwargs: Any) -> ExternalWriteResult:
+                self.calls += 1
+                if self.calls == 1:
+                    raise ProviderTimeoutError("socket timeout; side effects unknown")
+                return self.inner.execute(request, **kwargs)
+
+        harness = Harness()
+        wrapped = TimeoutOnceConnector(harness.connector)
+        harness.worker.connectors = {CHANNEL: wrapped}
+        harness.enqueue()
+        first = harness.worker.run_once()
+        assert first is not None and first.disposition == "retry"
+        record = harness.store.get(make_key())
+        # reconcile_required errors must park the record as UNKNOWN so the
+        # next delivery reconciles first instead of retrying blindly.
+        assert record is not None and record.status == "UNKNOWN"
+
+        second = harness.worker.run_once()  # redelivery: reconcile path
+        assert second is not None and second.disposition == "ack"
+        record = harness.store.get(make_key())
+        assert record is not None and record.status in {"SUCCEEDED", "RECONCILED"}
+        assert harness.connector.external_write_calls == 1
+
     def test_confirmed_not_created_retries_same_key_once(self) -> None:
         class NotFoundThenCreateConnector:
             def __init__(self, inner: Any) -> None:
@@ -285,21 +319,27 @@ class TestFailClosed:
         assert harness.connector.external_write_calls == 0
 
     def test_audit_failure_after_write_does_not_lose_result(self) -> None:
-        # Intent audit succeeds, result audit fails: the operation record and
-        # outbox retain the external ID (repair via outbox, never re-create).
+        # Result outbox/audit precede the SUCCEEDED transition: an audit
+        # outage retries the delivery instead of losing the event, and the
+        # replay is deduplicated by the connector ledger (no second write).
         harness = Harness()
         harness.audit.fail_after = 1  # intent event succeeds, next fails
         harness.enqueue()
-        with pytest.raises(AuditWriteError):
-            harness.worker.run_once()
-        record = harness.store.get(make_key())
-        assert record is not None
-        assert record.external_object_id is not None
+        result = harness.worker.run_once()
+        assert result is not None and result.disposition == "retry"
         assert harness.connector.external_write_calls == 1
-        # replay is deduped
+        # audit backend recovers; the replayed delivery emits the events
+        harness.audit.fail_after = None
         replay = harness.worker.handle(make_message(harness, delivery_id=998, attempt=2))
         assert replay.disposition == "ack"
+        assert replay.record is not None
+        assert replay.record.status == "SUCCEEDED"
+        assert replay.record.external_object_id is not None
         assert harness.connector.external_write_calls == 1
+        assert any(
+            entry["event_type"] == "activation_succeeded"
+            for entry in harness.outbox.entries
+        )
 
 
 class TestWorkerRestart:

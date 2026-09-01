@@ -209,6 +209,21 @@ class ActivationWorker:
             created_ids = tuple(getattr(error, "created_object_ids", ()) or ())
             if created_ids:
                 return self._partial_success(key=key, created_ids=created_ids, error=error)
+            if error.reconcile_required:
+                # Side effects unknown (timeout/5xx): never retry blindly;
+                # park as UNKNOWN so the next delivery reconciles first.
+                record = self.store.transition(key=key, to="UNKNOWN", now=now)
+                self._audit_best_effort(
+                    {
+                        "event": "activation_unknown",
+                        "key": key.as_tuple(),
+                        "code": error.code,
+                        "occurred_at": now,
+                    }
+                )
+                return HandleResult(
+                    "retry", record, "side effects unknown; reconcile before retry"
+                )
             if error.retryable:
                 return HandleResult(
                     "retry", self.store.get(key), f"retryable connector error: {error}"
@@ -229,30 +244,41 @@ class ActivationWorker:
             )
             return HandleResult("retry", record, "outcome unknown; reconcile before retry")
 
+        # Outbox + audit are written BEFORE the terminal SUCCEEDED transition
+        # so a storage failure retries the delivery instead of losing the
+        # event forever; the connector ledger deduplicates the replayed
+        # external write for the same idempotency key.
+        try:
+            self.outbox.append(
+                aggregate_id=key.idempotency_key,
+                event_type="activation_succeeded",
+                payload={
+                    "key": list(key.as_tuple()),
+                    "external_object_id": result.external_object_id,
+                    "outcome": result.outcome,
+                },
+            )
+            self.audit.record(
+                {
+                    "event": "activation_succeeded",
+                    "key": key.as_tuple(),
+                    "external_object_id": result.external_object_id,
+                    "outcome": result.outcome,
+                    "occurred_at": now,
+                }
+            )
+        except AuditWriteError as error:
+            return HandleResult(
+                "retry",
+                self.store.get(key),
+                f"fail closed before success record: {error}",
+            )
         record = self.store.transition(
             key=key,
             to="SUCCEEDED",
             now=now,
             external_object_id=result.external_object_id,
             operation_id=result.operation_id,
-        )
-        self.outbox.append(
-            aggregate_id=key.idempotency_key,
-            event_type="activation_succeeded",
-            payload={
-                "key": list(key.as_tuple()),
-                "external_object_id": record.external_object_id,
-                "outcome": result.outcome,
-            },
-        )
-        self.audit.record(
-            {
-                "event": "activation_succeeded",
-                "key": key.as_tuple(),
-                "external_object_id": record.external_object_id,
-                "outcome": result.outcome,
-                "occurred_at": now,
-            }
         )
         return HandleResult("ack", record, "external write recorded")
 
@@ -283,21 +309,26 @@ class ActivationWorker:
 
         if outcome.get("outcome") == "RECONCILED":
             external_id = str(outcome["external_object_id"])
+            try:
+                self.outbox.append(
+                    aggregate_id=key.idempotency_key,
+                    event_type="activation_reconciled",
+                    payload={"key": list(key.as_tuple()), "external_object_id": external_id},
+                )
+                self.audit.record(
+                    {
+                        "event": "activation_reconciled",
+                        "key": key.as_tuple(),
+                        "external_object_id": external_id,
+                        "occurred_at": now,
+                    }
+                )
+            except AuditWriteError as error:
+                return HandleResult(
+                    "retry", record, f"fail closed before reconcile record: {error}"
+                )
             record = self.store.transition(
                 key=key, to="RECONCILED", now=now, external_object_id=external_id
-            )
-            self.outbox.append(
-                aggregate_id=key.idempotency_key,
-                event_type="activation_reconciled",
-                payload={"key": list(key.as_tuple()), "external_object_id": external_id},
-            )
-            self.audit.record(
-                {
-                    "event": "activation_reconciled",
-                    "key": key.as_tuple(),
-                    "external_object_id": external_id,
-                    "occurred_at": now,
-                }
             )
             return HandleResult("ack", record, "unknown outcome reconciled to existing object")
 

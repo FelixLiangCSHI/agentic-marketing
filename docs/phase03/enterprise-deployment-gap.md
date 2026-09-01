@@ -56,8 +56,6 @@
 
 | # | 严重度 | 位置 | 问题 | 
 |---|---|---|---|
-| F3 | High | `packages/campaign-activation/.../worker.py:232-248` | 状态置 `SUCCEEDED` 与 outbox/audit 写入非原子，事件可能永久丢失 |
-| F4 | High | `packages/campaign-activation/.../worker.py:201-216` | 忽略 `reconcile_required`，可重试错误直接重试，可能重复外部副作用 |
 | F5 | High | `packages/campaign-metrics/normalize.py` + `report.py` | normalize/report 不校验输入行同属一个 tenant/account/campaign/时间窗；dedupe key 与 `metric_id` 缺 tenant/account |
 | F6 | Medium | `connectors/{linkedin,google_ads}/.../auth.py` | `expires_in` 缺失/为 0 未 fail-closed；rotated refresh token 被丢弃（持久化接线属 G2，fail-closed 逻辑可先改） |
 | F7 | Medium | `connectors/{jimeng,llm/deepseek}` | `normalize_error()` 未复用 SDK 脱敏；endpoint 未做 HTTPS/白名单校验（校验代码可先写，真实生效属 G4） |
