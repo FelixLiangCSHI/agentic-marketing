@@ -28,7 +28,12 @@ EXPECTED_TABLES = {
     },
     "approval": {"requests", "decisions", "tokens"},
     "audit": {"events"},
-    "campaign": {"connector_operations", "compensation_tasks"},
+    "campaign": {
+        "connector_operations",
+        "compensation_tasks",
+        "raw_channel_metrics",
+        "normalized_metrics",
+    },
 }
 
 

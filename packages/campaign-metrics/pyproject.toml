@@ -1,0 +1,37 @@
+[project]
+name = "campaign-metrics"
+version = "0.1.0"
+description = "Campaign metrics pipeline (Phase 03 / Subphase 06): immutable append-only raw provider metrics (deduped by source response hash, missing never coerced to 0), independent recomputable normalization (Decimal values, explicit formula version, source raw metric IDs, not_available instead of imputation), watermark/cursor-based ingest that survives worker restarts and duplicate pulls, fully traceable performance reports and DRAFT-only strategy recommendations bound to evidence with zero channel write tools. Real DEV/SIT metric pulls run ONLY in protected jobs; this repo ships deterministic fixtures and fakes exclusively."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+]
+
+# 本包还依赖同仓库的 infra-core（本地路径安装）：
+#   python3 -m pip install -e "packages/infra-core" -e "packages/campaign-metrics[dev]"
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+campaign_metrics = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src:tests"
+packages = ["campaign_metrics"]
+strict = true

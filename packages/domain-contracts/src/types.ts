@@ -369,3 +369,103 @@ export interface ProductChangeV1 {
   content_hash: string | null;
   occurred_at: string;
 }
+
+export const CANONICAL_METRICS = [
+  "impressions",
+  "clicks",
+  "spend",
+  "conversions",
+  "ctr",
+  "cpc",
+  "cpm",
+  "conversion_rate",
+] as const;
+export type CanonicalMetric = (typeof CANONICAL_METRICS)[number];
+
+export const METRIC_QUALITY_STATUSES = ["ok", "not_available"] as const;
+export type MetricQualityStatus = (typeof METRIC_QUALITY_STATUSES)[number];
+
+export interface ReportMetricEntryV1 {
+  canonical_metric: CanonicalMetric;
+  value: string | null;
+  status: MetricQualityStatus;
+  not_available_reason: string | null;
+  currency: string | null;
+  source_raw_metric_ids: string[];
+  formula_version: string;
+  freshness_retrieved_at: string | null;
+}
+
+export interface ReportBudgetV1 {
+  approved_limit_minor: number;
+  currency: string;
+  spend_minor: number | null;
+  variance_minor: number | null;
+  status: MetricQualityStatus;
+  not_available_reason: string | null;
+}
+
+export interface PerformanceReportV1 {
+  schema_version: "1.0";
+  report_id: string;
+  tenant_id: string;
+  run_id: string;
+  campaign_id: string;
+  channel: Channel;
+  account_id: string;
+  period_start: string;
+  period_end: string;
+  data_freshness_at: string | null;
+  metrics: ReportMetricEntryV1[];
+  budget: ReportBudgetV1;
+  warnings: string[];
+  generated_at: string;
+  trace_id: string;
+}
+
+export const STRATEGY_ACTION_TYPES = [
+  "budget_adjustment",
+  "audience_adjustment",
+  "creative_adjustment",
+  "schedule_adjustment",
+  "pause",
+] as const;
+export type StrategyActionType = (typeof STRATEGY_ACTION_TYPES)[number];
+
+export const STRATEGY_NEXT_STEPS = [
+  "create_activation_request",
+  "manual_task",
+] as const;
+export type StrategyNextStep = (typeof STRATEGY_NEXT_STEPS)[number];
+
+export interface StrategyEvidenceV1 {
+  canonical_metric: string;
+  value: string;
+  source_raw_metric_ids: string[];
+  formula_version: string;
+  freshness_retrieved_at: string | null;
+}
+
+export interface StrategyRecommendationEntryV1 {
+  action_type: StrategyActionType;
+  summary: string;
+  evidence: StrategyEvidenceV1[];
+  expected_impact: string;
+  risk: string;
+  confidence: number;
+  next_step: StrategyNextStep;
+  executed: false;
+}
+
+export interface StrategyRecommendationV1 {
+  schema_version: "1.0";
+  strategy_id: string;
+  status: "DRAFT";
+  report_id: string;
+  tenant_id: string;
+  channel: Channel;
+  data_window: { start: string; end: string };
+  recommendations: StrategyRecommendationEntryV1[];
+  generated_at: string;
+  trace_id: string;
+}

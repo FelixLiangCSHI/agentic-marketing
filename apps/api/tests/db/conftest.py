@@ -30,6 +30,8 @@ _ALL_TABLES = (
     "audit.events",
     "campaign.compensation_tasks",
     "campaign.connector_operations",
+    "campaign.normalized_metrics",
+    "campaign.raw_channel_metrics",
     "core.runs",
 )
 

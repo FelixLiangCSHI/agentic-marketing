@@ -1,0 +1,92 @@
+[
+  {
+    "name": "strategy_draft_budget",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_bbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "budget_adjustment",
+          "summary": "Increase daily budget by 10% based on efficient CPC.",
+          "evidence": [
+            {
+              "canonical_metric": "cpc",
+              "value": "2.5",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0002",
+                "raw-linkedin-0001"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            },
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "More clicks at the observed CPC.",
+          "risk": "Spend increases before the next window confirms CPC.",
+          "confidence": 0.6,
+          "next_step": "create_activation_request",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "strategy_draft_pause_manual_task",
+    "document": {
+      "schema_version": "1.0",
+      "strategy_id": "str_cccccccccccccccccccccccc",
+      "status": "DRAFT",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "channel": "linkedin",
+      "data_window": {
+        "start": "2026-09-07",
+        "end": "2026-09-13"
+      },
+      "recommendations": [
+        {
+          "action_type": "pause",
+          "summary": "Pause the campaign pending creative refresh.",
+          "evidence": [
+            {
+              "canonical_metric": "ctr",
+              "value": "0.02",
+              "source_raw_metric_ids": [
+                "raw-linkedin-0001",
+                "raw-linkedin-0000"
+              ],
+              "formula_version": "fv1",
+              "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+            }
+          ],
+          "expected_impact": "Stops inefficient spend.",
+          "risk": "Loses momentum during pause.",
+          "confidence": 0.4,
+          "next_step": "manual_task",
+          "executed": false
+        }
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  }
+]

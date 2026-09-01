@@ -9,6 +9,7 @@ production code paths.
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
@@ -18,6 +19,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     Text,
     UniqueConstraint,
 )
@@ -337,3 +339,96 @@ class CompensationTaskRow(Base):
         Text, nullable=False, server_default="PENDING_APPROVAL"
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+METRIC_QUALITY_STATUSES = ("ok", "not_available")
+
+
+class RawChannelMetricRow(Base):
+    __tablename__ = "raw_channel_metrics"
+    __table_args__ = (
+        UniqueConstraint(
+            "channel",
+            "external_object_id",
+            "provider_field_name",
+            "period_start",
+            "period_end",
+            "source_response_hash",
+            name="uq_campaign_raw_metric_dedupe",
+        ),
+        CheckConstraint(
+            "source_response_hash ~ '^sha256:[0-9a-f]{64}$'",
+            name="ck_campaign_raw_metric_hash",
+        ),
+        Index(
+            "ix_campaign_raw_metrics_object",
+            "tenant_id",
+            "channel",
+            "external_object_id",
+            "period_start",
+        ),
+        {"schema": "campaign"},
+    )
+
+    metric_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(Text, nullable=False)
+    channel: Mapped[str] = mapped_column(Text, nullable=False)
+    account_id: Mapped[str] = mapped_column(Text, nullable=False)
+    external_object_id: Mapped[str] = mapped_column(Text, nullable=False)
+    provider_field_name: Mapped[str] = mapped_column(Text, nullable=False)
+    provider_value: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
+    provider_value_type: Mapped[str] = mapped_column(Text, nullable=False)
+    provider_currency: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider_timezone: Mapped[str] = mapped_column(Text, nullable=False)
+    attribution_window: Mapped[str] = mapped_column(Text, nullable=False)
+    period_start: Mapped[str] = mapped_column(Text, nullable=False)
+    period_end: Mapped[str] = mapped_column(Text, nullable=False)
+    provider_api_version: Mapped[str] = mapped_column(Text, nullable=False)
+    retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    source_response_ref: Mapped[str] = mapped_column(Text, nullable=False)
+    source_response_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    connector_version: Mapped[str] = mapped_column(Text, nullable=False)
+    trace_id: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class NormalizedMetricRow(Base):
+    __tablename__ = "normalized_metrics"
+    __table_args__ = (
+        CheckConstraint(
+            "quality_status IN ('ok', 'not_available')",
+            name="ck_campaign_normalized_quality",
+        ),
+        CheckConstraint(
+            "(quality_status = 'ok') = (value_decimal IS NOT NULL)",
+            name="ck_campaign_normalized_value_presence",
+        ),
+        Index(
+            "ix_campaign_normalized_object",
+            "tenant_id",
+            "channel",
+            "external_object_id",
+            "canonical_metric",
+        ),
+        {"schema": "campaign"},
+    )
+
+    metric_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(Text, nullable=False)
+    channel: Mapped[str] = mapped_column(Text, nullable=False)
+    external_object_id: Mapped[str] = mapped_column(Text, nullable=False)
+    canonical_metric: Mapped[str] = mapped_column(Text, nullable=False)
+    value_decimal: Mapped[Decimal | None] = mapped_column(Numeric(38, 12), nullable=True)
+    quality_status: Mapped[str] = mapped_column(Text, nullable=False)
+    not_available_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    currency: Mapped[str | None] = mapped_column(Text, nullable=True)
+    timezone: Mapped[str | None] = mapped_column(Text, nullable=True)
+    period_start: Mapped[str] = mapped_column(Text, nullable=False)
+    period_end: Mapped[str] = mapped_column(Text, nullable=False)
+    formula_version: Mapped[str] = mapped_column(Text, nullable=False)
+    source_raw_metric_ids: Mapped[list[Any]] = mapped_column(JSONB, nullable=False)
+    freshness_retrieved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    calculated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), primary_key=True
+    )

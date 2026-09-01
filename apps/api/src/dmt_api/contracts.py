@@ -430,6 +430,134 @@ class ProductChangeV1(_ContractModel):
     occurred_at: DateTimeUtc
 
 
+MetricQualityStatus = Literal["ok", "not_available"]
+CanonicalMetric = Literal[
+    "impressions",
+    "clicks",
+    "spend",
+    "conversions",
+    "ctr",
+    "cpc",
+    "cpm",
+    "conversion_rate",
+]
+DECIMAL_STRING_PATTERN = r"^-?\d+(\.\d+)?$"
+DATE_PATTERN = r"^\d{4}-\d{2}-\d{2}$"
+DateOnly = Annotated[StrictStr, Field(pattern=DATE_PATTERN)]
+DecimalString = Annotated[StrictStr, Field(pattern=DECIMAL_STRING_PATTERN)]
+Confidence = Annotated[Union[StrictInt, StrictFloat], Field(ge=0, le=1)]
+
+
+class ReportMetricEntryV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    canonical_metric: CanonicalMetric
+    value: DecimalString | None
+    status: MetricQualityStatus
+    not_available_reason: Annotated[StrictStr, Field(min_length=1, max_length=200)] | None
+    currency: Annotated[StrictStr, Field(pattern=r"^[A-Z]{3}$")] | None
+    source_raw_metric_ids: list[Annotated[StrictStr, Field(min_length=1, max_length=400)]]
+    formula_version: Annotated[StrictStr, Field(min_length=1, max_length=64)]
+    freshness_retrieved_at: DateTimeUtc | None
+
+
+class ReportBudgetV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    approved_limit_minor: Annotated[StrictInt, Field(ge=1)]
+    currency: Annotated[StrictStr, Field(pattern=r"^[A-Z]{3}$")]
+    spend_minor: Annotated[StrictInt, Field(ge=0)] | None
+    variance_minor: StrictInt | None
+    status: MetricQualityStatus
+    not_available_reason: Annotated[StrictStr, Field(min_length=1, max_length=200)] | None
+
+
+class PerformanceReportV1(_ContractModel):
+    """Read-only, fully traceable performance report (Phase 03 / Subphase 06).
+
+    Mirrors ``performance-report.v1.schema.json``. Every number cites its
+    source raw metric IDs, formula version and freshness; anything that
+    cannot be computed reliably is ``not_available`` — never estimated.
+    """
+
+    report_id: Annotated[StrictStr, Field(pattern=r"^rpt_[a-f0-9]{24}$")]
+    tenant_id: Annotated[StrictStr, Field(min_length=1, max_length=128)]
+    run_id: Annotated[StrictStr, Field(min_length=1, max_length=128)]
+    campaign_id: Annotated[StrictStr, Field(min_length=1, max_length=255)]
+    channel: Channel
+    account_id: Annotated[StrictStr, Field(min_length=1, max_length=128)]
+    period_start: DateOnly
+    period_end: DateOnly
+    data_freshness_at: DateTimeUtc | None
+    metrics: list[ReportMetricEntryV1]
+    budget: ReportBudgetV1
+    warnings: list[Annotated[StrictStr, Field(min_length=1, max_length=500)]]
+    generated_at: DateTimeUtc
+    trace_id: Annotated[StrictStr, Field(min_length=1, max_length=128)]
+
+
+StrategyActionType = Literal[
+    "budget_adjustment",
+    "audience_adjustment",
+    "creative_adjustment",
+    "schedule_adjustment",
+    "pause",
+]
+StrategyNextStep = Literal["create_activation_request", "manual_task"]
+
+
+class StrategyEvidenceV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    canonical_metric: Annotated[StrictStr, Field(min_length=1, max_length=64)]
+    value: DecimalString
+    source_raw_metric_ids: Annotated[
+        list[Annotated[StrictStr, Field(min_length=1, max_length=400)]],
+        Field(min_length=1),
+    ]
+    formula_version: Annotated[StrictStr, Field(min_length=1, max_length=64)]
+    freshness_retrieved_at: DateTimeUtc | None
+
+
+class StrategyDataWindowV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    start: DateOnly
+    end: DateOnly
+
+
+class StrategyRecommendationEntryV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    action_type: StrategyActionType
+    summary: Annotated[StrictStr, Field(min_length=1, max_length=1000)]
+    evidence: Annotated[list[StrategyEvidenceV1], Field(min_length=1)]
+    expected_impact: Annotated[StrictStr, Field(min_length=1, max_length=1000)]
+    risk: Annotated[StrictStr, Field(min_length=1, max_length=1000)]
+    confidence: Confidence
+    next_step: StrategyNextStep
+    executed: Literal[False]
+
+
+class StrategyRecommendationV1(_ContractModel):
+    """DRAFT-only, evidence-bound strategy draft (Phase 03 / Subphase 06).
+
+    Mirrors ``strategy-recommendation.v1.schema.json``. Strategies carry
+    no channel write capability: execution always creates a new
+    ``ActivationRequest`` or a manual task.
+    """
+
+    strategy_id: Annotated[StrictStr, Field(pattern=r"^str_[a-f0-9]{24}$")]
+    status: Literal["DRAFT"]
+    report_id: Annotated[StrictStr, Field(pattern=r"^rpt_[a-f0-9]{24}$")]
+    tenant_id: Annotated[StrictStr, Field(min_length=1, max_length=128)]
+    channel: Channel
+    data_window: StrategyDataWindowV1
+    recommendations: Annotated[list[StrategyRecommendationEntryV1], Field(min_length=1)]
+    generated_at: DateTimeUtc
+    trace_id: Annotated[StrictStr, Field(min_length=1, max_length=128)]
+
+
 CONTRACT_MODELS: dict[str, type[BaseModel]] = {
     "run.v1": RunV1,
     "run-event.v1": RunEventV1,
@@ -442,6 +570,8 @@ CONTRACT_MODELS: dict[str, type[BaseModel]] = {
     "activation-request.v1": ActivationRequestV1,
     "connector-error.v1": ConnectorErrorV1,
     "content-request.v1": ContentRequestV1,
+    "performance-report.v1": PerformanceReportV1,
+    "strategy-recommendation.v1": StrategyRecommendationV1,
     "product-document.v1": ProductDocumentV1,
     "product-claim.v1": ProductClaimV1,
     "product-change.v1": ProductChangeV1,

@@ -1,0 +1,1307 @@
+[
+  {
+    "name": "missing_metric_source_ids",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "2026-09-14T00:00:00Z",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": "10000",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "status": "ok",
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "missing_formula_version",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "2026-09-14T00:00:00Z",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": "10000",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0000"
+          ],
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "status": "ok",
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "value_number_not_string",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "2026-09-14T00:00:00Z",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": 10000,
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "status": "ok",
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "not_available_coerced_to_zero",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "2026-09-14T00:00:00Z",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": "10000",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "zero",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "status": "ok",
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "unknown_top_level_field",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "2026-09-14T00:00:00Z",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": "10000",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "status": "ok",
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006",
+      "estimated": true
+    }
+  },
+  {
+    "name": "bad_report_id",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "report-1",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "2026-09-14T00:00:00Z",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": "10000",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "status": "ok",
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "bad_channel",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "tiktok",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "2026-09-14T00:00:00Z",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": "10000",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "status": "ok",
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "budget_missing_status",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "2026-09-14T00:00:00Z",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": "10000",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  },
+  {
+    "name": "missing_trace_id",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "2026-09-14T00:00:00Z",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": "10000",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "status": "ok",
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z"
+    }
+  },
+  {
+    "name": "bad_freshness_timestamp",
+    "document": {
+      "schema_version": "1.0",
+      "report_id": "rpt_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "tenant-cshi",
+      "run_id": "run-p3-0006",
+      "campaign_id": "urn:li:sponsoredCampaign:1001",
+      "channel": "linkedin",
+      "account_id": "acct-linkedin-dev",
+      "period_start": "2026-09-07",
+      "period_end": "2026-09-13",
+      "data_freshness_at": "today",
+      "metrics": [
+        {
+          "canonical_metric": "impressions",
+          "value": "10000",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "clicks",
+          "value": "200",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "spend",
+          "value": "500",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversions",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "provider_reported_missing",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "ctr",
+          "value": "0.02",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0001",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpc",
+          "value": "2.5",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "cpm",
+          "value": "50",
+          "status": "ok",
+          "not_available_reason": null,
+          "currency": "USD",
+          "source_raw_metric_ids": [
+            "raw-linkedin-0002",
+            "raw-linkedin-0000"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        },
+        {
+          "canonical_metric": "conversion_rate",
+          "value": null,
+          "status": "not_available",
+          "not_available_reason": "source_not_available",
+          "currency": null,
+          "source_raw_metric_ids": [
+            "raw-linkedin-0003",
+            "raw-linkedin-0001"
+          ],
+          "formula_version": "fv1",
+          "freshness_retrieved_at": "2026-09-14T00:00:00Z"
+        }
+      ],
+      "budget": {
+        "approved_limit_minor": 100000,
+        "currency": "USD",
+        "spend_minor": 50000,
+        "variance_minor": -50000,
+        "status": "ok",
+        "not_available_reason": null
+      },
+      "warnings": [
+        "conversions not_available: provider_reported_missing",
+        "conversion_rate not_available: source_not_available"
+      ],
+      "generated_at": "2026-09-14T00:00:00Z",
+      "trace_id": "trace-p3-0006"
+    }
+  }
+]
