@@ -107,3 +107,17 @@ class TestRuntimeResolution:
         env = {**REAL_ENV, "DEEPSEEK_API_KEY_SECRET_REF": "sk-rawkey123"}
         with pytest.raises(ConnectorConfigError, match="secretref"):
             resolve_runtime(load_config(path), env)
+
+
+class TestEndpointGuard:
+    def test_http_endpoint_rejected(self, tmp_path: Path) -> None:
+        path = _write(tmp_path, {"mode": "sandbox", "enabled": True})
+        env = {**REAL_ENV, "DEEPSEEK_API_ENDPOINT": "http://api.deepseek.example"}
+        with pytest.raises(ConnectorConfigError, match="https"):
+            resolve_runtime(load_config(path), env)
+
+    def test_endpoint_host_not_in_allowlist_rejected(self, tmp_path: Path) -> None:
+        path = _write(tmp_path, {"mode": "sandbox", "enabled": True})
+        env = {**REAL_ENV, "DEEPSEEK_API_ENDPOINT": "https://attacker.example"}
+        with pytest.raises(ConnectorConfigError, match="allowlist"):
+            resolve_runtime(load_config(path), env)

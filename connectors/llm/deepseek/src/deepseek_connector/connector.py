@@ -26,6 +26,8 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Literal
 
+from connector_sdk.errors import sanitize_message
+
 from pydantic import ValidationError
 
 from deepseek_connector.config import DeepSeekConfig, RuntimeSettings, resolve_runtime
@@ -229,7 +231,7 @@ class DeepSeekConnector:
         return ConnectorErrorV1(
             connector=self.connector_kind,
             code=code,
-            message=message[:2000],
+            message=sanitize_message(message),
             trace_id=trace_id,
             retryable=retryable,
             details={"provider": "deepseek", "mode": self._runtime.mode},

@@ -16,6 +16,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from connector_sdk.errors import sanitize_message
+
 from infra_core.clock import Clock, SystemClock
 from infra_core.objectstore import ObjectStore
 from infra_core.queue import QueueClient
@@ -194,7 +196,7 @@ class JimengConnector:
         return ConnectorErrorV1(
             connector="jimeng",
             code=code,
-            message=message[:2000],
+            message=sanitize_message(message),
             trace_id=trace_id,
             retryable=retryable,
             details={"provider": "jimeng", "mode": self._runtime.mode},

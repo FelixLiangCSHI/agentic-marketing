@@ -186,7 +186,7 @@ class ReviewService:
         reason: str | None,
         rework_target: str | None,
     ) -> ReviewCase:
-        case = self.get(review_id)
+        case = self.get(review_id, tenant=principal.tenant)
 
         # Track is derived from server-resolved roles only.
         tracks = sorted(
@@ -261,7 +261,7 @@ class ReviewService:
         issues: tuple[dict[str, object], ...],
         critic_questions: tuple[dict[str, object], ...],
     ) -> ReviewCase:
-        case = self.get(review_id)
+        case = self.get(review_id, tenant=principal.tenant)
         if principal.subject != case.created_by:
             raise RoleNotAllowedError(
                 "only the creator can register a content change"

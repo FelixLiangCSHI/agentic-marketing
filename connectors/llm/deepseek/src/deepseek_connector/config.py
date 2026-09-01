@@ -22,6 +22,7 @@ import json
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Annotated, Literal
+from urllib.parse import urlparse
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, ValidationError
@@ -142,6 +143,21 @@ def _reject_secret_looking(value: str, where: str) -> None:
     if any(value.startswith(prefix) for prefix in _SECRET_LOOKING_PREFIXES):
         raise ConnectorConfigError(
             f"{where} looks like a raw secret; only secretref:// references are allowed"
+        )
+
+
+def _check_endpoint(endpoint: str, allowed_fqdns: tuple[str, ...], mode: str) -> None:
+    """SSRF guard: real-mode endpoints must be HTTPS on an allowlisted FQDN."""
+    parsed = urlparse(endpoint)
+    if parsed.scheme != "https":
+        raise ConnectorConfigError(
+            f"mode={mode} requires an https:// endpoint; got scheme "
+            f"{parsed.scheme or 'none'!r}"
+        )
+    host = parsed.hostname or ""
+    if host not in allowed_fqdns:
+        raise ConnectorConfigError(
+            f"mode={mode} endpoint host {host!r} is not in the FQDN allowlist"
         )
 
 
@@ -266,6 +282,7 @@ def resolve_runtime(config: DeepSeekConfig, env: Mapping[str, str]) -> RuntimeSe
     )
     if not allowed:
         raise ConnectorConfigError(f"mode={mode} requires a non-empty FQDN allowlist")
+    _check_endpoint(endpoint, allowed, mode)
     return RuntimeSettings(
         mode=mode,
         endpoint=endpoint,

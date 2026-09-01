@@ -26,15 +26,16 @@ def live() -> dict[str, str]:
 @router.get("/ready")
 def ready(request: Request) -> JSONResponse:
     settings = Settings.from_env()
+    identity_configured = (
+        getattr(request.app.state, "identity_provider", None) is not None
+    )
     checks = {
         "config": "ok",
         "mode": settings.mode,
         "environment": settings.environment,
         "database": "not_configured",
         "identity_provider": (
-            "configured"
-            if getattr(request.app.state, "identity_provider", None) is not None
-            else "not_configured"
+            "configured" if identity_configured else "not_configured"
         ),
     }
     if not settings.is_ready:
@@ -44,6 +45,16 @@ def ready(request: Request) -> JSONResponse:
             "configuration is invalid",
             retryable=True,
             details={"problems": list(settings.problems)},
+        )
+    # Outside local development the IdP is a hard dependency: readiness
+    # fails closed instead of reporting 200 with an unauthenticated API.
+    if settings.environment != "local" and not identity_configured:
+        return error_response(
+            503,
+            "not_ready",
+            "identity provider is not configured",
+            retryable=True,
+            details={"checks": checks},
         )
     database_url = getattr(request.app.state, "database_url", None)
     if database_url:

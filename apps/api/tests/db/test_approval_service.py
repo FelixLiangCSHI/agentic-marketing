@@ -17,6 +17,7 @@ from dmt_api.approval_service import (
     ApprovalBinding,
     ApprovalService,
     BindingMismatchError,
+    InvalidBindingError,
     RoleNotAllowedError,
 )
 from dmt_api.identity.roles import Role
@@ -49,6 +50,7 @@ def binding(**overrides: Any) -> ApprovalBinding:
         "valid_until": _LATER.isoformat(),
         "tool_name": "content.publish",
         "agent_type": "content",
+        "tool_call_id": "call-0001",
     }
     values.update(overrides)
     return ApprovalBinding(**values)
@@ -245,6 +247,24 @@ class TestTokenLifecycle:
         with pytest.raises(TokenConsumptionError):
             consume(migrated_engine, token)
 
+    def test_tool_call_id_change_invalidates_the_old_token(
+        self, migrated_engine: Engine
+    ) -> None:
+        _, token = self._approved_token(migrated_engine)
+        changed = binding(tool_call_id="call-9999")
+        with pytest.raises(BindingMismatchError):
+            consume(migrated_engine, token, the_binding=changed)
+        with pytest.raises(TokenConsumptionError):
+            consume(migrated_engine, token)
+
+    def test_binding_rejects_empty_tool_call_id_or_tool_name(self) -> None:
+        with pytest.raises(InvalidBindingError):
+            binding(tool_call_id="")
+        with pytest.raises(InvalidBindingError):
+            binding(tool_call_id="   ")
+        with pytest.raises(InvalidBindingError):
+            binding(tool_name="")
+
 
 class TestConcurrentConsumption:
     def test_exactly_one_concurrent_consumer_wins(
@@ -263,6 +283,41 @@ class TestConcurrentConsumption:
         with ThreadPoolExecutor(max_workers=8) as pool:
             results = list(pool.map(attempt, [f"worker-{i}" for i in range(8)]))
         assert results.count(True) == 1
+
+    def test_concurrent_consume_and_revoke_never_deadlock(
+        self, migrated_engine: Engine
+    ) -> None:
+        # consume_token_bound and revoke_request take locks in the same
+        # token-before-approval order, so racing them must always finish.
+        for i in range(4):
+            approval_id, token = create_request(
+                migrated_engine, run_id=f"run-cr-{i}", the_binding=binding()
+            )
+            decide(migrated_engine, approval_id)
+
+            def do_consume() -> bool:
+                try:
+                    consume(migrated_engine, token, consumed_by="worker-consume")
+                    return True
+                except TokenConsumptionError:
+                    return False
+
+            def do_revoke() -> bool:
+                try:
+                    with make_uow(migrated_engine) as uow:
+                        ApprovalService(uow, now=lambda: _NOW).revoke(
+                            approval_id, actor_id="admin", reason="race test"
+                        )
+                        uow.commit()
+                    return True
+                except Exception:
+                    return False
+
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                consumed = pool.submit(do_consume)
+                revoked = pool.submit(do_revoke)
+                consumed.result(timeout=30)
+                revoked.result(timeout=30)
 
 
 class TestAuditFailClosed:

@@ -348,6 +348,8 @@ class RawChannelMetricRow(Base):
     __tablename__ = "raw_channel_metrics"
     __table_args__ = (
         UniqueConstraint(
+            "tenant_id",
+            "account_id",
             "channel",
             "external_object_id",
             "provider_field_name",

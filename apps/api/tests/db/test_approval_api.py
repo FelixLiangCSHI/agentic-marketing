@@ -49,6 +49,8 @@ CREATE_BODY = {
         "policy_version": "1.0.0",
         "workflow_version": "1.0.0",
         "scope": "content/post-1",
+        "tool_name": "content.publish",
+        "tool_call_id": "call-0001",
     },
 }
 

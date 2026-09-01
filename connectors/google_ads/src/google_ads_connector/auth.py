@@ -39,6 +39,20 @@ class ServiceAccountNotApprovedError(ConnectorSdkError):
     reconcile_required = False
 
 
+def _expires_in_seconds(response: Mapping[str, object]) -> int:
+    """Parse ``expires_in`` failing closed: missing/zero/garbage → error."""
+    raw = response.get("expires_in")
+    try:
+        seconds = int(str(raw))
+    except (TypeError, ValueError):
+        seconds = -1
+    if seconds <= 0:
+        raise AuthExpiredError(
+            "token response lacks a positive expires_in; failing closed"
+        )
+    return seconds
+
+
 @dataclass(frozen=True)
 class GoogleAdsCredentials:
     """Masked credential handles; raw values never leave the adapter."""
@@ -118,7 +132,7 @@ class GoogleAdsAuthAdapter:
         return GoogleAdsCredentials(
             developer_token=developer_token,
             access_token=SecretValue(str(response["access_token"])),
-            expires_in_seconds=int(str(response.get("expires_in", 0))),
+            expires_in_seconds=_expires_in_seconds(response),
             login_customer_id_ref=self._config.account.login_customer_id_ref,
             identity_ref=identity_ref,
         )

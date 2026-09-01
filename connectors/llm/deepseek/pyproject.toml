@@ -9,6 +9,7 @@ dependencies = [
   "PyYAML>=6.0",
   # Local path dependencies (installed with `pip install -e` from repo root):
   #   packages/infra-core       -> secret resolver, clock
+  #   packages/connector-sdk    -> shared error sanitization
   #   packages/content-workflow -> ContentModel protocol + node contracts
   #   packages/product-rag      -> Citation
 ]

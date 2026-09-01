@@ -25,6 +25,20 @@ class OAuthStateError(Exception):
     """The OAuth state is unknown, tampered with or already consumed."""
 
 
+def _expires_in_seconds(response: dict[str, object]) -> int:
+    """Parse ``expires_in`` failing closed: missing/zero/garbage → error."""
+    raw = response.get("expires_in")
+    try:
+        seconds = int(str(raw))
+    except (TypeError, ValueError):
+        seconds = -1
+    if seconds <= 0:
+        raise AuthExpiredError(
+            "token response lacks a positive expires_in; failing closed"
+        )
+    return seconds
+
+
 @dataclass(frozen=True)
 class TokenGrant:
     """Masked token handles; refresh token lives behind a secret reference."""
@@ -129,7 +143,7 @@ class OAuthAdapter:
         # API — protected jobs use the real Secret Manager runbook.)
         return TokenGrant(
             access_token=access,
-            expires_in_seconds=int(str(response.get("expires_in", 0))),
+            expires_in_seconds=_expires_in_seconds(response),
             refresh_token_ref=self._config.auth.refresh_token_ref,
             scopes=self._config.auth.scopes,
         )

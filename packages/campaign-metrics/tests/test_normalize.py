@@ -174,3 +174,30 @@ def test_recompute_is_deterministic() -> None:
     first = normalize(raw, calculated_at=FAKE_NOW)
     second = normalize(raw, calculated_at=FAKE_NOW)
     assert first == second
+
+
+def test_normalize_rejects_mixed_tenant_account_object_or_window() -> None:
+    import pytest
+
+    from campaign_metrics.normalize import NormalizationInputError
+
+    base = make_raw_set()
+    for overrides in (
+        {"tenant_id": "tenant-b"},
+        {"account_id": "acct-2"},
+        {"external_object_id": "urn:li:sponsoredCampaign:9999"},
+        {"period_start": "2026-08-01"},
+        {"period_end": "2026-08-31"},
+    ):
+        stray = make_raw(
+            metric_id="raw-stray",
+            source_response_hash="sha256:" + "f" * 64,
+            **overrides,
+        )
+        with pytest.raises(NormalizationInputError):
+            normalize(base + (stray,), calculated_at=FAKE_NOW)
+
+
+def test_metric_id_carries_tenant_and_account() -> None:
+    result = normalize(make_raw_set(), calculated_at=FAKE_NOW)
+    assert all("tenant-a" in m.metric_id and "acct-1" in m.metric_id for m in result)

@@ -4,6 +4,7 @@ Phase 03 / Subphase 02. All connectors share this contract; the only
 implementation in-repo is the deterministic :class:`FakeConnector`.
 """
 
+from connector_sdk.approval import verify_approved_input
 from connector_sdk.config import ChannelConnectorConfig
 from connector_sdk.connector import Connector
 from connector_sdk.dry_run import ChannelPolicy, DryRunError, DryRunResult, run_dry_run
@@ -58,4 +59,5 @@ __all__ = [
     "normalize_error",
     "run_dry_run",
     "sanitize_message",
+    "verify_approved_input",
 ]

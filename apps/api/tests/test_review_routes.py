@@ -161,6 +161,36 @@ class TestAccessControl:
         hidden = client.get(f"/api/v1/reviews/{other_id}", headers=tokens["auditor"])
         assert hidden.status_code == 404
 
+    def test_decision_and_content_changed_are_tenant_scoped(
+        self, client: TestClient, tokens: dict[str, dict[str, str]], idp: FakeIdentityProvider
+    ) -> None:
+        review_id = create_review(client, tokens)
+        other_medical = bearer(
+            idp.issue_session(
+                "olga", "Olga", tenant="tenant-other", groups=("grp-medical",)
+            )
+        )
+        cross_decision = decide(client, review_id, other_medical)
+        assert cross_decision.status_code == 404  # type: ignore[attr-defined]
+
+        other_creator = bearer(
+            idp.issue_session(
+                "olivia", "Olivia", tenant="tenant-other", groups=("grp-content",)
+            )
+        )
+        cross_change = client.post(
+            f"/api/v1/reviews/{review_id}/content-changed",
+            json={
+                "artifact_hash": HASH_V2,
+                "automated_status": "PASS",
+                "content": {"headline": "H2", "body": "B2", "claims": [], "disclosures": []},
+                "issues": [],
+                "critic_questions": [],
+            },
+            headers=other_creator,
+        )
+        assert cross_change.status_code == 404
+
 
 class TestTwoTrackApproval:
     def test_both_tracks_required_for_approved(

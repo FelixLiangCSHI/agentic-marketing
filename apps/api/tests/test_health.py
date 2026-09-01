@@ -62,3 +62,30 @@ def test_ready_reports_identity_provider_when_configured() -> None:
         response = client.get("/api/health/ready")
     assert response.status_code == 200
     assert response.json()["checks"]["identity_provider"] == "configured"
+
+
+def test_ready_fails_closed_without_identity_provider_outside_local(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("DMT_ENVIRONMENT", "dev")
+    app = create_app()
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.get("/api/health/ready")
+    assert response.status_code == 503
+    body = response.json()
+    assert body["code"] == "not_ready"
+    assert body["details"]["checks"]["identity_provider"] == "not_configured"
+
+
+def test_ready_with_identity_provider_outside_local_is_ok(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("DMT_ENVIRONMENT", "dev")
+    app = create_app(
+        identity_provider=FakeIdentityProvider(
+            group_mapping={"grp-admin": frozenset({Role.ADMIN})}
+        )
+    )
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.get("/api/health/ready")
+    assert response.status_code == 200

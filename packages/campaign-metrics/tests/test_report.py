@@ -136,3 +136,15 @@ def test_report_validates_against_frozen_contract() -> None:
     required = set(schema["required"])
     assert required <= set(report.keys())
     assert schema["properties"]["schema_version"]["const"] == report["schema_version"]
+
+
+def test_report_rejects_metrics_from_other_tenant() -> None:
+    with pytest.raises(ReportInputError):
+        _report(tenant_id="tenant-b")
+
+
+def test_report_rejects_metrics_from_other_time_window() -> None:
+    with pytest.raises(ReportInputError):
+        _report(period_start="2026-08-01")
+    with pytest.raises(ReportInputError):
+        _report(period_end="2026-09-30")

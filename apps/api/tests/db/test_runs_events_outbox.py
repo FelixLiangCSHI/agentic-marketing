@@ -163,3 +163,40 @@ def test_workflow_journal_appends_in_sequence(migrated_engine: Engine) -> None:
         entries = uow.journal.for_run("run-1")
     assert [e.sequence for e in entries] == [0, 1]
     assert [e.node_name for e in entries] == ["plan", "act"]
+
+
+def test_claim_pending_uses_skip_locked_for_disjoint_batches(
+    migrated_engine: Engine,
+) -> None:
+    # Two concurrent dispatcher transactions must claim disjoint messages
+    # (FOR UPDATE SKIP LOCKED) instead of blocking or double dispatching.
+    create_run(migrated_engine)
+    create_run(migrated_engine, run_id="run-2")
+
+    first = make_uow(migrated_engine)
+    second = make_uow(migrated_engine)
+    try:
+        with first as uow_a:
+            batch_a = uow_a.outbox.claim_pending(limit=1)
+            assert len(batch_a) == 1
+            with second as uow_b:
+                batch_b = uow_b.outbox.claim_pending(limit=10)
+                claimed_a = {m.outbox_id for m in batch_a}
+                claimed_b = {m.outbox_id for m in batch_b}
+                assert claimed_a.isdisjoint(claimed_b)
+                assert len(batch_b) == 1  # the locked row was skipped
+                for message in batch_b:
+                    uow_b.outbox.mark_dispatched(
+                        message.outbox_id, dispatched_at=NOW + timedelta(seconds=1)
+                    )
+                uow_b.commit()
+            for message in batch_a:
+                uow_a.outbox.mark_dispatched(
+                    message.outbox_id, dispatched_at=NOW + timedelta(seconds=1)
+                )
+            uow_a.commit()
+    finally:
+        pass
+
+    with make_uow(migrated_engine) as uow:
+        assert uow.outbox.pending() == []
