@@ -23,7 +23,7 @@ new approvals.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from content_workflow.contracts import CopyDraftV1, MediaAssetV1, model_hash
@@ -321,6 +321,3 @@ def consumable(
         return False, "approvals are not bound to the package content hash"
     return True, "consumable"
 
-
-def sequence_hashes(media: Sequence[MediaAssetV1]) -> tuple[str, ...]:
-    return tuple(asset.sha256 for asset in media)
