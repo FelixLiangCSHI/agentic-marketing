@@ -1,0 +1,34 @@
+# Deterministic mock fixtures for the Google Ads connector (success paths).
+# Synthetic data only — no real customer IDs, developer tokens or provider
+# payloads. Metric rows mimic GAQL GoogleAdsService.Search responses: raw
+# provider field names and values are preserved verbatim (cost stays in
+# micros as an int64 string; missing metrics stay missing, never 0).
+seed: 31015
+campaign:
+  external_id_prefix: "customers/synthetic/campaigns/"
+  initial_status: "PAUSED"
+gaql:
+  query_template: >-
+    SELECT metrics.impressions, metrics.clicks, metrics.cost_micros,
+    metrics.conversions FROM campaign
+    WHERE segments.date BETWEEN '{start}' AND '{end}'
+metrics:
+  pages:
+    - page_token: null
+      next_page_token: "page-2"
+      rows:
+        - field: "metrics.impressions"
+          value: 20831
+          value_type: "integer"
+        - field: "metrics.clicks"
+          value: 0
+          value_type: "integer"
+    - page_token: "page-2"
+      next_page_token: null
+      rows:
+        - field: "metrics.cost_micros"
+          value: "413270000"
+          value_type: "int64_string"
+        - field: "metrics.conversions"
+          value: null
+          value_type: "missing"
