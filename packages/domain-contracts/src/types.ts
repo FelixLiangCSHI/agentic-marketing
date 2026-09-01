@@ -243,6 +243,17 @@ export interface CampaignProposalV1 {
   created_at: string;
 }
 
+export interface CampaignDryRunV1 {
+  schema_version: "1.0";
+  proposal_id: string;
+  policy_version: string;
+  valid: boolean;
+  request_fingerprint: string;
+  errors: { code: string; message: string; field: string }[];
+  warnings: string[];
+  evaluated_at: string;
+}
+
 export interface ConnectorErrorV1 {
   schema_version: "1.0";
   connector: Connector;

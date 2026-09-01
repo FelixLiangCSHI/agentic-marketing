@@ -13,6 +13,7 @@
 - `tool-call.v1.schema.json`
 - `approved-content-package.v1.schema.json`
 - `campaign-proposal.v1.schema.json`
+- `campaign-dry-run.v1.schema.json`
 - `activation-request.v1.schema.json`
 - `connector-error.v1.schema.json`
 

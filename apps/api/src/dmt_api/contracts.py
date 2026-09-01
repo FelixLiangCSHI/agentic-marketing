@@ -292,6 +292,30 @@ class CampaignProposalV1(_ContractModel):
     created_at: DateTimeUtc
 
 
+class DryRunErrorV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    code: Annotated[StrictStr, Field(pattern=r"^[a-z0-9][a-z0-9_]{1,63}$")]
+    message: Annotated[StrictStr, Field(min_length=1, max_length=500)]
+    field: Annotated[StrictStr, Field(min_length=1, max_length=200)]
+
+
+class CampaignDryRunV1(_ContractModel):
+    """Side-effect-free channel dry-run report (Phase 03 / Subphase 02).
+
+    Mirrors ``campaign-dry-run.v1.schema.json``. Produced by
+    ``packages/connector-sdk`` ``run_dry_run``; zero external calls.
+    """
+
+    proposal_id: Annotated[StrictStr, Field(pattern=r"^cpr_[a-f0-9]{24}$")]
+    policy_version: Annotated[StrictStr, Field(min_length=1, max_length=64)]
+    valid: StrictBool
+    request_fingerprint: Sha256Hash
+    errors: list[DryRunErrorV1]
+    warnings: list[Annotated[StrictStr, Field(min_length=1, max_length=500)]]
+    evaluated_at: DateTimeUtc
+
+
 class ConnectorErrorV1(_ContractModel):
     connector: Connector
     code: ErrorCode
@@ -414,6 +438,7 @@ CONTRACT_MODELS: dict[str, type[BaseModel]] = {
     "tool-call.v1": ToolCallV1,
     "approved-content-package.v1": ApprovedContentPackageV1,
     "campaign-proposal.v1": CampaignProposalV1,
+    "campaign-dry-run.v1": CampaignDryRunV1,
     "activation-request.v1": ActivationRequestV1,
     "connector-error.v1": ConnectorErrorV1,
     "content-request.v1": ContentRequestV1,
