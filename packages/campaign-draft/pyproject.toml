@@ -1,0 +1,37 @@
+[project]
+name = "dmt-campaign-draft"
+version = "0.1.0"
+description = "Deterministic Campaign Proposal draft builder (Phase 03 / Subphase 01). Only an APPROVED, unexpired, hash-matching ApprovedContentPackage can produce a DRAFT CampaignProposal; no channel API is ever called."
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "pydantic==2.13.4",
+]
+
+# 本包还依赖同仓库的 content-package（本地路径安装）：
+#   python3 -m pip install -e "packages/content-package" -e "packages/campaign-draft[dev]"
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "mypy==2.3.1",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+campaign_draft = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src:tests"
+packages = ["campaign_draft"]
+strict = true
