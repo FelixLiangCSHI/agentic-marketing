@@ -18,9 +18,13 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Mapping
 
-from campaign_metrics.models import NormalizedMetric, RawMetricRecord
+from campaign_metrics.models import MetricsError, NormalizedMetric, RawMetricRecord
 
 FORMULA_VERSION = "fv1"
+
+
+class NormalizationInputError(MetricsError):
+    """The raw inputs mix tenants, accounts, objects or time windows."""
 
 _MICROS = Decimal("1000000")
 
@@ -73,7 +77,8 @@ def _metric(
 ) -> NormalizedMetric:
     return NormalizedMetric(
         metric_id=(
-            f"nm-{template.channel}-{template.external_object_id}"
+            f"nm-{template.tenant_id}-{template.account_id}"
+            f"-{template.channel}-{template.external_object_id}"
             f"-{canonical_metric}-{template.period_start}-{FORMULA_VERSION}"
         ),
         tenant_id=template.tenant_id,
@@ -101,6 +106,19 @@ def normalize(
     if not raw_records:
         return ()
     template = raw_records[0]
+    for record in raw_records:
+        if (
+            record.tenant_id != template.tenant_id
+            or record.channel != template.channel
+            or record.account_id != template.account_id
+            or record.external_object_id != template.external_object_id
+            or record.period_start != template.period_start
+            or record.period_end != template.period_end
+        ):
+            raise NormalizationInputError(
+                f"raw metric {record.metric_id!r} belongs to a different "
+                "tenant/account/object/time window than the batch"
+            )
     field_map = _FIELD_MAPS.get(template.channel, {})
 
     grouped: dict[str, list[tuple[RawMetricRecord, bool, bool]]] = {}

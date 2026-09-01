@@ -56,7 +56,6 @@
 
 | # | 严重度 | 位置 | 问题 | 
 |---|---|---|---|
-| F5 | High | `packages/campaign-metrics/normalize.py` + `report.py` | normalize/report 不校验输入行同属一个 tenant/account/campaign/时间窗；dedupe key 与 `metric_id` 缺 tenant/account |
 | F6 | Medium | `connectors/{linkedin,google_ads}/.../auth.py` | `expires_in` 缺失/为 0 未 fail-closed；rotated refresh token 被丢弃（持久化接线属 G2，fail-closed 逻辑可先改） |
 | F7 | Medium | `connectors/{jimeng,llm/deepseek}` | `normalize_error()` 未复用 SDK 脱敏；endpoint 未做 HTTPS/白名单校验（校验代码可先写，真实生效属 G4） |
 | F8 | Medium | `apps/api/.../repositories.py` | 锁序不一致（token↔approval 死锁风险）；outbox `SKIP LOCKED` SQL 可预写（并发验证属 G1） |

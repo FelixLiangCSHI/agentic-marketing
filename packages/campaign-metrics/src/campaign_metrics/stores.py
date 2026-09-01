@@ -36,7 +36,9 @@ class FakeRawMetricStore:
 
     def __init__(self) -> None:
         self._records: list[RawMetricRecord] = []
-        self._by_dedupe_key: dict[tuple[str, str, str, str, str, str], RawMetricRecord] = {}
+        self._by_dedupe_key: dict[
+            tuple[str, str, str, str, str, str, str, str], RawMetricRecord
+        ] = {}
         self._by_metric_id: dict[str, RawMetricRecord] = {}
 
     def append(self, record: RawMetricRecord) -> AppendOutcome:

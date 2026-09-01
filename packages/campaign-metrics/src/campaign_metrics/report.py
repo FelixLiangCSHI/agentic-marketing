@@ -79,6 +79,14 @@ def build_performance_report(
             raise ReportInputError(
                 f"metric {metric.metric_id!r} belongs to another object or channel"
             )
+        if metric.tenant_id != tenant_id:
+            raise ReportInputError(
+                f"metric {metric.metric_id!r} belongs to another tenant"
+            )
+        if metric.period_start != period_start or metric.period_end != period_end:
+            raise ReportInputError(
+                f"metric {metric.metric_id!r} covers a different time window"
+            )
 
     entries: list[dict[str, Any]] = []
     warnings: list[str] = []

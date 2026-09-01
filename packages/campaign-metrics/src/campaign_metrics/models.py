@@ -61,9 +61,11 @@ class RawMetricRecord(_Frozen):
     connector_version: str = Field(min_length=1)
     trace_id: str = Field(min_length=1)
 
-    def dedupe_key(self) -> tuple[str, str, str, str, str, str]:
+    def dedupe_key(self) -> tuple[str, str, str, str, str, str, str, str]:
         return (
+            self.tenant_id,
             self.channel,
+            self.account_id,
             self.external_object_id,
             self.provider_field_name,
             self.period_start,
