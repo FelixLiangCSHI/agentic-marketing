@@ -131,6 +131,7 @@ def _package_inputs(snapshot: WorkflowSnapshot) -> PackageInputs:
     )
     content_hash = canonical_content_hash(
         copy_hash=model_hash(draft),
+        tenant_id=snapshot.request.tenant,
         claims=claims,
         asset_hashes=tuple(asset.sha256 for asset in media),
         versions=versions,
@@ -138,6 +139,7 @@ def _package_inputs(snapshot: WorkflowSnapshot) -> PackageInputs:
     )
     return PackageInputs(
         product_id="product-alpha",
+        tenant_id=snapshot.request.tenant,
         market=snapshot.request.market,
         locale=snapshot.request.locale,
         target_audience=tuple(snapshot.request.target_audience),

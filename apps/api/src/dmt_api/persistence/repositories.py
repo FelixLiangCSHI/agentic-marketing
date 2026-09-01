@@ -784,11 +784,16 @@ class ApprovalRepository(_BaseRepository):
         self,
         *,
         limit: int = 100,
+        tenant: str | None = None,
         run_id: str | None = None,
         requester_id: str | None = None,
         approver_approval_types: frozenset[str] = frozenset(),
     ) -> list[ApprovalRequest]:
         stmt = select(ApprovalRequestRow)
+        if tenant is not None:
+            stmt = stmt.join(
+                RunRow, ApprovalRequestRow.run_id == RunRow.run_id
+            ).where(RunRow.tenant == tenant)
         if run_id is not None:
             stmt = stmt.where(ApprovalRequestRow.run_id == run_id)
         scope_predicates = []

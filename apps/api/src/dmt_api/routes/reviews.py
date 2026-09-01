@@ -158,7 +158,9 @@ def create_review(
     payload: ReviewCreateRequest,
     principal: Principal = Depends(_CREATOR),
     service: ReviewService = Depends(get_review_service),
-) -> ReviewView:
+) -> ReviewView | JSONResponse:
+    if payload.tenant != principal.tenant:
+        return error_response(403, "tenant_mismatch", "tenant is not authorized", retryable=False)
     case = service.create(
         principal=principal,
         run_id=payload.run_id,
@@ -180,7 +182,7 @@ def list_reviews(
     principal: Principal = Depends(_VIEWER),
     service: ReviewService = Depends(get_review_service),
 ) -> tuple[ReviewView, ...]:
-    return tuple(_view(case) for case in service.list_cases())
+    return tuple(_view(case) for case in service.list_cases(tenant=principal.tenant))
 
 
 @router.get("/{review_id}", response_model=None)
@@ -190,7 +192,7 @@ def get_review(
     service: ReviewService = Depends(get_review_service),
 ) -> ReviewDetailView | JSONResponse:
     try:
-        case = service.get(review_id)
+        case = service.get(review_id, tenant=principal.tenant)
     except ReviewNotFoundError:
         return error_response(404, "not_found", "review not found", retryable=False)
     return _detail(case)

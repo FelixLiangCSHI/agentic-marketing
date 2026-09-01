@@ -29,6 +29,7 @@ class Principal:
 
     subject: str
     display_name: str
+    tenant: str
     groups: tuple[str, ...]
     roles: frozenset[Role]
 
@@ -47,6 +48,7 @@ def _utcnow() -> datetime:
 class _FakeSession:
     subject: str
     display_name: str
+    tenant: str
     groups: tuple[str, ...]
     expires_at: datetime
 
@@ -68,6 +70,7 @@ class FakeIdentityProvider:
         subject: str,
         display_name: str,
         *,
+        tenant: str = "tenant-cshi",
         groups: tuple[str, ...] = (),
         ttl: timedelta = timedelta(hours=8),
     ) -> str:
@@ -75,6 +78,7 @@ class FakeIdentityProvider:
         self._sessions[token] = _FakeSession(
             subject=subject,
             display_name=display_name,
+            tenant=tenant,
             groups=groups,
             expires_at=self.clock() + ttl,
         )
@@ -97,6 +101,7 @@ class FakeIdentityProvider:
         return Principal(
             subject=session.subject,
             display_name=session.display_name,
+            tenant=session.tenant,
             groups=session.groups,
             roles=resolve_roles(session.groups, self.group_mapping),
         )

@@ -134,6 +134,7 @@ def expected_content_hash(
     media: tuple[MediaAssetV1, ...],
     versions: VersionBindingsV1,
     channel_variants: tuple[tuple[str, tuple[str, ...]], ...],
+    tenant_id: str = "tenant-cshi",
 ) -> str:
     from content_package import ClaimBindingV1
 
@@ -150,6 +151,7 @@ def expected_content_hash(
     )
     return canonical_content_hash(
         copy_hash=model_hash(draft),
+        tenant_id=tenant_id,
         claims=claims,
         asset_hashes=tuple(asset.sha256 for asset in media),
         versions=versions,
@@ -180,7 +182,10 @@ def make_inputs(**overrides: Any) -> PackageInputs:
     channel_variants = overrides.pop(
         "channel_variants", (("linkedin", ("cv-req-0001",)),)
     )
-    content_hash = expected_content_hash(draft, media, versions, channel_variants)
+    tenant_id = overrides.get("tenant_id", "tenant-cshi")
+    content_hash = expected_content_hash(
+        draft, media, versions, channel_variants, tenant_id=tenant_id
+    )
     compliance_result = overrides.pop(
         "compliance_result",
         ENGINE.evaluate(
@@ -200,6 +205,7 @@ def make_inputs(**overrides: Any) -> PackageInputs:
     )
     payload: dict[str, Any] = {
         "product_id": "product-alpha",
+        "tenant_id": tenant_id,
         "market": "US",
         "locale": "en-US",
         "target_audience": ("physicians",),

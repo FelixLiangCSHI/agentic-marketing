@@ -16,6 +16,7 @@ class MeResponse(BaseModel):
 
     subject: str
     display_name: str
+    tenant: str
     roles: list[str]
 
 
@@ -24,5 +25,6 @@ def me(principal: Principal = Depends(get_principal)) -> MeResponse:
     return MeResponse(
         subject=principal.subject,
         display_name=principal.display_name,
+        tenant=principal.tenant,
         roles=sorted(role.value for role in principal.roles),
     )

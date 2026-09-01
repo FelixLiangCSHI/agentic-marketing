@@ -15,6 +15,7 @@ enterprise SSO app is delivered.
 from __future__ import annotations
 
 import secrets
+import re
 from math import isfinite
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -44,6 +45,7 @@ class OidcConfig:
     issuer: str
     audience: str
     group_claim: str = "groups"
+    tenant_claim: str = "tenant"
     clock_skew_seconds: int = 30
 
 
@@ -114,6 +116,11 @@ class EnterpriseIdentityProvider:
             raise AuthenticationError("token audience does not match this API")
         if not isinstance(claims.get("sub"), str) or not claims["sub"]:
             raise AuthenticationError("token subject is missing")
+        tenant = claims.get(self.config.tenant_claim)
+        if not isinstance(tenant, str) or not re.fullmatch(
+            r"^[a-z0-9][a-z0-9_-]{0,63}$", tenant
+        ):
+            raise AuthenticationError("token tenant claim is missing or malformed")
         now = self.clock().timestamp()
         skew = self.config.clock_skew_seconds
         exp = _numeric_date(claims, "exp")
@@ -133,6 +140,7 @@ class EnterpriseIdentityProvider:
         return Principal(
             subject=str(claims["sub"]),
             display_name=str(claims.get("name", claims["sub"])),
+            tenant=str(claims[self.config.tenant_claim]),
             groups=groups,
             roles=resolve_roles(groups, self.group_mapping),
         )

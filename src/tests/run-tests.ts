@@ -14,3 +14,4 @@ import "@/tests/buffer-export.test";
 import "@/tests/domain-contracts.test";
 import "@/tests/domain-contracts-adapter.test";
 import "@/tests/review-ui.test";
+import "@/tests/control-api-views.test";

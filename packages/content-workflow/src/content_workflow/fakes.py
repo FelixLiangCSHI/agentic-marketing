@@ -37,7 +37,7 @@ class MediaGenerator(Protocol):
         ...
 
     def generate_media(
-        self, brief: ContentBriefV1, media_type: MediaType
+        self, brief: ContentBriefV1, media_type: MediaType, *, attempt: int = 0
     ) -> MediaAssetV1:
         ...
 
@@ -94,9 +94,9 @@ class FakeMediaGenerator:
     generator_id = "fake-media-v1"
 
     def generate_media(
-        self, brief: ContentBriefV1, media_type: MediaType
+        self, brief: ContentBriefV1, media_type: MediaType, *, attempt: int = 0
     ) -> MediaAssetV1:
-        seed = f"{brief.request_id}:{brief.channel}:{media_type}:{brief.tone}"
+        seed = f"{brief.request_id}:{brief.channel}:{media_type}:{brief.tone}:{attempt}"
         digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()
         return MediaAssetV1(
             request_id=brief.request_id,

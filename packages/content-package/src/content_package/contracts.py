@@ -73,6 +73,7 @@ class ApprovedContentPackageV1(_Frozen):
     package_id: Annotated[StrictStr, Field(pattern=PACKAGE_ID_PATTERN)]
     version: Annotated[StrictInt, Field(ge=1)]
     status: PackageStatus
+    tenant_id: Identifier
     product_id: Identifier
     market: Market
     locale: StrictStr
@@ -98,6 +99,7 @@ class ApprovedContentPackageV1(_Frozen):
 def canonical_content_hash(
     *,
     copy_hash: str,
+    tenant_id: str,
     claims: tuple[ClaimBindingV1, ...],
     asset_hashes: tuple[str, ...],
     versions: VersionBindingsV1,
@@ -111,6 +113,7 @@ def canonical_content_hash(
     """
     document = {
         "copy_hash": copy_hash,
+        "tenant_id": tenant_id,
         "claims": [
             {
                 "text": claim.text,

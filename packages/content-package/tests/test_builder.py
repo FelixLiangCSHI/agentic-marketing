@@ -36,6 +36,7 @@ class TestHappyPath:
         package = BUILDER.build(make_inputs(), as_of=AS_OF)
         assert package.schema_version == "1.0"
         assert package.status == "APPROVED"
+        assert package.tenant_id == "tenant-cshi"
         assert package.package_id.startswith("acp_")
         assert package.version == 1
         assert package.content_hash.startswith("sha256:")
@@ -191,5 +192,11 @@ class TestDuplicateBuild:
         first = BUILDER.build(make_inputs(), as_of=AS_OF)
         changed_draft = make_draft(headline="A different headline")
         second = BUILDER.build(make_inputs(draft=changed_draft), as_of=AS_OF)
+        assert first.content_hash != second.content_hash
+        assert first.package_id != second.package_id
+
+    def test_tenant_is_bound_to_content_hash(self) -> None:
+        first = BUILDER.build(make_inputs(tenant_id="tenant-cshi"), as_of=AS_OF)
+        second = BUILDER.build(make_inputs(tenant_id="tenant-other"), as_of=AS_OF)
         assert first.content_hash != second.content_hash
         assert first.package_id != second.package_id

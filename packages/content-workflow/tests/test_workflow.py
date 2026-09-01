@@ -228,7 +228,7 @@ class TestTargetedRework:
 
     def test_asset_issue_reruns_only_media_and_compliance(self) -> None:
         workflow = _workflow()
-        workflow.start(_request(), thread_id="t-assetfix")
+        initial = workflow.start(_request(), thread_id="t-assetfix")
         reworked = workflow.resume("t-assetfix", _reject("asset_issue"))
         counts = _node_counts(reworked)
         assert counts["generate_media"] == 2
@@ -236,6 +236,8 @@ class TestTargetedRework:
         assert counts["generate_copy"] == 1
         assert counts["retrieve_product_facts"] == 1
         assert counts["build_brief"] == 1
+        assert initial.media is not None and reworked.media is not None
+        assert reworked.media[0].sha256 != initial.media[0].sha256
 
     def test_fact_issue_reruns_full_downstream(self) -> None:
         workflow = _workflow()

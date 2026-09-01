@@ -41,7 +41,7 @@ class _Lineage:
 
 
 def lineage_key(package: ApprovedContentPackageV1) -> str:
-    return f"{package.product_id}|{package.market}|{package.locale}"
+    return f"{package.tenant_id}|{package.product_id}|{package.market}|{package.locale}"
 
 
 class PackageStore:

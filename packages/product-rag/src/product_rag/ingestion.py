@@ -150,7 +150,9 @@ class IngestionPipeline:
         for change in page.changes:
             if change.change_type in ("REVOKED", "DELETED"):
                 deleted += self._index.delete_by_source(
-                    change.entity_id, change.source_version
+                    change.entity_id,
+                    tenant=tenant,
+                    source_version=change.source_version,
                 )
                 revoked.append(change.entity_id)
         return ChangeReport(

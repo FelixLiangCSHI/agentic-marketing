@@ -106,7 +106,6 @@
 | G-R1 | 租户隔离缺 tenant：chunk_id 不含 tenant/market/locale；`delete_by_source` 无 tenant 参数；`ApprovedContentPackageV1`/lineage_key 无 tenant 字段；reviews/approvals API 读路径无 tenant 过滤 | `product_rag/chunking.py`、`index.py`、`content_package/store.py`、`contracts.py`、`apps/api/routes/{reviews,approvals}.py` |
 | G-R2 | Citation 只验存在性不验来源：应校验 Claim 引用属于实际检索 fact 集（chunk_hash 成员校验） | `content_workflow/workflow.py`、`compliance/rules.py` |
 | G-R3 | `_check_assets` 只比数量不比 hash，资产防篡改门实质 no-op | `content_package/builder.py` |
-| G-R4 | 失败工具的 evidence 仍计入 goal check，可致 run 假 `SUCCEEDED` | `harness_core/loop.py` |
 | G-R5 | 时间戳按字典序字符串比较 + 可选小数秒，合规过期门可判错 | `product_rag/models.py`、`rules.py`、`builder.py` 等 |
 | G-R6 | Jimeng asset_issue 返工幂等键不变，永远返回旧资产 | `jimeng_connector/media_generator.py`、`worker.py` |
 
@@ -117,7 +116,6 @@
 - 连接器治理：预算/限流非线程安全、`daily_spent` 无日切、默认 `_noop_sleeper` 使退避为零等待、
   `Retry-After` 未被 `max_delay_ms` 钳制、`rework_count` 无上限。
 - 禁用表达/推测扫描未覆盖 disclosures/claim 文本/alt_text；`revoke()` 无状态机校验。
-- 前端两处 TS→Python 集成点未做运行时契约校验（`as ReviewView[]` 盲转型）。
 - CI：`pip-audit` 未覆盖 compliance/content-package/jimeng；Actions 按 tag 非 SHA 锁定。
 - 契约同步：Python Pydantic 为手写镜像，仅靠 fixtures 保证一致；connector-error 镜像不在 parity 测试内
   → 建议 schema 生成 Pydantic 或加 `jsonschema` 直验测试。

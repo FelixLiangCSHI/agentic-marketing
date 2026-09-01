@@ -79,6 +79,7 @@ class PackageInputs:
     """Immutable snapshot handed to the builder (already reviewed)."""
 
     product_id: str
+    tenant_id: str
     market: str
     locale: str
     target_audience: tuple[str, ...]
@@ -113,6 +114,7 @@ class PackageBuilder:
 
         content_hash = canonical_content_hash(
             copy_hash=model_hash(inputs.draft),
+            tenant_id=inputs.tenant_id,
             claims=claims,
             asset_hashes=asset_hashes,
             versions=inputs.versions,
@@ -128,6 +130,7 @@ class PackageBuilder:
             package_id=package_id_for(content_hash, version),
             version=version,
             status="APPROVED",
+            tenant_id=inputs.tenant_id,
             product_id=inputs.product_id,
             market=inputs.market,  # type: ignore[arg-type]
             locale=inputs.locale,

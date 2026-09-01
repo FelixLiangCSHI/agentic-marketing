@@ -162,6 +162,7 @@ def list_approvals(
         if principal.roles & roles
     )
     requests = uow.approvals.list_recent(
+        tenant=principal.tenant,
         run_id=run_id,
         requester_id=None if privileged else principal.subject,
         approver_approval_types=frozenset() if privileged else approver_types,
@@ -177,6 +178,9 @@ def create_approval(
 ) -> ApprovalCreateResponse | JSONResponse:
     service = ApprovalService(uow, now=_now)
     try:
+        run = uow.runs.get(body.run_id)
+        if run is None or run.tenant != principal.tenant:
+            return error_response(404, "not_found", "run not found", retryable=False)
         request, token = service.create_request(
             run_id=body.run_id,
             approval_type=body.approval_type,
@@ -201,6 +205,12 @@ def decide_approval(
 ) -> ApprovalView | JSONResponse:
     service = ApprovalService(uow, now=_now)
     try:
+        existing = uow.approvals.get(approval_id)
+        if existing is None:
+            raise NotFoundError(f"approval {approval_id!r} does not exist")
+        run = uow.runs.get(existing.run_id)
+        if run is None or run.tenant != principal.tenant:
+            return error_response(404, "not_found", "approval not found", retryable=False)
         request = service.decide(
             approval_id=approval_id,
             approver_id=principal.subject,
@@ -227,6 +237,12 @@ def revoke_approval(
 ) -> ApprovalView | JSONResponse:
     service = ApprovalService(uow, now=_now)
     try:
+        existing = uow.approvals.get(approval_id)
+        if existing is None:
+            raise NotFoundError(f"approval {approval_id!r} does not exist")
+        run = uow.runs.get(existing.run_id)
+        if run is None or run.tenant != principal.tenant:
+            return error_response(404, "not_found", "approval not found", retryable=False)
         request = service.revoke(
             approval_id, actor_id=principal.subject, reason=body.reason
         )

@@ -70,7 +70,7 @@ class KnowledgeBaseIndex(Protocol):
         ...
 
     def delete_by_source(
-        self, source_id: str, source_version: str | None = None
+        self, source_id: str, *, tenant: str, source_version: str | None = None
     ) -> int:
         ...
 
@@ -129,12 +129,13 @@ class InMemoryKnowledgeBaseIndex:
             self._entries[entry.chunk.chunk_id] = entry
 
     def delete_by_source(
-        self, source_id: str, source_version: str | None = None
+        self, source_id: str, *, tenant: str, source_version: str | None = None
     ) -> int:
         doomed = [
             chunk_id
             for chunk_id, entry in self._entries.items()
             if entry.chunk.source_id == source_id
+            and entry.chunk.tenant == tenant
             and (source_version is None or entry.chunk.source_version == source_version)
         ]
         for chunk_id in doomed:

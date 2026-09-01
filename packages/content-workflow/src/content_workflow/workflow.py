@@ -406,8 +406,9 @@ class ContentWorkflow:
         request = state["request"]
         brief = state.get("brief")
         assert brief is not None
+        attempt = state.get("rework_count", 0)
         assets = tuple(
-            self._media.generate_media(brief, media_type)
+            self._media.generate_media(brief, media_type, attempt=attempt)
             for media_type in request.requested_media_types
         )
         output_hash = text_hash("|".join(asset.sha256 for asset in assets))
