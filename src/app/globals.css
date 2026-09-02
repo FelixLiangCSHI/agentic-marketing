@@ -1,31 +1,38 @@
+/* Design tokens generated with the ui-ux-pro-max skill:
+   style "Data-Dense Dashboard", blue data palette with amber highlights,
+   Fira Sans / Fira Code typography (system font fallbacks kept). */
 :root {
-  --background: #f3f6fa;
+  --background: #f8fafc;
   --surface: #ffffff;
-  --surface-muted: #f7f9fc;
-  --surface-blue: #f1f6fb;
-  --ink: #17253b;
-  --ink-soft: #46566c;
-  --ink-muted: #68788e;
-  --line: #dce4ed;
-  --line-strong: #c7d2df;
-  --brand: #0f6cbd;
-  --brand-dark: #0b568f;
-  --brand-soft: #eaf3fb;
-  --navy: #16324f;
-  --success: #16794b;
-  --success-soft: #e8f7ef;
-  --warning: #9a5b0a;
-  --warning-soft: #fff6df;
-  --danger: #b42336;
-  --danger-soft: #fff0f1;
-  --violet: #315f8f;
-  --violet-soft: #edf3f8;
-  --shadow-sm: 0 1px 2px rgba(23, 32, 51, 0.05);
-  --shadow-md: 0 12px 28px rgba(32, 54, 82, 0.07);
+  --surface-muted: #f1f5f9;
+  --surface-blue: #eff6ff;
+  --ink: #1e3a8a;
+  --ink-soft: #3f4f6e;
+  --ink-muted: #475569;
+  --line: #dbeafe;
+  --line-strong: #bfdbfe;
+  --brand: #1e40af;
+  --brand-dark: #1e3a8a;
+  --brand-soft: #eff6ff;
+  --navy: #1e3a8a;
+  --accent: #d97706;
+  --accent-soft: #fef3c7;
+  --success: #047857;
+  --success-soft: #ecfdf5;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --danger: #b91c1c;
+  --danger-soft: #fef2f2;
+  --violet: #2563eb;
+  --violet-soft: #eff6ff;
+  --shadow-sm: 0 1px 2px rgba(30, 58, 138, 0.06);
+  --shadow-md: 0 12px 28px rgba(30, 64, 175, 0.08);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
-  --font-sans: "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
+  --font-sans: "Fira Sans", "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
+  --font-mono: "Fira Code", "Cascadia Code", "SFMono-Regular", Consolas,
+    monospace;
 }
 
 * {
@@ -62,7 +69,7 @@ button {
 button:focus-visible,
 select:focus-visible,
 input:focus-visible {
-  outline: 3px solid rgba(10, 102, 194, 0.24);
+  outline: 3px solid rgba(30, 64, 175, 0.35);
   outline-offset: 2px;
 }
 
@@ -507,13 +514,13 @@ select:disabled {
   border: 1px solid var(--brand);
   color: #fff;
   background: var(--brand);
-  box-shadow: 0 6px 16px rgba(10, 102, 194, 0.16);
+  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.16);
 }
 
 .primary-button:not(:disabled):hover {
   border-color: var(--brand-dark);
   background: var(--brand-dark);
-  box-shadow: 0 8px 20px rgba(10, 102, 194, 0.23);
+  box-shadow: 0 8px 20px rgba(30, 64, 175, 0.23);
   transform: translateY(-1px);
 }
 
@@ -714,7 +721,7 @@ select:disabled {
   height: 8px;
   border-radius: 50%;
   background: var(--brand);
-  box-shadow: 0 0 0 4px rgba(10, 102, 194, 0.12);
+  box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.12);
 }
 
 .status-index {
@@ -1180,7 +1187,7 @@ select:disabled {
   padding: 6px;
   border-radius: 5px;
   background: var(--surface-muted);
-  font-family: Consolas, monospace;
+  font-family: var(--font-mono);
 }
 
 .metric-details ul {
@@ -1742,7 +1749,7 @@ select:disabled {
   grid-template-columns: 82px minmax(0, 1fr);
   gap: 8px;
   padding: 7px 9px;
-  border: 1px solid rgba(15, 108, 189, 0.16);
+  border: 1px solid rgba(30, 64, 175, 0.16);
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.75);
 }
@@ -1959,7 +1966,7 @@ select:disabled {
 
 .approval-status--draft,
 .plan-status--ai_draft {
-  border-color: #d8cdf5;
+  border-color: var(--line-strong);
   color: var(--violet);
   background: var(--violet-soft);
 }
@@ -2124,7 +2131,7 @@ select:disabled {
 .calendar-approval-card {
   min-height: 0;
   padding: 20px;
-  border-color: #d8cdf5;
+  border-color: var(--line-strong);
 }
 
 .calendar-approval-card .enterprise-approval {
@@ -2565,7 +2572,7 @@ select:disabled {
 .experiment-card {
   margin-top: 10px;
   padding: 9px;
-  border: 1px solid #d8cdf5;
+  border: 1px solid var(--line-strong);
   border-radius: 7px;
   background: var(--violet-soft);
 }
@@ -3847,7 +3854,7 @@ select:disabled {
 .source-cell {
   gap: 4px;
   color: var(--brand);
-  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 8px;
   white-space: nowrap;
 }
