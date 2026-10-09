@@ -55,6 +55,19 @@ npm run build
 npm start
 ```
 
+## Pardot 生产只读连接验证入口
+
+独立的 `verify-pardot-production` 流水线取代原 DEV 部署占位，不改变 Demo
+页面的现有行为。仅从受保护的 main 分支手动触发，经 `production` Environment
+人工审批、批准 commit 和工单校验后，在专用 self-hosted Runner 获取 Salesforce
+token 并只读查询生产 Campaign；不读取 Prospect、不部署、不发送邮件。
+
+企业 Secret Manager 只以 Secret Reference 接入，真实凭据不进入仓库、
+GitHub Variables 或日志。Runner 供给、双人评审、环境保护规则、触发参数及
+脱敏成功回执要求见 [Pardot 生产验证 Runbook](docs/runbooks/pardot-production-verification.md)。
+`npm run pardot:verify:production` 在普通本地执行时会明确拒绝；
+测试通过或本地配置有效不等于生产连接已经成功。
+
 ## 服务配置
 
 首次启动且没有本地配置时，应用会打开四步配置向导，依次配置洞察服务、

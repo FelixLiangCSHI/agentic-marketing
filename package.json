@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/tests/run-tests.ts",
+    "pardot:verify:production": "tsx scripts/verify-pardot-production.ts",
     "api:test": "cd apps/api && python3 -m pytest",
     "api:typecheck": "cd apps/api && python3 -m mypy",
     "harness:test": "cd packages/harness-core && python3 -m pytest",
