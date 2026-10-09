@@ -43,6 +43,8 @@ compliance blocks.
 ```bash
 pip install -e packages/product-rag -e packages/harness-core \
   -e packages/infra-core -e packages/content-workflow \
+  -e packages/compliance -e packages/content-package \
+  -e packages/campaign-draft -e packages/connector-sdk \
   -e "connectors/llm/deepseek[dev]"
 cd connectors/llm/deepseek
 python3 -m pytest        # 36 tests, all deterministic mock

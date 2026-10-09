@@ -62,6 +62,8 @@ approved image capability is claimed; other media types raise a typed
 ```bash
 pip install -e "packages/infra-core" -e "packages/product-rag" \
   -e "packages/harness-core" -e "packages/content-workflow" \
+  -e "packages/compliance" -e "packages/content-package" \
+  -e "packages/campaign-draft" -e "packages/connector-sdk" \
   -e "connectors/jimeng[dev]"
 npm run jimeng:test        # pytest (44 tests, all mock)
 npm run jimeng:typecheck   # mypy --strict

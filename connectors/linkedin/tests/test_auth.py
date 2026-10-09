@@ -23,12 +23,13 @@ from linkedin_connector import (
     OAuthStateError,
 )
 from connector_sdk import AuthExpiredError
+from linkedin_connector.auth import OAuthTransport
 
 from builders import make_config
 
 
 def make_adapter(
-    *, transport: MockOAuthTransport | None = None
+    *, transport: OAuthTransport | None = None
 ) -> tuple[OAuthAdapter, FakeSecretResolver]:
     resolver = FakeSecretResolver()
     resolver._store["secretref://vault/dmt/dev/linkedin/client-id"] = "client-id-public"
@@ -130,12 +131,13 @@ def test_missing_or_zero_expires_in_fails_closed() -> None:
         def refresh(self, *, refresh_token: object) -> dict[str, object]:
             return self.payload
 
-    for payload in (
+    payloads: tuple[dict[str, object], ...] = (
         {"access_token": "synthetic-a"},
         {"access_token": "synthetic-a", "expires_in": 0},
         {"access_token": "synthetic-a", "expires_in": -1},
         {"access_token": "synthetic-a", "expires_in": "soon"},
-    ):
+    )
+    for payload in payloads:
         adapter, _ = make_adapter(transport=NoExpiryTransport(payload))
         with pytest.raises(AuthExpiredError):
             adapter.refresh_access_token()

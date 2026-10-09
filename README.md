@@ -29,6 +29,15 @@
 
 解析库精确锁定版本。项目未采用 npm 上存在已知未修复公告的旧 `xlsx@0.18.5`。新增依赖前检查了 npm 公告和维护状态。
 
+ESLint 保留 Next.js 16 的完整规则集。由于 `fast-glob` 的 `braces` 子依赖暂无
+安全补丁，仅在 `@next/eslint-plugin-next` 内将其替换为
+[本地 globSync 适配器](tools/next-eslint-glob/index.cjs)，复用已使用的
+`tinyglobby@0.2.17`（MIT），并保持目录展开、绝对路径和目录尾斜线的原有语义。
+为兼容现有 Node.js 最低版本，仅此 CommonJS 适配器允许引入已知的两个模块；
+应用代码的 import 规则和所有 Next 检查保持不变。
+该适配器不是通用 fast-glob 替代品；Next 升级时必须通过根目录及真实导航规则
+回归测试。未降低 `npm audit --audit-level=high` 门槛或添加漏洞豁免。
+
 ## 本地启动
 
 要求 Node.js 20.9+ 和 npm。先安装依赖：
@@ -54,6 +63,19 @@ npm run typecheck
 npm run build
 npm start
 ```
+
+## Pardot 生产只读连接验证入口
+
+独立的 `verify-pardot-production` 流水线取代原 DEV 部署占位，不改变 Demo
+页面的现有行为。仅从受保护的 main 分支手动触发，经 `production` Environment
+人工审批、批准 commit 和工单校验后，在专用 self-hosted Runner 获取 Salesforce
+token 并只读查询生产 Campaign；不读取 Prospect、不部署、不发送邮件。
+
+企业 Secret Manager 只以 Secret Reference 接入，真实凭据不进入仓库、
+GitHub Variables 或日志。Runner 供给、双人评审、环境保护规则、触发参数及
+脱敏成功回执要求见 [Pardot 生产验证 Runbook](docs/runbooks/pardot-production-verification.md)。
+`npm run pardot:verify:production` 在普通本地执行时会明确拒绝；
+测试通过或本地配置有效不等于生产连接已经成功。
 
 ## 服务配置
 

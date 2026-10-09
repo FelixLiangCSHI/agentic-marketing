@@ -489,9 +489,9 @@ class TestReconcileAndNormalize:
         assert error.retryable is False
 
     def test_normalize_error_sanitizes_credential_material(self) -> None:
+        synthetic_key = "-".join(("sk", "synthetic" * 4))
         error = _connector().normalize_error(
-            ValueError("api_key: sk-verysecret1234567890 leaked"), trace_id="t-sm"
+            ValueError(f"api_key: {synthetic_key} leaked"), trace_id="t-sm"
         )
-        assert "sk-verysecret1234567890" not in error.message
+        assert synthetic_key not in error.message
         assert "[redacted]" in error.message
-
