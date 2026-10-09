@@ -53,6 +53,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@agentic-marketing/next-eslint-glob": "file:tools/next-eslint-glob",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -62,6 +63,9 @@
     "typescript": "^5"
   },
   "overrides": {
+    "@next/eslint-plugin-next": {
+      "fast-glob": "$@agentic-marketing/next-eslint-glob"
+    },
     "brace-expansion@1": "1.1.21",
     "brace-expansion@2": "2.0.3",
     "brace-expansion@4": "5.0.12",

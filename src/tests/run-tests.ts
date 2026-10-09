@@ -16,3 +16,4 @@ import "@/tests/domain-contracts-adapter.test";
 import "@/tests/review-ui.test";
 import "@/tests/control-api-views.test";
 import "@/tests/pardot-production-verification.test";
+import "@/tests/next-eslint-glob.test";

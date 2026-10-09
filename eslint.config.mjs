@@ -5,6 +5,14 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    files: ["tools/next-eslint-glob/index.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": ["error", {
+        allow: ["^(tinyglobby|node:path)$"],
+      }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

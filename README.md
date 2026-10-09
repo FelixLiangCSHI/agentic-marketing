@@ -29,6 +29,15 @@
 
 解析库精确锁定版本。项目未采用 npm 上存在已知未修复公告的旧 `xlsx@0.18.5`。新增依赖前检查了 npm 公告和维护状态。
 
+ESLint 保留 Next.js 16 的完整规则集。由于 `fast-glob` 的 `braces` 子依赖暂无
+安全补丁，仅在 `@next/eslint-plugin-next` 内将其替换为
+[本地 globSync 适配器](tools/next-eslint-glob/index.cjs)，复用已使用的
+`tinyglobby@0.2.17`（MIT），并保持目录展开、绝对路径和目录尾斜线的原有语义。
+为兼容现有 Node.js 最低版本，仅此 CommonJS 适配器允许引入已知的两个模块；
+应用代码的 import 规则和所有 Next 检查保持不变。
+该适配器不是通用 fast-glob 替代品；Next 升级时必须通过根目录及真实导航规则
+回归测试。未降低 `npm audit --audit-level=high` 门槛或添加漏洞豁免。
+
 ## 本地启动
 
 要求 Node.js 20.9+ 和 npm。先安装依赖：

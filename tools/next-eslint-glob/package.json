@@ -1,0 +1,11 @@
+{
+  "name": "@agentic-marketing/next-eslint-glob",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The globSync interface used only by Next ESLint, without the vulnerable braces dependency.",
+  "license": "UNLICENSED",
+  "main": "index.cjs",
+  "dependencies": {
+    "tinyglobby": "0.2.17"
+  }
+}
