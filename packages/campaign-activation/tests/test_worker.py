@@ -8,6 +8,7 @@ from typing import Any, Mapping
 
 import pytest
 
+from connector_sdk import FakeConnector
 from connector_sdk.errors import ConnectorSdkError
 from connector_sdk.models import ExternalWriteResult
 from infra_core.queue import Message
@@ -158,7 +159,7 @@ class TestUnknownOutcome:
         from connector_sdk.errors import ProviderTimeoutError
 
         class TimeoutOnceConnector:
-            def __init__(self, inner: Any) -> None:
+            def __init__(self, inner: FakeConnector) -> None:
                 self.inner = inner
                 self.calls = 0
 

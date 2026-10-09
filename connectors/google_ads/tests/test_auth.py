@@ -127,12 +127,13 @@ class TestExpiresInFailClosed:
             def mint_identity_token(self, *, identity_ref: str) -> dict[str, object]:
                 return self.payload
 
-        for payload in (
+        payloads: tuple[dict[str, object], ...] = (
             {"access_token": "synthetic-a"},
             {"access_token": "synthetic-a", "expires_in": 0},
             {"access_token": "synthetic-a", "expires_in": -5},
             {"access_token": "synthetic-a", "expires_in": "soon"},
-        ):
+        )
+        for payload in payloads:
             adapter = GoogleAdsAuthAdapter(
                 config=make_config(),
                 secret_resolver=make_resolver(),

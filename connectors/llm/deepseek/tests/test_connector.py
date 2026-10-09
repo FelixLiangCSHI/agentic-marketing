@@ -8,12 +8,12 @@ from __future__ import annotations
 import json
 import random
 import threading
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
-import deepseek_connector.connector as connector_module
 from deepseek_connector import (
     AuthenticationError,
     BudgetExceededError,
@@ -199,7 +199,7 @@ class TestRetries:
 
     def test_default_sleeper_uses_time_sleep(self, monkeypatch: pytest.MonkeyPatch) -> None:
         slept: list[float] = []
-        monkeypatch.setattr(connector_module.time, "sleep", slept.append)
+        monkeypatch.setattr(time, "sleep", slept.append)
         connector = DeepSeekConnector(
             load_config(CONFIG_PATH),
             env={},
@@ -212,13 +212,15 @@ class TestRetries:
 
     def test_real_mode_default_rng_uses_entropy(self, monkeypatch: pytest.MonkeyPatch) -> None:
         random_args: list[object] = []
-        original_random = connector_module.random.Random
+        original_random = random.Random
 
-        def spy_random(seed: object = None) -> random.Random:
+        def spy_random(
+            seed: int | float | str | bytes | bytearray | None = None,
+        ) -> random.Random:
             random_args.append(seed)
             return original_random(seed)
 
-        monkeypatch.setattr(connector_module.random, "Random", spy_random)
+        monkeypatch.setattr(random, "Random", spy_random)
         config = load_config(CONFIG_PATH).model_copy(update={"mode": "sandbox", "enabled": True})
         DeepSeekConnector(
             config,
@@ -368,10 +370,11 @@ class TestNormalizeError:
         assert error.retryable is False
 
     def test_normalize_error_sanitizes_credential_material(self) -> None:
+        synthetic_key = "-".join(("sk", "synthetic" * 4))
         error = _connector(_mock()).normalize_error(
-            ValueError("api_key: sk-verysecret1234567890 leaked"), trace_id="t-sm"
+            ValueError(f"api_key: {synthetic_key} leaked"), trace_id="t-sm"
         )
-        assert "sk-verysecret1234567890" not in error.message
+        assert synthetic_key not in error.message
         assert "[redacted]" in error.message
 
 
